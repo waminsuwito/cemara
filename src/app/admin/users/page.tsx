@@ -80,6 +80,7 @@ const initialUsers: User[] = [
   { id: 7, name: "Charlie", nik: "1007", password: "password", batangan: "BP-01", location: "BP Dumai", role: "OPERATOR" },
   { id: 8, name: "Dedi", nik: "1008", password: "password", batangan: "KI-01", location: "BP IKN", role: "OPERATOR" },
   { id: 9, name: "Eko", nik: "1009", password: "password", batangan: "KT-01", location: "BP Pekanbaru", role: "OPERATOR" },
+  { id: 10, name: "Kiki", nik: "1010", password: "password", batangan: "LD-01", location: "BP Dumai", role: "OPERATOR" },
 ];
 
 const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];

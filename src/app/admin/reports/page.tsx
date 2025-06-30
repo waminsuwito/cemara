@@ -69,6 +69,7 @@ const initialVehicles: Vehicle[] = [
   { id: 7, hullNumber: "BP-01", licensePlate: "B 7777 BPP", type: "BP", operator: "Hadi", location: "BP Dumai" },
   { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "Kendaraan Inventaris", operator: "Iwan", location: "BP IKN" },
   { id: 9, hullNumber: "KT-01", licensePlate: "B 9999 KTS", type: "Kapsul Semen", operator: "Joko", location: "BP Pekanbaru" },
+  { id: 10, hullNumber: "LD-01", licensePlate: "B 1010 LDL", type: "Loader", operator: "Kiki", location: "BP Dumai" },
 ];
 
 const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];

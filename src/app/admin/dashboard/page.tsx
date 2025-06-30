@@ -98,13 +98,14 @@ const allVehicles: {id: string; type: string; operator: string; location: string
   { id: "EX-01", type: "Exavator", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
   { id: "TM-01", type: "Truck mixer", operator: "Solihin", location: locations[3], status: "Perlu Perhatian" },
   
-  // Baik (5)
+  // Baik (6)
   { id: "DT-01", type: "Dump Truck", operator: "Aep Saefudin", location: locations[1], status: "Baik" },
   { id: "FK-01", type: "Foco kren", operator: "Siswanto", location: locations[0], status: "Baik" },
   { id: "BP-01", type: "BP", operator: "Charlie", location: locations[2], status: "Baik" },
   { id: "KI-01", type: "Kendaraan Inventaris", operator: "Dedi", location: locations[3], status: "Baik" },
   { id: "KT-01", type: "Kapsul Semen", operator: "Eko", location: locations[0], status: "Baik" },
-  
+  { id: "LD-01", type: "Loader", operator: "Kiki", location: locations[2], status: "Baik" },
+
   // Dummy Baik (62)
   ...Array.from({ length: 62 }, (_, i) => ({
     id: `BAIK-${String(i + 1).padStart(3, '0')}`,
