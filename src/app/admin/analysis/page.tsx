@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import ReactToPrint from "react-to-print";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -94,10 +94,6 @@ export default function AnalysisPage() {
   );
   
   const reportRef = useRef<PrintableReport>(null);
-  const handlePrint = useReactToPrint({
-      content: () => reportRef.current,
-      documentTitle: `Laporan-Kondisi-Alat-${selectedLocation}-${format(new Date(), 'yyyy-MM-dd')}`,
-  });
 
   const vehiclesWithStatus = useMemo(() => {
     const today = startOfToday();
@@ -190,10 +186,16 @@ export default function AnalysisPage() {
                 </SelectContent>
               </Select>
             )}
-             <Button onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print Laporan
-            </Button>
+             <ReactToPrint
+                trigger={() => (
+                    <Button>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Laporan
+                    </Button>
+                )}
+                content={() => reportRef.current}
+                documentTitle={`Laporan-Kondisi-Alat-${selectedLocation}-${format(new Date(), 'yyyy-MM-dd')}`}
+            />
           </div>
         </CardHeader>
         <CardContent>
