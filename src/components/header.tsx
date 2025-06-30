@@ -33,7 +33,7 @@ export function Header() {
         router.push('/');
     }
   return (
-    <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
+    <header className="relative sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         <Link
           href="#"
@@ -62,6 +62,11 @@ export function Header() {
           </nav>
         </SheetContent>
       </Sheet>
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+        <p className="font-semibold text-primary tracking-wider whitespace-nowrap">
+          PT FARIKA RIAU PERKASA
+        </p>
+      </div>
       <div className="flex w-full items-center justify-between gap-4 md:ml-auto md:gap-2 lg:gap-4">
         {isChecklistPage && operatorUser && (
             <div className="flex-1 text-sm text-muted-foreground">
