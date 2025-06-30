@@ -49,7 +49,7 @@ export function OperatorLoginForm() {
       const foundUser = users.find(
         (user) =>
           user.role === 'OPERATOR' &&
-          (user.nik === values.username || (user.name && user.name.toLowerCase() === values.username.toLowerCase())) &&
+          (String(user.nik) === values.username || (user.name && user.name.toLowerCase() === values.username.toLowerCase())) &&
           user.password === values.password
       );
 
