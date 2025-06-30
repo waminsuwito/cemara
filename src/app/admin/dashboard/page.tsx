@@ -220,6 +220,10 @@ const PrintableDashboard = ({ stats, selectedLocation, vehicles }: {
 }) => {
     const locationDisplay = selectedLocation === 'all' ? 'Semua Lokasi' : selectedLocation;
     const printDate = format(new Date(), 'dd MMMM yyyy', { locale: localeID });
+    
+    const damagedVehicles = vehicles.filter(
+        v => (v.status === 'Rusak' || v.status === 'Perlu Perhatian') && v.latestReport
+    );
 
     return (
         <div className="p-10 text-black bg-white font-sans">
@@ -271,6 +275,41 @@ const PrintableDashboard = ({ stats, selectedLocation, vehicles }: {
                     ))}
                 </tbody>
             </table>
+
+            {damagedVehicles.length > 0 && (
+                <>
+                    <h3 className="text-lg font-semibold mb-2 mt-8">Detail Laporan Kerusakan</h3>
+                    <table className="w-full text-sm border-collapse border border-gray-600">
+                        <thead>
+                            <tr className="bg-gray-200">
+                                <th className="border border-gray-600 p-2 text-left">Nomor Lambung</th>
+                                <th className="border border-gray-600 p-2 text-left">Detail Kerusakan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {damagedVehicles.map((vehicle) => (
+                                <tr key={`damage-${vehicle.id}`} className="even:bg-gray-50 align-top">
+                                    <td className="border border-gray-600 p-2 font-semibold">{vehicle.hullNumber}</td>
+                                    <td className="border border-gray-600 p-2">
+                                        <ul className="list-disc pl-5 space-y-1">
+                                            {vehicle.latestReport?.items?.filter(item => item.status !== 'BAIK').map((item, index) => (
+                                                <li key={index}>
+                                                    <strong>{item.label} ({item.status}):</strong> {item.keterangan || 'Tidak ada keterangan.'}
+                                                </li>
+                                            ))}
+                                            {vehicle.latestReport?.kerusakanLain?.keterangan && (
+                                                <li>
+                                                    <strong>Kerusakan Lainnya:</strong> {vehicle.latestReport.kerusakanLain.keterangan}
+                                                </li>
+                                            )}
+                                        </ul>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </>
+            )}
 
             <div className="mt-12 text-sm text-gray-500">
                 <p>Laporan ini dibuat secara otomatis oleh sistem Checklist Harian Alat.</p>
@@ -543,5 +582,7 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
 
     
