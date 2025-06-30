@@ -6,7 +6,6 @@ import React from 'react';
 import {
   CircleUser,
   Home,
-  LineChart,
   Menu,
   Truck,
   Users,
@@ -40,7 +39,6 @@ const navItems = [
   { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
   { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN'] },
-  { href: "/admin/analysis", icon: LineChart, label: "Laporan dan Analisis", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
