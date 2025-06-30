@@ -22,12 +22,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  Activity,
   AlertTriangle,
   CheckCircle2,
   Truck,
   Wrench,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const recentReports = [
   {
@@ -67,8 +74,33 @@ const recentReports = [
   },
 ];
 
+const allVehicles: {id: string; type: string; operator: string; location: string; status: string}[] = [
+  // Rusak (2)
+  { id: "BD-02", type: "Bulldozer", operator: "Amirul", location: "Site A", status: "Rusak" },
+  { id: "BD-04", type: "Bulldozer", operator: "Amirul", location: "Site B", status: "Rusak" },
+
+  // Perlu Perhatian (5)
+  { id: "EX-01", type: "Excavator", operator: "Umar Santoso", location: "Site A", status: "Perlu Perhatian" },
+  { id: "DT-06", type: "Dump Truck", operator: "Umar Santoso", location: "Site A", status: "Perlu Perhatian" },
+  { id: "DT-07", type: "Dump Truck", operator: "Solihin", location: "Site C", status: "Perlu Perhatian" },
+  { id: "GR-01", type: "Grader", operator: "Aep Saefudin", location: "Site B", status: "Perlu Perhatian"},
+  { id: "CP-02", type: "Compactor", operator: "Siswanto", location: "Site C", status: "Perlu Perhatian"},
+
+  // Baik (65)
+  { id: "DT-05", type: "Dump Truck", operator: "Aep Saefudin", location: "Site B", status: "Baik" },
+  { id: "GD-03", type: "Grader", operator: "Solihin", location: "Site C", status: "Baik" },
+  { id: "CP-01", type: "Compactor", operator: "Siswanto", location: "Site B", status: "Baik" },
+  ...Array.from({ length: 62 }, (_, i) => ({
+    id: `BAIK-${String(i + 1).padStart(3, '0')}`,
+    type: "Various",
+    status: "Baik",
+    location: `Site ${["A", "B", "C"][i % 3]}`,
+    operator: `Operator ${i+1}`
+  }))
+].sort((a, b) => a.id.localeCompare(b.id));
+
 const StatCard = ({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) => (
-    <Card>
+    <Card className="hover:bg-muted/50 transition-colors">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
             <Icon className="h-4 w-4 text-muted-foreground" />
@@ -93,6 +125,36 @@ const getStatusBadge = (status: string) => {
   }
 }
 
+const DetailTable = ({ vehicles, statusFilter }: { vehicles: typeof allVehicles, statusFilter?: string }) => {
+  const filteredVehicles = statusFilter ? vehicles.filter(v => v.status === statusFilter) : vehicles;
+  return (
+    <div className="max-h-[60vh] overflow-y-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID Kendaraan</TableHead>
+            <TableHead>Jenis</TableHead>
+            <TableHead>Lokasi</TableHead>
+            <TableHead>Operator</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredVehicles.map((vehicle) => (
+            <TableRow key={vehicle.id}>
+              <TableCell className="font-medium">{vehicle.id}</TableCell>
+              <TableCell>{vehicle.type}</TableCell>
+              <TableCell>{vehicle.location}</TableCell>
+              <TableCell>{vehicle.operator}</TableCell>
+              <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+};
+
 export default function DashboardPage() {
   return (
     <>
@@ -113,10 +175,73 @@ export default function DashboardPage() {
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Alat" value="72" icon={Truck} description="Total semua alat berat" />
-        <StatCard title="Alat Baik" value="65" icon={CheckCircle2} description="+5 dari kemarin" />
-        <StatCard title="Alat Rusak" value="2" icon={Wrench} description="+1 dari kemarin" />
-        <StatCard title="Perlu Perhatian" value="5" icon={AlertTriangle} description="-2 dari kemarin" />
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Total Alat" value="72" icon={Truck} description="Total semua alat berat" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Total Alat</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar semua alat berat yang terdaftar.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={allVehicles} />
+            </DialogContent>
+        </Dialog>
+        
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Alat Baik" value="65" icon={CheckCircle2} description="+5 dari kemarin" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Alat Baik</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar semua alat berat dalam kondisi baik.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={allVehicles} statusFilter="Baik" />
+            </DialogContent>
+        </Dialog>
+        
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Alat Rusak" value="2" icon={Wrench} description="+1 dari kemarin" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Alat Rusak</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar semua alat berat yang rusak.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={allVehicles} statusFilter="Rusak" />
+            </DialogContent>
+        </Dialog>
+
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Perlu Perhatian" value="5" icon={AlertTriangle} description="-2 dari kemarin" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Alat Perlu Perhatian</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar semua alat berat yang memerlukan perhatian.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={allVehicles} statusFilter="Perlu Perhatian" />
+            </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
