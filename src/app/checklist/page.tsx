@@ -98,14 +98,10 @@ function ChecklistForm() {
       );
 
       const kerusakanLainFotoUrl = await uploadImageAndGetURL(data.kerusakanLain.foto);
-      const kerusakanLainWithUrl = {
-        keterangan: data.kerusakanLain.keterangan,
-        foto: kerusakanLainFotoUrl,
-      };
       
       const damagedItems = itemsWithUrls.filter(item => item.status === 'RUSAK');
       const needsAttentionItems = itemsWithUrls.filter(item => item.status === 'PERLU PERHATIAN');
-      const hasOtherDamage = kerusakanLainWithUrl.keterangan.trim() !== '';
+      const hasOtherDamage = data.kerusakanLain.keterangan.trim() !== '';
       
       let overallStatus: Report['overallStatus'] = 'Baik';
       if (damagedItems.length > 0 || hasOtherDamage) {
@@ -114,10 +110,10 @@ function ChecklistForm() {
           overallStatus = 'Perlu Perhatian';
       }
 
-      // Create clean report items, only including foto if it exists
-      const reportItems: ReportItem[] = itemsWithUrls
+      const reportItems: ReportItem[] = [];
+        itemsWithUrls
         .filter(item => item.status !== 'BAIK')
-        .map(item => {
+        .forEach(item => {
             const cleanItem: ReportItem = {
                 id: item.id,
                 label: item.label,
@@ -127,10 +123,9 @@ function ChecklistForm() {
             if (item.foto) {
                 cleanItem.foto = item.foto;
             }
-            return cleanItem;
+            reportItems.push(cleanItem);
         });
 
-      // Construct the final report data, ensuring no undefined fields are sent
       const reportData: Omit<Report, 'id' | 'timestamp'> = {
           vehicleId: vehicle.hullNumber,
           vehicleType: vehicle.type,
@@ -140,12 +135,12 @@ function ChecklistForm() {
           items: reportItems,
       };
       
-      if (kerusakanLainWithUrl.keterangan) {
+      if (data.kerusakanLain.keterangan) {
           const kerusakanLainData: { keterangan: string, foto?: string } = {
-              keterangan: kerusakanLainWithUrl.keterangan,
+              keterangan: data.kerusakanLain.keterangan,
           };
-          if (kerusakanLainWithUrl.foto) {
-              kerusakanLainData.foto = kerusakanLainWithUrl.foto;
+          if (kerusakanLainFotoUrl) {
+              kerusakanLainData.foto = kerusakanLainFotoUrl;
           }
           reportData.kerusakanLain = kerusakanLainData;
       }
@@ -161,7 +156,16 @@ function ChecklistForm() {
 
     } catch (error) {
       console.error("Error during submission:", error);
-      toast({ variant: "destructive", title: "Submit Gagal", description: "Terjadi kesalahan saat mengirim laporan. Mohon coba lagi."});
+      let errorMessage = "Terjadi kesalahan saat mengirim laporan. Mohon coba lagi.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      toast({
+        variant: "destructive",
+        title: "Submit Gagal",
+        description: `Pesan Error: ${errorMessage}. Mohon laporkan pesan ini ke admin.`,
+        duration: 9000,
+      });
     } finally {
       setIsLoading(false);
     }
