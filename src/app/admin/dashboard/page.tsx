@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -333,10 +333,10 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
         <div className="flex items-center space-x-2">
-           <Button onClick={handlePrint}>
+           <button onClick={handlePrint} className={cn(buttonVariants())}>
              <Printer className="mr-2 h-4 w-4" />
              Print Laporan
-           </Button>
+           </button>
           <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Semua Lokasi BP" />
