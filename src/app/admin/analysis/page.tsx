@@ -44,43 +44,6 @@ const chartConfig = {
   belumChecklist: { label: "Belum Checklist", color: "hsl(var(--secondary))" },
 } satisfies ChartConfig;
 
-const PrintableReport = React.forwardRef<HTMLDivElement, { vehicles: (Vehicle & { status: string })[] }>(({ vehicles }, ref) => {
-    return (
-      <div ref={ref} className="p-8">
-        <h1 className="text-2xl font-bold mb-4 text-center">Laporan Kondisi Alat</h1>
-        <p className="text-center mb-6">Tanggal Cetak: {format(new Date(), 'dd MMMM yyyy')}</p>
-        <table className="w-full text-sm border-collapse border border-gray-400">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2 text-left">Lokasi BP</th>
-              <th className="border border-gray-300 p-2 text-left">No Lambung</th>
-              <th className="border border-gray-300 p-2 text-left">No Pol</th>
-              <th className="border border-gray-300 p-2 text-left">Nama Sopir/Operator</th>
-              <th className="border border-gray-300 p-2 text-left">Kondisi Alat</th>
-            </tr>
-          </thead>
-          <tbody>
-            {vehicles.length > 0 ? vehicles.map(vehicle => (
-              <tr key={vehicle.id} className="even:bg-gray-50">
-                <td className="border border-gray-300 p-2">{vehicle.location}</td>
-                <td className="border border-gray-300 p-2">{vehicle.hullNumber}</td>
-                <td className="border border-gray-300 p-2">{vehicle.licensePlate}</td>
-                <td className="border border-gray-300 p-2">{vehicle.operator}</td>
-                <td className="border border-gray-300 p-2">{vehicle.status}</td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={5} className="border border-gray-300 p-2 text-center">Tidak ada data untuk ditampilkan.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-});
-PrintableReport.displayName = 'PrintableReport';
-
-
 export default function AnalysisPage() {
   const { user } = useAdminAuth();
   const { vehicles, reports, locationNames } = useAppData();
@@ -227,7 +190,36 @@ export default function AnalysisPage() {
         </CardContent>
       </Card>
       <div style={{ display: 'none' }}>
-        <PrintableReport ref={componentToPrintRef} vehicles={filteredVehiclesForReport} />
+        <div ref={componentToPrintRef} className="p-8">
+            <h1 className="text-2xl font-bold mb-4 text-center">Laporan Kondisi Alat</h1>
+            <p className="text-center mb-6">Tanggal Cetak: {format(new Date(), 'dd MMMM yyyy')}</p>
+            <table className="w-full text-sm border-collapse border border-gray-400">
+            <thead>
+                <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-2 text-left">Lokasi BP</th>
+                <th className="border border-gray-300 p-2 text-left">No Lambung</th>
+                <th className="border border-gray-300 p-2 text-left">No Pol</th>
+                <th className="border border-gray-300 p-2 text-left">Nama Sopir/Operator</th>
+                <th className="border border-gray-300 p-2 text-left">Kondisi Alat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {filteredVehiclesForReport.length > 0 ? filteredVehiclesForReport.map(vehicle => (
+                <tr key={vehicle.id} className="even:bg-gray-50">
+                    <td className="border border-gray-300 p-2">{vehicle.location}</td>
+                    <td className="border border-gray-300 p-2">{vehicle.hullNumber}</td>
+                    <td className="border border-gray-300 p-2">{vehicle.licensePlate}</td>
+                    <td className="border border-gray-300 p-2">{vehicle.operator}</td>
+                    <td className="border border-gray-300 p-2">{vehicle.status}</td>
+                </tr>
+                )) : (
+                <tr>
+                    <td colSpan={5} className="border border-gray-300 p-2 text-center">Tidak ada data untuk ditampilkan.</td>
+                </tr>
+                )}
+            </tbody>
+            </table>
+        </div>
       </div>
     </>
   );
