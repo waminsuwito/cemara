@@ -49,42 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import type { UserRole } from "@/context/admin-auth-context";
-
-type User = {
-  id: number;
-  name: string;
-  nik?: string;
-  username?: string;
-  password?: string;
-  batangan?: string;
-  location?: string;
-  role: UserRole;
-};
-
-const initialUsers: User[] = [
-  // Admins
-  { id: 101, name: "Super Admin", username: "superadmin", password: "1", role: "SUPER_ADMIN" },
-  { id: 102, name: "Admin Pekanbaru", username: "admin_pku", password: "1", role: "LOCATION_ADMIN", location: "BP Pekanbaru" },
-  { id: 103, name: "Admin Baung", username: "admin_baung", password: "1", role: "LOCATION_ADMIN", location: "BP Baung" },
-  { id: 104, name: "Admin Dumai", username: "admin_dumai", password: "1", role: "LOCATION_ADMIN", location: "BP Dumai" },
-  { id: 105, name: "Admin IKN", username: "admin_ikn", password: "1", role: "LOCATION_ADMIN", location: "BP IKN" },
-  
-  // Operators
-  { id: 1, name: "Umar Santoso", nik: "1001", password: "password", batangan: "EX-01", location: "BP Pekanbaru", role: "OPERATOR" },
-  { id: 2, name: "Aep Saefudin", nik: "1002", password: "password", batangan: "DT-01", location: "BP Baung", role: "OPERATOR" },
-  { id: 3, name: "Amirul", nik: "1003", password: "password", batangan: "CP-01", location: "BP Dumai", role: "OPERATOR" },
-  { id: 4, name: "Solihin", nik: "1004", password: "password", batangan: "TM-01", location: "BP IKN", role: "OPERATOR" },
-  { id: 5, name: "Siswanto", nik: "1005", password: "password", batangan: "FK-01", location: "BP Pekanbaru", role: "OPERATOR" },
-  { id: 6, name: "Budi", nik: "1006", password: "password", batangan: "GS-01", location: "BP Baung", role: "OPERATOR" },
-  { id: 7, name: "Charlie", nik: "1007", password: "password", batangan: "BP-01", location: "BP Dumai", role: "OPERATOR" },
-  { id: 8, name: "Dedi", nik: "1008", password: "password", batangan: "KI-01", location: "BP IKN", role: "OPERATOR" },
-  { id: 9, name: "Eko", nik: "1009", password: "password", batangan: "KT-01", location: "BP Pekanbaru", role: "OPERATOR" },
-  { id: 10, name: "Kiki", nik: "1010", password: "password", batangan: "LD-01", location: "BP Dumai", role: "OPERATOR" },
-];
-
-const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
-const roles: UserRole[] = ["OPERATOR", "LOCATION_ADMIN", "SUPER_ADMIN"];
+import { initialUsers, locations, roles, type User, type UserRole } from "@/lib/data";
 
 export default function UserManagementPage() {
   const { user } = useAdminAuth();

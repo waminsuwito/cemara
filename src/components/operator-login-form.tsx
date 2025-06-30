@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { initialUsers } from "@/lib/data";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
@@ -43,18 +44,24 @@ export function OperatorLoginForm() {
     
     // Simulate API call for login
     setTimeout(() => {
-      const validUsernames = ["operator", "umar", "aep", "solihin", "siswanto"];
-      if (validUsernames.includes(values.username.toLowerCase()) && values.password === "password") {
+      const foundUser = initialUsers.find(
+        (user) =>
+          user.role === 'OPERATOR' &&
+          (user.nik === values.username || (user.name && user.name.toLowerCase() === values.username.toLowerCase())) &&
+          user.password === values.password
+      );
+
+      if (foundUser) {
         toast({
           title: "Login Berhasil",
-          description: `Selamat datang, ${values.username}.`,
+          description: `Selamat datang, ${foundUser.name}.`,
         });
         router.push("/checklist");
       } else {
         toast({
           variant: "destructive",
           title: "Login Gagal",
-          description: "Username atau password salah.",
+          description: "NIK/Nama atau password salah.",
         });
       }
       setIsLoading(false);
@@ -71,7 +78,7 @@ export function OperatorLoginForm() {
             <FormItem>
               <FormLabel>Username (NIK/Nama)</FormLabel>
               <FormControl>
-                <Input placeholder="Contoh: operator" {...field} />
+                <Input placeholder="Contoh: 1001 atau Umar Santoso" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

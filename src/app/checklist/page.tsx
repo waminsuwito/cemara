@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -7,22 +8,7 @@ import { Header } from "@/components/header";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-
-const checklistItems = [
-  { id: "engine_oil", label: "Level oli mesin" },
-  { id: "hydraulic_oil", label: "Level oli hidrolik" },
-  { id: "radiator_water", label: "Level air radiator" },
-  { id: "battery_water", label: "Level air aki" },
-  { id: "brake_fluid", label: "Level minyak rem" },
-  { id: "transmission_fluid", label: "Level minyak perseneling" },
-  { id: "air_filter", label: "Kebersihan filter udara" },
-  { id: "tire_pressure", label: "Tekanan angin ban" },
-  { id: "grease_lubrication", label: "Gris dan pelumasan bearing" },
-  { id: "cabin_cleanliness", label: "Kebersihan kabin" },
-  { id: "bucket_cleanliness", label: "Kebersihan gentong/bak" },
-  { id: "rearview_mirror", label: "Kaca spion" },
-  { id: "backup_alarm", label: "Alarm mundur" },
-];
+import { checklistItems } from "@/lib/data";
 
 export default function ChecklistPage() {
   const [isLoading, setIsLoading] = useState(false);

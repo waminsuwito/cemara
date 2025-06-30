@@ -2,8 +2,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR';
+import type { UserRole } from '@/lib/data';
 
 export type AdminUser = {
   username: string;

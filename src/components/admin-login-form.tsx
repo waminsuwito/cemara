@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useAdminAuth, type UserRole } from "@/context/admin-auth-context";
+import { useAdminAuth } from "@/context/admin-auth-context";
+import { initialUsers } from "@/lib/data";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,15 +27,6 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password harus diisi." }),
 });
 
-// This would typically come from a database or secure source
-const adminUsers = [
-  { username: "superadmin", password: "1", role: "SUPER_ADMIN" as UserRole },
-  { username: "admin_pku", password: "1", role: "LOCATION_ADMIN" as UserRole, location: "BP Pekanbaru" },
-  { username: "admin_baung", password: "1", role: "LOCATION_ADMIN" as UserRole, location: "BP Baung" },
-  { username: "admin_dumai", password: "1", role: "LOCATION_ADMIN" as UserRole, location: "BP Dumai" },
-  { username: "admin_ikn", password: "1", role: "LOCATION_ADMIN" as UserRole, location: "BP IKN" },
-];
-
 export function AdminLoginForm() {
   const router = useRouter();
   const { toast } = useToast();
@@ -52,19 +44,22 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTimeout(() => {
-      const foundUser = adminUsers.find(
-        (u) => u.username === values.username && u.password === values.password
+      const foundUser = initialUsers.find(
+        (u) =>
+          (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
+          u.username === values.username &&
+          u.password === values.password
       );
 
       if (foundUser) {
         login({
-          username: foundUser.username,
+          username: foundUser.username!,
           role: foundUser.role,
           location: foundUser.location,
         });
         toast({
           title: "Login Berhasil",
-          description: `Selamat datang, ${foundUser.username}.`,
+          description: `Selamat datang, ${foundUser.name}.`,
         });
         router.push("/admin/dashboard");
       } else {

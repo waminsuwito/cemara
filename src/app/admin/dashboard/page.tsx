@@ -43,79 +43,8 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { cn } from "@/lib/utils";
+import { locations, recentReports, allVehicles } from "@/lib/data";
 
-
-const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
-
-const recentReports = [
-  {
-    operator: "Umar Santoso",
-    vehicleId: "EX-01",
-    vehicle: "Exavator EX-01",
-    location: locations[0],
-    status: "Perlu Perhatian",
-    date: "2024-05-20",
-  },
-  {
-    operator: "Aep Saefudin",
-    vehicleId: "DT-01",
-    vehicle: "Dump Truck DT-01",
-    location: locations[1],
-    status: "Baik",
-    date: "2024-05-20",
-  },
-  {
-    operator: "Amirul",
-    vehicleId: "CP-01",
-    vehicle: "CP CP-01",
-    location: locations[2],
-    status: "Rusak",
-    date: "2024-05-19",
-  },
-  {
-    operator: "Solihin",
-    vehicleId: "TM-01",
-    vehicle: "Truck mixer TM-01",
-    location: locations[3],
-    status: "Baik",
-    date: "2024-05-19",
-  },
-  {
-    operator: "Siswanto",
-    vehicleId: "FK-01",
-    vehicle: "Foco kren FK-01",
-    location: locations[0],
-    status: "Baik",
-    date: "2024-05-18",
-  },
-];
-
-const allVehicles: {id: string; type: string; operator: string; location: string; status: string}[] = [
-  // Rusak (2)
-  { id: "CP-01", type: "CP", operator: "Amirul", location: locations[2], status: "Rusak" },
-  { id: "GS-01", type: "Genset", operator: "Budi", location: locations[1], status: "Rusak" },
-
-  // Perlu Perhatian (2)
-  { id: "EX-01", type: "Exavator", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
-  { id: "TM-01", type: "Truck mixer", operator: "Solihin", location: locations[3], status: "Perlu Perhatian" },
-  
-  // Baik (6)
-  { id: "DT-01", type: "Dump Truck", operator: "Aep Saefudin", location: locations[1], status: "Baik" },
-  { id: "FK-01", type: "Foco kren", operator: "Siswanto", location: locations[0], status: "Baik" },
-  { id: "BP-01", type: "BP", operator: "Charlie", location: locations[2], status: "Baik" },
-  { id: "KI-01", type: "Kendaraan Inventaris", operator: "Dedi", location: locations[3], status: "Baik" },
-  { id: "KT-01", type: "Kapsul Semen", operator: "Eko", location: locations[0], status: "Baik" },
-  { id: "LD-01", type: "Loader", operator: "Kiki", location: locations[2], status: "Baik" },
-
-  // Dummy Baik (62)
-  ...Array.from({ length: 62 }, (_, i) => ({
-    id: `BAIK-${String(i + 1).padStart(3, '0')}`,
-    type: "Various",
-    status: "Baik",
-    location: locations[i % locations.length],
-    operator: `Operator ${i+1}`
-  }))
-].sort((a, b) => a.id.localeCompare(b.id));
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
     <Card className="hover:bg-muted/50 transition-colors">

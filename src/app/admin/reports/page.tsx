@@ -49,30 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminAuth } from "@/context/admin-auth-context";
-
-type Vehicle = {
-  id: number;
-  hullNumber: string;
-  licensePlate: string;
-  type: string;
-  operator: string;
-  location: string;
-};
-
-const initialVehicles: Vehicle[] = [
-  { id: 1, hullNumber: "TM-01", licensePlate: "B 1111 TMX", type: "Truck mixer", operator: "Budi", location: "BP Pekanbaru" },
-  { id: 2, hullNumber: "DT-01", licensePlate: "B 2222 DTK", type: "Dump Truck", operator: "Charlie", location: "BP Baung" },
-  { id: 3, hullNumber: "CP-01", licensePlate: "B 3333 CPP", type: "CP", operator: "Dedi", location: "BP Dumai" },
-  { id: 4, hullNumber: "EX-01", licensePlate: "B 4444 EXV", type: "Exavator", operator: "Eko", location: "BP IKN" },
-  { id: 5, hullNumber: "FK-01", licensePlate: "B 5555 FKK", type: "Foco kren", operator: "Fahri", location: "BP Pekanbaru" },
-  { id: 6, hullNumber: "GS-01", licensePlate: "B 6666 GST", type: "Genset", operator: "Gilang", location: "BP Baung" },
-  { id: 7, hullNumber: "BP-01", licensePlate: "B 7777 BPP", type: "BP", operator: "Hadi", location: "BP Dumai" },
-  { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "Kendaraan Inventaris", operator: "Iwan", location: "BP IKN" },
-  { id: 9, hullNumber: "KT-01", licensePlate: "B 9999 KTS", type: "Kapsul Semen", operator: "Joko", location: "BP Pekanbaru" },
-  { id: 10, hullNumber: "LD-01", licensePlate: "B 1010 LDL", type: "Loader", operator: "Kiki", location: "BP Dumai" },
-];
-
-const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
+import { initialVehicles, locations, type Vehicle } from "@/lib/data";
 
 export default function VehicleManagementPage() {
   const { user } = useAdminAuth();
