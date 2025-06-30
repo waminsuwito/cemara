@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -32,6 +33,7 @@ import {
   Wrench,
   ClipboardCheck,
   ClipboardX,
+  ChevronLeft,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,7 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { cn } from "@/lib/utils";
-import { locations, recentReports, allVehicles } from "@/lib/data";
+import { locations, recentReports, allVehicles, reportDetails, type ReportDetail } from "@/lib/data";
 
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
@@ -68,41 +70,134 @@ const getStatusBadge = (status: string) => {
     case "Rusak":
       return <Badge variant="destructive">Rusak</Badge>;
     case "Belum Checklist":
-      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Belum Checklist</Badge>;
+       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Belum Checklist</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
 }
 
-const DetailTable = ({ vehicles, statusFilter }: { vehicles: typeof allVehicles, statusFilter?: string }) => {
-  const filteredVehicles = statusFilter ? vehicles.filter(v => v.status === statusFilter) : vehicles;
-  return (
-    <div className="max-h-[60vh] overflow-y-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID Kendaraan</TableHead>
-            <TableHead>Jenis</TableHead>
-            <TableHead>Lokasi</TableHead>
-            <TableHead>Operator</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredVehicles.map((vehicle) => (
-            <TableRow key={vehicle.id}>
-              <TableCell className="font-medium">{vehicle.id}</TableCell>
-              <TableCell>{vehicle.type}</TableCell>
-              <TableCell>{vehicle.location}</TableCell>
-              <TableCell>{vehicle.operator}</TableCell>
-              <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  )
-};
+const VehicleDetailContainer = ({ vehicles, statusFilter, title, description }: { vehicles: typeof allVehicles, statusFilter?: string, title: string, description: string }) => {
+    const [view, setView] = useState<'list' | 'detail'>('list');
+    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+
+    const handleDetailClick = (vehicleId: string) => {
+        setSelectedVehicleId(vehicleId);
+        setView('detail');
+    };
+
+    const handleBackClick = () => {
+        setSelectedVehicleId(null);
+        setView('list');
+    };
+
+    const report = selectedVehicleId ? reportDetails.find(r => r.vehicleId === selectedVehicleId) : undefined;
+    const filteredVehicles = statusFilter ? vehicles.filter(v => v.status === statusFilter) : vehicles;
+    
+    return (
+        <DialogContent className="sm:max-w-[800px]">
+            {view === 'list' ? (
+                <>
+                    <DialogHeader>
+                        <DialogTitle>{title}</DialogTitle>
+                        <DialogDescription>{description}</DialogDescription>
+                    </DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID Kendaraan</TableHead>
+                                    <TableHead>Jenis</TableHead>
+                                    <TableHead>Lokasi</TableHead>
+                                    <TableHead>Operator</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredVehicles.map((vehicle) => (
+                                    <TableRow key={vehicle.id}>
+                                        <TableCell className="font-medium">{vehicle.id}</TableCell>
+                                        <TableCell>{vehicle.type}</TableCell>
+                                        <TableCell>{vehicle.location}</TableCell>
+                                        <TableCell>{vehicle.operator}</TableCell>
+                                        <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
+                                        <TableCell className="text-right">
+                                            {(vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && reportDetails.some(r => r.vehicleId === vehicle.id) && (
+                                                <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle.id)}>
+                                                    Detail
+                                                </Button>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <DialogHeader>
+                        <div className="flex items-center gap-4">
+                             <Button variant="outline" size="icon" className="h-7 w-7" onClick={handleBackClick}>
+                                <ChevronLeft className="h-4 w-4" />
+                                <span className="sr-only">Kembali</span>
+                            </Button>
+                            <div>
+                                <DialogTitle>Detail Laporan Kerusakan: {selectedVehicleId}</DialogTitle>
+                                <DialogDescription>Laporan dikirim pada tanggal {report?.date}.</DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto p-1 space-y-4">
+                        {!report ? (
+                             <div className="py-4 text-center text-muted-foreground">Tidak ada detail laporan kerusakan untuk kendaraan ini.</div>
+                        ): (
+                            <>
+                            {report.items.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Item Checklist</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {report.items.map((item, index) => (
+                                            <div key={index} className="border-b pb-2 last:border-b-0 last:pb-0">
+                                                <p className="font-semibold">{item.item}</p>
+                                                <p><span className={`font-medium ${item.status === 'RUSAK' ? 'text-destructive' : 'text-accent'}`}>{item.status}</span>: {item.keterangan}</p>
+                                                {item.foto && (
+                                                    <div className="mt-2">
+                                                        <p className="text-sm text-muted-foreground mb-1">Foto:</p>
+                                                        <img src={item.foto} alt={`Foto ${item.item}`} className="rounded-md w-full max-w-xs" data-ai-hint="machine damage" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            )}
+                            {report.kerusakanLain && (
+                                 <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Kerusakan Lainnya</CardTitle>
+                                    </Header>
+                                    <CardContent>
+                                        <p>{report.kerusakanLain.keterangan}</p>
+                                         {report.kerusakanLain.foto && (
+                                            <div className="mt-2">
+                                                <p className="text-sm text-muted-foreground mb-1">Foto:</p>
+                                                <img src={report.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" className="rounded-md w-full max-w-xs" data-ai-hint="machine part" />
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+                            </>
+                        )}
+                    </div>
+                </>
+            )}
+        </DialogContent>
+    );
+}
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
@@ -165,15 +260,11 @@ export default function DashboardPage() {
                     <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total alat di lokasi ini" />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Total Alat</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={todayVehicles} />
-            </DialogContent>
+            <VehicleDetailContainer
+                title="Detail Total Alat"
+                description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
+                vehicles={todayVehicles}
+            />
         </Dialog>
 
         <Dialog>
@@ -182,15 +273,11 @@ export default function DashboardPage() {
                     <StatCard title="Alat Sudah Checklist" value={`${checkedInCount}`} icon={ClipboardCheck} description="Alat yang sudah dicek hari ini" />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Alat Sudah Checklist</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar alat berat yang sudah melakukan checklist.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={checkedInVehicles} />
-            </DialogContent>
+            <VehicleDetailContainer
+                title="Detail Alat Sudah Checklist"
+                description="Berikut adalah daftar alat berat yang sudah melakukan checklist."
+                vehicles={checkedInVehicles}
+            />
         </Dialog>
 
         <Dialog>
@@ -199,15 +286,11 @@ export default function DashboardPage() {
                     <StatCard title="Alat Belum Checklist" value={`${notCheckedInCount}`} icon={ClipboardX} description="Alat yang belum dicek hari ini" />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Alat Belum Checklist</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar alat berat yang belum melakukan checklist.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={notCheckedInVehicles} />
-            </DialogContent>
+            <VehicleDetailContainer
+                title="Detail Alat Belum Checklist"
+                description="Berikut adalah daftar alat berat yang belum melakukan checklist."
+                vehicles={notCheckedInVehicles}
+            />
         </Dialog>
 
         <Dialog>
@@ -216,15 +299,12 @@ export default function DashboardPage() {
                     <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="Total alat kondisi baik" />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Alat Baik</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar semua alat berat dalam kondisi baik.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={todayVehicles} statusFilter="Baik" />
-            </DialogContent>
+            <VehicleDetailContainer
+                title="Detail Alat Baik"
+                description="Berikut adalah daftar semua alat berat dalam kondisi baik."
+                vehicles={todayVehicles}
+                statusFilter="Baik"
+            />
         </Dialog>
         
         <Dialog>
@@ -233,15 +313,12 @@ export default function DashboardPage() {
                     <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="Total alat perlu perhatian" valueClassName="text-accent" />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Alat Perlu Perhatian</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar semua alat berat yang memerlukan perhatian.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={todayVehicles} statusFilter="Perlu Perhatian" />
-            </DialogContent>
+            <VehicleDetailContainer
+                title="Detail Alat Perlu Perhatian"
+                description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
+                vehicles={todayVehicles}
+                statusFilter="Perlu Perhatian"
+            />
         </Dialog>
         
         <Dialog>
@@ -250,15 +327,12 @@ export default function DashboardPage() {
                     <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="Total alat kondisi rusak" valueClassName="text-destructive" />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Alat Rusak</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar semua alat berat yang rusak.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={todayVehicles} statusFilter="Rusak" />
-            </DialogContent>
+            <VehicleDetailContainer
+                title="Detail Alat Rusak"
+                description="Berikut adalah daftar semua alat berat yang rusak."
+                vehicles={todayVehicles}
+                statusFilter="Rusak"
+            />
         </Dialog>
       </div>
 

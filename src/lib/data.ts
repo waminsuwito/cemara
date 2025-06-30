@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR';
 
 export type User = {
@@ -21,6 +22,23 @@ export type Vehicle = {
   type: string;
   operator: string;
   location: string;
+};
+
+export type ReportDetailItem = {
+    item: string;
+    status: 'RUSAK' | 'PERLU PERHATIAN';
+    keterangan: string;
+    foto?: string; // URL to image
+};
+
+export type ReportDetail = {
+    vehicleId: string;
+    date: string;
+    items: ReportDetailItem[];
+    kerusakanLain?: {
+        keterangan: string;
+        foto?: string;
+    };
 };
 
 export const locations: string[] = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
@@ -132,6 +150,37 @@ export const allVehicles: {id: string; type: string; operator: string; location:
   }))
 ].sort((a, b) => a.id.localeCompare(b.id));
 
+export const reportDetails: ReportDetail[] = [
+    {
+        vehicleId: "CP-01", // This one is "Rusak"
+        date: "2024-05-19",
+        items: [
+            { item: "Level oli hidrolik", status: "RUSAK", keterangan: "Oli hidrolik bocor, level sangat rendah.", foto: "https://placehold.co/400x300.png" },
+            { item: "Kaca spion", status: "RUSAK", keterangan: "Kaca spion sebelah kanan pecah." }
+        ],
+        kerusakanLain: {
+            keterangan: "Ada suara aneh dari mesin saat idle.",
+            foto: "https://placehold.co/400x300.png"
+        }
+    },
+    {
+        vehicleId: "EX-01", // This one is "Perlu Perhatian"
+        date: "2024-05-20",
+        items: [
+            { item: "Tekanan angin ban", status: "PERLU PERHATIAN", keterangan: "Ban belakang kiri tekanan kurang, perlu ditambah." }
+        ]
+    },
+    {
+        vehicleId: "GS-01", // Also "Rusak"
+        date: "2024-05-21",
+        items: [],
+        kerusakanLain: {
+            keterangan: "Genset tidak mau menyala sama sekali. Starter rusak.",
+            foto: "https://placehold.co/400x300.png"
+        }
+    }
+];
+
 export const checklistItems = [
   { id: "engine_oil", label: "Level oli mesin" },
   { id: "hydraulic_oil", label: "Level oli hidrolik" },
@@ -147,3 +196,6 @@ export const checklistItems = [
   { id: "rearview_mirror", label: "Kaca spion" },
   { id: "backup_alarm", label: "Alarm mundur" },
 ];
+
+
+    
