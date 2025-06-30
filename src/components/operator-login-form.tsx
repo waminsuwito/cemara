@@ -6,8 +6,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +21,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Format email tidak valid." }),
+  username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
   password: z.string().min(1, { message: "Password harus diisi." }),
 });
 
@@ -35,7 +33,7 @@ export function OperatorLoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
@@ -43,24 +41,24 @@ export function OperatorLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-      toast({
-        title: "Login Berhasil",
-        description: `Selamat datang, ${user.email}.`,
-      });
-      router.push("/checklist");
-    } catch (error) {
-      console.error("Firebase login error:", error);
-      toast({
-        variant: "destructive",
-        title: "Login Gagal",
-        description: "Email atau password salah. Pastikan Anda sudah terdaftar.",
-      });
-    } finally {
+    // Simulate API call for login
+    setTimeout(() => {
+      const validUsernames = ["operator", "umar", "aep", "solihin", "siswanto"];
+      if (validUsernames.includes(values.username.toLowerCase()) && values.password === "password") {
+        toast({
+          title: "Login Berhasil",
+          description: `Selamat datang, ${values.username}.`,
+        });
+        router.push("/checklist");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: "Username atau password salah.",
+        });
+      }
       setIsLoading(false);
-    }
+    }, 1000);
   }
 
   return (
@@ -68,12 +66,12 @@ export function OperatorLoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="email"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Username (NIK/Nama)</FormLabel>
               <FormControl>
-                <Input placeholder="operator@example.com" {...field} />
+                <Input placeholder="Contoh: operator" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
