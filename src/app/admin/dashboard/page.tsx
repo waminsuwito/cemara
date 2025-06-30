@@ -41,6 +41,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
@@ -70,7 +71,7 @@ const getStatusBadge = (status: string) => {
     case "Rusak":
       return <Badge variant="destructive">Rusak</Badge>;
     case "Belum Checklist":
-       return <Badge variant="secondary" className="bg-gray-200 text-gray-800">Belum Checklist</Badge>;
+       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Belum Checklist</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
