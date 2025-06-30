@@ -43,6 +43,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
@@ -284,6 +286,7 @@ export default function DashboardPage() {
   const { user } = useAdminAuth();
   const { vehicles, reports, locationNames } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -353,21 +356,43 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="print-only">
-          <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} vehicles={masterVehiclesForLocation} />
-      </div>
-
       <div className="flex flex-col gap-4 lg:gap-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
           <div className="flex items-center space-x-2">
-           <button 
-             onClick={handlePrint} 
-             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
-           >
-             <Printer className="mr-2 h-4 w-4" />
-             Print Laporan
-           </button>
+           <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+              <DialogTrigger asChild>
+                 <button 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
+                 >
+                   <Printer className="mr-2 h-4 w-4" />
+                   Print Laporan
+                 </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Pratinjau Laporan</DialogTitle>
+                  <DialogDescription>
+                    Laporan ini akan dicetak berdasarkan filter yang Anda pilih. Periksa kembali sebelum mencetak.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[70vh] overflow-y-auto border rounded-md">
+                   <div className="print-only">
+                       <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} vehicles={masterVehiclesForLocation} />
+                   </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                      <Button type="button" variant="outline">Tutup</Button>
+                  </DialogClose>
+                  <Button onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Cetak
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Semua Lokasi BP" />
@@ -518,3 +543,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
