@@ -91,11 +91,17 @@ body {
 }
 
 @media print {
-  .no-print {
-    display: none !important;
+  body * {
+    visibility: hidden;
+  }
+  .print-only, .print-only * {
+    visibility: visible;
   }
   .print-only {
-    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
   body {
     background-color: white;

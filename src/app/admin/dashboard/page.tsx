@@ -326,7 +326,7 @@ export default function DashboardPage() {
           <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} />
       </div>
 
-      <div className="no-print flex flex-col gap-4 lg:gap-6">
+      <div className="flex flex-col gap-4 lg:gap-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
           <div className="flex items-center space-x-2">
