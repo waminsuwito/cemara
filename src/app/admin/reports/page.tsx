@@ -59,11 +59,14 @@ type Vehicle = {
 };
 
 const initialVehicles: Vehicle[] = [
-  { id: 1, hullNumber: "EX-01", licensePlate: "B 1234 ABC", type: "Excavator", operator: "Umar Santoso", location: "Site A" },
-  { id: 2, hullNumber: "DT-05", licensePlate: "B 5678 DEF", type: "Dump Truck", operator: "Aep Saefudin", location: "Site B" },
-  { id: 3, hullNumber: "BD-02", licensePlate: "B 9012 GHI", type: "Bulldozer", operator: "Amirul", location: "Site A" },
-  { id: 4, hullNumber: "GD-03", licensePlate: "B 3456 JKL", type: "Grader", operator: "Solihin", location: "Site C" },
-  { id: 5, hullNumber: "CP-01", licensePlate: "B 7890 MNO", type: "Compactor", operator: "Siswanto", location: "Site B" },
+  { id: 1, hullNumber: "TM-01", licensePlate: "B 1111 TMX", type: "Truck mixer", operator: "Budi", location: "Site A" },
+  { id: 2, hullNumber: "DT-01", licensePlate: "B 2222 DTK", type: "Dump Truck", operator: "Charlie", location: "Site B" },
+  { id: 3, hullNumber: "CP-01", licensePlate: "B 3333 CPP", type: "CP", operator: "Dedi", location: "Site C" },
+  { id: 4, hullNumber: "EX-01", licensePlate: "B 4444 EXV", type: "Exavator", operator: "Eko", location: "Site A" },
+  { id: 5, hullNumber: "FK-01", licensePlate: "B 5555 FKK", type: "Foco kren", operator: "Fahri", location: "Site B" },
+  { id: 6, hullNumber: "GS-01", licensePlate: "B 6666 GST", type: "Genset", operator: "Gilang", location: "Site C" },
+  { id: 7, hullNumber: "BP-01", licensePlate: "B 7777 BPP", type: "BP", operator: "Hadi", location: "Site A" },
+  { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "kend Inventaris", operator: "Iwan", location: "Site B" },
 ];
 
 export default function VehicleManagementPage() {
