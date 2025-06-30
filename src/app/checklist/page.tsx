@@ -88,21 +88,16 @@ function ChecklistForm() {
       };
 
       const itemsWithUrls = await Promise.all(
-        data.items.map(async (item) => {
-          const fotoUrl = await uploadImageAndGetURL(item.foto);
-          // Explicitly create a new object to avoid carrying over RHF properties
-          return {
+        data.items.map(async (item) => ({
             id: item.id,
             label: item.label,
             status: item.status,
             keterangan: item.keterangan,
-            foto: fotoUrl,
-          };
-        })
+            foto: await uploadImageAndGetURL(item.foto),
+        }))
       );
 
       const kerusakanLainFotoUrl = await uploadImageAndGetURL(data.kerusakanLain.foto);
-      // Explicitly create a new object for "other damage"
       const kerusakanLainWithUrl = {
         keterangan: data.kerusakanLain.keterangan,
         foto: kerusakanLainFotoUrl,
@@ -119,17 +114,23 @@ function ChecklistForm() {
           overallStatus = 'Perlu Perhatian';
       }
 
-      // Explicitly create report items to ensure data is clean
+      // Create clean report items, only including foto if it exists
       const reportItems: ReportItem[] = itemsWithUrls
         .filter(item => item.status !== 'BAIK')
-        .map(item => ({
-          id: item.id,
-          label: item.label,
-          status: item.status,
-          keterangan: item.keterangan || '',
-          foto: item.foto,
-        }));
+        .map(item => {
+            const cleanItem: ReportItem = {
+                id: item.id,
+                label: item.label,
+                status: item.status,
+                keterangan: item.keterangan || '',
+            };
+            if (item.foto) {
+                cleanItem.foto = item.foto;
+            }
+            return cleanItem;
+        });
 
+      // Construct the final report data, ensuring no undefined fields are sent
       const reportData: Omit<Report, 'id' | 'timestamp'> = {
           vehicleId: vehicle.hullNumber,
           vehicleType: vehicle.type,
@@ -137,13 +138,17 @@ function ChecklistForm() {
           location: operator.location,
           overallStatus,
           items: reportItems,
-          kerusakanLain: kerusakanLainWithUrl.keterangan 
-            ? { 
-                keterangan: kerusakanLainWithUrl.keterangan, 
-                foto: kerusakanLainWithUrl.foto 
-              } 
-            : undefined,
       };
+      
+      if (kerusakanLainWithUrl.keterangan) {
+          const kerusakanLainData: { keterangan: string, foto?: string } = {
+              keterangan: kerusakanLainWithUrl.keterangan,
+          };
+          if (kerusakanLainWithUrl.foto) {
+              kerusakanLainData.foto = kerusakanLainWithUrl.foto;
+          }
+          reportData.kerusakanLain = kerusakanLainData;
+      }
       
       await submitReport(reportData);
       
