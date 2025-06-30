@@ -137,6 +137,8 @@ const getStatusBadge = (status: string) => {
       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Perlu Perhatian</Badge>;
     case "Rusak":
       return <Badge variant="destructive">Rusak</Badge>;
+    case "Belum Checklist":
+      return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Belum Checklist</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
@@ -180,7 +182,7 @@ export default function DashboardPage() {
     isSuperAdmin ? "all" : user?.location || "all"
   );
 
-  const filteredVehiclesByLocation = selectedLocation === "all"
+  const masterVehiclesForLocation = selectedLocation === "all"
     ? allVehicles
     : allVehicles.filter(v => v.location === selectedLocation);
 
@@ -188,17 +190,25 @@ export default function DashboardPage() {
     ? recentReports
     : recentReports.filter(r => r.location === selectedLocation);
 
-  const totalCount = filteredVehiclesByLocation.length;
-  const baikCount = filteredVehiclesByLocation.filter((v) => v.status === "Baik").length;
-  const rusakCount = filteredVehiclesByLocation.filter((v) => v.status === "Rusak").length;
-  const perhatianCount = filteredVehiclesByLocation.filter((v) => v.status === "Perlu Perhatian").length;
+  const reportMap = new Map(filteredRecentReports.map(r => [r.vehicleId, r.status]));
 
-  const checkedInVehicleIds = filteredRecentReports.map(r => r.vehicleId);
-  const checkedInVehicles = filteredVehiclesByLocation.filter(v => checkedInVehicleIds.includes(v.id));
-  const notCheckedInVehicles = filteredVehiclesByLocation.filter(v => !checkedInVehicleIds.includes(v.id));
+  const todayVehicles = masterVehiclesForLocation.map(vehicle => {
+    const todayStatus = reportMap.get(vehicle.id);
+    return {
+      ...vehicle,
+      status: todayStatus || 'Belum Checklist'
+    };
+  });
 
-  const checkedInCount = checkedInVehicles.length;
-  const notCheckedInCount = notCheckedInVehicles.length;
+  const totalCount = todayVehicles.length;
+  const baikCount = todayVehicles.filter((v) => v.status === "Baik").length;
+  const rusakCount = todayVehicles.filter((v) => v.status === "Rusak").length;
+  const perhatianCount = todayVehicles.filter((v) => v.status === "Perlu Perhatian").length;
+  const notCheckedInCount = todayVehicles.filter((v) => v.status === "Belum Checklist").length;
+  const checkedInCount = totalCount - notCheckedInCount;
+
+  const checkedInVehicles = todayVehicles.filter(v => v.status !== 'Belum Checklist');
+  const notCheckedInVehicles = todayVehicles.filter(v => v.status === 'Belum Checklist');
 
   return (
     <>
@@ -232,7 +242,7 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={filteredVehiclesByLocation} />
+                <DetailTable vehicles={todayVehicles} />
             </DialogContent>
         </Dialog>
 
@@ -283,7 +293,7 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat dalam kondisi baik.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={filteredVehiclesByLocation} statusFilter="Baik" />
+                <DetailTable vehicles={todayVehicles} statusFilter="Baik" />
             </DialogContent>
         </Dialog>
         
@@ -300,7 +310,7 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat yang memerlukan perhatian.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={filteredVehiclesByLocation} statusFilter="Perlu Perhatian" />
+                <DetailTable vehicles={todayVehicles} statusFilter="Perlu Perhatian" />
             </DialogContent>
         </Dialog>
         
@@ -317,7 +327,7 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat yang rusak.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={filteredVehiclesByLocation} statusFilter="Rusak" />
+                <DetailTable vehicles={todayVehicles} statusFilter="Rusak" />
             </DialogContent>
         </Dialog>
       </div>
