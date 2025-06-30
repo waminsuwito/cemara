@@ -2,7 +2,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, from 'react';
+import React from 'react';
 import { User, Vehicle, Report, Location } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "firebase/firestore";
