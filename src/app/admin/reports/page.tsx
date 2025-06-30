@@ -66,7 +66,8 @@ const initialVehicles: Vehicle[] = [
   { id: 5, hullNumber: "FK-01", licensePlate: "B 5555 FKK", type: "Foco kren", operator: "Fahri", location: "Site B" },
   { id: 6, hullNumber: "GS-01", licensePlate: "B 6666 GST", type: "Genset", operator: "Gilang", location: "Site C" },
   { id: 7, hullNumber: "BP-01", licensePlate: "B 7777 BPP", type: "BP", operator: "Hadi", location: "Site A" },
-  { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "kend Inventaris", operator: "Iwan", location: "Site B" },
+  { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "Kendaraan Inventaris", operator: "Iwan", location: "Site B" },
+  { id: 9, hullNumber: "KT-01", licensePlate: "B 9999 KTS", type: "Kapsul Semen", operator: "Joko", location: "Site C" },
 ];
 
 export default function VehicleManagementPage() {
