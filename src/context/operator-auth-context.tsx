@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -40,6 +39,7 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: User, vehicleData: string) => {
+    setIsLoading(true);
     setUser(userData);
     setVehicle(vehicleData);
     try {
@@ -48,6 +48,7 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
     } catch(e) {
         console.error("Failed to save operator to session storage", e);
     }
+    setIsLoading(false);
   };
 
   const logout = () => {
@@ -59,11 +60,7 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <OperatorAuthContext.Provider value={{ user, vehicle, login, logout, isLoading }}>
-      {isLoading ? (
-        <div className="flex h-screen w-full items-center justify-center">
-            Memuat...
-        </div>
-      ) : children}
+      {children}
     </OperatorAuthContext.Provider>
   );
 };

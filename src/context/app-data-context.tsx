@@ -36,7 +36,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,18 +71,10 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       unsubscribes.push(unsubscribe);
     });
 
-    // Assume data is 'loaded' after setting up listeners.
-    // The UI will be reactive to data arriving.
-    const timer = setTimeout(() => {
-        setIsDataLoaded(true);
-    }, 1500); // Give it a moment to fetch initial data to avoid flicker.
-
     return () => {
       unsubscribes.forEach(unsub => unsub());
-      clearTimeout(timer);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [toast]);
 
   const addUser = async (userData: Omit<User, 'id'>) => {
     try {
@@ -206,14 +197,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     reports, submitReport,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
   };
-
-  if (!isDataLoaded) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center">
-            Memuat data...
-        </div>
-    );
-  }
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 };
