@@ -87,20 +87,31 @@ body {
 }
 
 @media print {
-  body * {
+  /* Hide elements on screen that should not be printed */
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Hide everything in the body by default */
+  body > * {
     visibility: hidden;
   }
+
+  /* Make the .print-only container and all of its children visible */
   .print-only, .print-only * {
     visibility: visible;
   }
+
+  /* Position the .print-only container to fill the entire page */
   .print-only {
-    display: block;
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    height: auto;
   }
+
   body {
-    background-color: white;
+    background-color: white !important;
   }
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -51,7 +52,6 @@ import { useAppData } from "@/context/app-data-context";
 import { cn } from "@/lib/utils";
 import { type Report, type Vehicle } from "@/lib/data";
 import { format, isSameDay, isBefore, startOfToday } from "date-fns";
-import { id as localeID } from "date-fns/locale";
 
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
@@ -212,124 +212,11 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
     );
 };
 
-// Printable Report Component
-const PrintableDashboard = ({ stats, selectedLocation, vehicles }: { 
-    stats: { label: string, value: number }[], 
-    selectedLocation: string,
-    vehicles: VehicleWithStatus[] 
-}) => {
-    const locationDisplay = selectedLocation === 'all' ? 'Semua Lokasi' : selectedLocation;
-    const printDate = format(new Date(), 'dd MMMM yyyy', { locale: localeID });
-    
-    const damagedVehicles = vehicles.filter(
-        v => (v.status === 'Rusak' || v.status === 'Perlu Perhatian') && v.latestReport
-    );
-
-    return (
-        <div className="p-10 text-black bg-white font-sans">
-            <h1 className="text-3xl font-bold mb-2 text-center">PT FARIKA RIAU PERKASA</h1>
-            <h2 className="text-xl font-semibold mb-4 text-center">Laporan Harian Kondisi Alat</h2>
-            <div className="flex justify-between mb-6">
-                <p><span className="font-semibold">Lokasi:</span> {locationDisplay}</p>
-                <p><span className="font-semibold">Tanggal:</span> {printDate}</p>
-            </div>
-            
-            <h3 className="text-lg font-semibold mb-2 mt-6">Ringkasan Status</h3>
-            <table className="w-full text-sm border-collapse border border-gray-600">
-                <thead>
-                    <tr className="bg-gray-200">
-                        <th className="border border-gray-600 p-2 text-left">Status Kondisi</th>
-                        <th className="border border-gray-600 p-2 text-right">Jumlah Alat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {stats.map((stat, index) => (
-                        <tr key={index} className="even:bg-gray-50">
-                            <td className="border border-gray-600 p-2">{stat.label}</td>
-                            <td className="border border-gray-600 p-2 text-right">{stat.value}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            <h3 className="text-lg font-semibold mb-2 mt-8">Daftar Alat dan Operator</h3>
-            <table className="w-full text-sm border-collapse border border-gray-600">
-                <thead>
-                    <tr className="bg-gray-200">
-                        <th className="border border-gray-600 p-2 text-left">No.</th>
-                        <th className="border border-gray-600 p-2 text-left">Nomor Lambung</th>
-                        <th className="border border-gray-600 p-2 text-left">Jenis Alat</th>
-                        <th className="border border-gray-600 p-2 text-left">Sopir/Operator</th>
-                        <th className="border border-gray-600 p-2 text-left">Status Hari Ini</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {vehicles.map((vehicle, index) => (
-                        <tr key={vehicle.id} className="even:bg-gray-50">
-                            <td className="border border-gray-600 p-2">{index + 1}</td>
-                            <td className="border border-gray-600 p-2">{vehicle.hullNumber}</td>
-                            <td className="border border-gray-600 p-2">{vehicle.type}</td>
-                            <td className="border border-gray-600 p-2">{vehicle.operator}</td>
-                            <td className="border border-gray-600 p-2">{vehicle.status}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {damagedVehicles.length > 0 && (
-                <>
-                    <h3 className="text-lg font-semibold mb-2 mt-8">Detail Laporan Kerusakan</h3>
-                    <table className="w-full text-sm border-collapse border border-gray-600">
-                        <thead>
-                            <tr className="bg-gray-200">
-                                <th className="border border-gray-600 p-2 text-left">Nomor Lambung</th>
-                                <th className="border border-gray-600 p-2 text-left">Detail Kerusakan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {damagedVehicles.map((vehicle) => (
-                                <tr key={`damage-${vehicle.id}`} className="even:bg-gray-50 align-top">
-                                    <td className="border border-gray-600 p-2 font-semibold">{vehicle.hullNumber}</td>
-                                    <td className="border border-gray-600 p-2">
-                                        <ul className="list-disc pl-5 space-y-1">
-                                            {vehicle.latestReport?.items?.filter(item => item.status !== 'BAIK').map((item, index) => (
-                                                <li key={index}>
-                                                    <strong>{item.label} ({item.status}):</strong> {item.keterangan || 'Tidak ada keterangan.'}
-                                                </li>
-                                            ))}
-                                            {vehicle.latestReport?.kerusakanLain?.keterangan && (
-                                                <li>
-                                                    <strong>Kerusakan Lainnya:</strong> {vehicle.latestReport.kerusakanLain.keterangan}
-                                                </li>
-                                            )}
-                                        </ul>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </>
-            )}
-
-            <div className="mt-12 text-sm text-gray-500">
-                <p>Laporan ini dibuat secara otomatis oleh sistem Checklist Harian Alat.</p>
-                <p>Dicetak pada: {format(new Date(), 'dd MMMM yyyy, HH:mm:ss')}</p>
-            </div>
-        </div>
-    );
-};
-PrintableDashboard.displayName = 'PrintableDashboard';
-
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
   const { vehicles, reports, locationNames } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const [selectedLocation, setSelectedLocation] = useState(
     isSuperAdmin ? "all" : user?.location || "all"
@@ -384,54 +271,19 @@ export default function DashboardPage() {
   const perhatianVehicles = masterVehiclesForLocation.filter(v => v.status === 'Perlu Perhatian');
   const rusakVehicles = masterVehiclesForLocation.filter(v => v.status === 'Rusak');
 
-  const reportStats = [
-      { label: 'Total Alat', value: totalCount },
-      { label: 'Alat Sudah Checklist', value: checkedInCount },
-      { label: 'Alat Belum Checklist', value: notCheckedInCount },
-      { label: 'Kondisi Baik', value: baikCount },
-      { label: 'Perlu Perhatian', value: perhatianCount },
-      { label: 'Kondisi Rusak', value: rusakCount },
-  ];
-
   return (
     <>
       <div className="flex flex-col gap-4 lg:gap-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
           <div className="flex items-center space-x-2">
-           <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-              <DialogTrigger asChild>
-                 <button 
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
-                 >
-                   <Printer className="mr-2 h-4 w-4" />
-                   Print Laporan
-                 </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle>Pratinjau Laporan</DialogTitle>
-                  <DialogDescription>
-                    Laporan ini akan dicetak berdasarkan filter yang Anda pilih. Periksa kembali sebelum mencetak.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="max-h-[70vh] overflow-y-auto border rounded-md">
-                   <div className="print-only">
-                       <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} vehicles={masterVehiclesForLocation} />
-                   </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                      <Button type="button" variant="outline">Tutup</Button>
-                  </DialogClose>
-                  <Button onClick={handlePrint}>
+            <Button asChild>
+                <Link href={`/admin/dashboard/print?location=${selectedLocation}`}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Cetak
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
+                    Print Laporan
+                </Link>
+            </Button>
+            
             <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Semua Lokasi BP" />
@@ -582,7 +434,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
-
-    
