@@ -1,8 +1,6 @@
-
 "use client";
 
-import React, { useMemo, useState, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import React, { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -33,8 +31,7 @@ import {
 } from "@/components/ui/chart";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
-import { isSameDay, isBefore, startOfToday, format } from "date-fns";
-import { Printer } from "lucide-react";
+import { isSameDay, isBefore, startOfToday } from "date-fns";
 import type { Vehicle } from "@/lib/data";
 
 const chartConfig = {
@@ -53,12 +50,6 @@ export default function AnalysisPage() {
     isSuperAdmin ? "all" : user?.location || "all"
   );
   
-  const componentToPrintRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-    content: () => componentToPrintRef.current,
-    documentTitle: `Laporan-Kondisi-Alat-${selectedLocation}-${format(new Date(), 'yyyy-MM-dd')}`,
-  });
-
   const vehiclesWithStatus = useMemo(() => {
     const today = startOfToday();
     return vehicles.map(vehicle => {
@@ -82,18 +73,6 @@ export default function AnalysisPage() {
       return { ...vehicle, status };
     });
   }, [vehicles, reports]);
-
-  const filteredVehiclesForReport = useMemo(() => {
-    const vehiclesForUser = isSuperAdmin
-      ? vehiclesWithStatus
-      : vehiclesWithStatus.filter(v => v.location === user?.location);
-
-    if (selectedLocation === 'all') {
-        return vehiclesForUser;
-    }
-
-    return vehiclesForUser.filter(v => v.location === selectedLocation);
-  }, [vehiclesWithStatus, isSuperAdmin, user?.location, selectedLocation]);
 
   const chartData = useMemo(() => {
     const dataByLocation = locationNames.reduce((acc, loc) => {
@@ -150,13 +129,6 @@ export default function AnalysisPage() {
                 </SelectContent>
               </Select>
             )}
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-            >
-              <Printer className="h-4 w-4" />
-              Print Laporan
-            </button>
           </div>
         </CardHeader>
         <CardContent>
@@ -189,38 +161,6 @@ export default function AnalysisPage() {
           )}
         </CardContent>
       </Card>
-      <div style={{ display: 'none' }}>
-        <div ref={componentToPrintRef} className="p-8">
-            <h1 className="text-2xl font-bold mb-4 text-center">Laporan Kondisi Alat</h1>
-            <p className="text-center mb-6">Tanggal Cetak: {format(new Date(), 'dd MMMM yyyy')}</p>
-            <table className="w-full text-sm border-collapse border border-gray-400">
-            <thead>
-                <tr className="bg-gray-100">
-                <th className="border border-gray-300 p-2 text-left">Lokasi BP</th>
-                <th className="border border-gray-300 p-2 text-left">No Lambung</th>
-                <th className="border border-gray-300 p-2 text-left">No Pol</th>
-                <th className="border border-gray-300 p-2 text-left">Nama Sopir/Operator</th>
-                <th className="border border-gray-300 p-2 text-left">Kondisi Alat</th>
-                </tr>
-            </thead>
-            <tbody>
-                {filteredVehiclesForReport.length > 0 ? filteredVehiclesForReport.map(vehicle => (
-                <tr key={vehicle.id} className="even:bg-gray-50">
-                    <td className="border border-gray-300 p-2">{vehicle.location}</td>
-                    <td className="border border-gray-300 p-2">{vehicle.hullNumber}</td>
-                    <td className="border border-gray-300 p-2">{vehicle.licensePlate}</td>
-                    <td className="border border-gray-300 p-2">{vehicle.operator}</td>
-                    <td className="border border-gray-300 p-2">{vehicle.status}</td>
-                </tr>
-                )) : (
-                <tr>
-                    <td colSpan={5} className="border border-gray-300 p-2 text-center">Tidak ada data untuk ditampilkan.</td>
-                </tr>
-                )}
-            </tbody>
-            </table>
-        </div>
-      </div>
     </>
   );
 }
