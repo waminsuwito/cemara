@@ -26,7 +26,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { AdminAuthProvider, useAdminAuth } from "@/context/admin-auth-context";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
@@ -179,8 +179,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AdminAuthProvider>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
-    </AdminAuthProvider>
+    <AdminLayoutContent>{children}</AdminLayoutContent>
   );
 }
