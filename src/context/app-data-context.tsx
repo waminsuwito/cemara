@@ -62,16 +62,26 @@ type AppDataContextType = {
 const AppDataContext = createContext<AppDataContextType | null>(null);
 
 export const AppDataProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>(() => getFromStorage(USERS_STORAGE_KEY, initialUsers));
-  const [vehicles, setVehicles] = useState<Vehicle[]>(() => getFromStorage(VEHICLES_STORAGE_KEY, initialVehicles));
-  const [reports, setReports] = useState<Report[]>(() => getFromStorage(REPORTS_STORAGE_KEY, initialReports));
-  const [locations, setLocations] = useState<Location[]>(() => getFromStorage(LOCATIONS_STORAGE_KEY, initialLocations));
+  const [users, setUsers] = useState<User[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  // Load initial data from localStorage on mount
+  useEffect(() => {
+    setUsers(getFromStorage(USERS_STORAGE_KEY, initialUsers));
+    setVehicles(getFromStorage(VEHICLES_STORAGE_KEY, initialVehicles));
+    setReports(getFromStorage(REPORTS_STORAGE_KEY, initialReports));
+    setLocations(getFromStorage(LOCATIONS_STORAGE_KEY, initialLocations));
+    setIsDataLoaded(true);
+  }, []);
   
-  // Persist state to localStorage whenever it changes
-  useEffect(() => { saveToStorage(USERS_STORAGE_KEY, users); }, [users]);
-  useEffect(() => { saveToStorage(VEHICLES_STORAGE_KEY, vehicles); }, [vehicles]);
-  useEffect(() => { saveToStorage(REPORTS_STORAGE_KEY, reports); }, [reports]);
-  useEffect(() => { saveToStorage(LOCATIONS_STORAGE_KEY, locations); }, [locations]);
+  // Persist state to localStorage whenever it changes, but only after initial load
+  useEffect(() => { if (isDataLoaded) saveToStorage(USERS_STORAGE_KEY, users); }, [users, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) saveToStorage(VEHICLES_STORAGE_KEY, vehicles); }, [vehicles, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) saveToStorage(REPORTS_STORAGE_KEY, reports); }, [reports, isDataLoaded]);
+  useEffect(() => { if (isDataLoaded) saveToStorage(LOCATIONS_STORAGE_KEY, locations); }, [locations, isDataLoaded]);
   
   // CRUD for Users
   const addUser = (user: Omit<User, 'id'>) => setUsers(prev => [...prev, { ...user, id: Date.now() }]);
@@ -120,6 +130,14 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     reports, submitReport,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
   };
+
+  if (!isDataLoaded) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            Memuat Data...
+        </div>
+    );
+  }
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 };
