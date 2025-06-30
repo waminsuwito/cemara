@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
-import { checklistItems, Report } from "@/lib/data";
+import { checklistItems, Report, ReportItem } from "@/lib/data";
 import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -111,14 +111,30 @@ function ChecklistForm() {
           overallStatus = 'Perlu Perhatian';
       }
 
+      // Explicitly create report items to ensure data is clean
+      const reportItems: ReportItem[] = itemsWithUrls
+        .filter(item => item.status !== 'BAIK')
+        .map(item => ({
+          id: item.id,
+          label: item.label,
+          status: item.status,
+          keterangan: item.keterangan || '',
+          foto: item.foto,
+        }));
+
       const reportData: Omit<Report, 'id' | 'timestamp'> = {
           vehicleId: vehicle.hullNumber,
           vehicleType: vehicle.type,
           operatorName: operator.name,
           location: operator.location,
           overallStatus,
-          items: itemsWithUrls.filter(item => item.status !== 'BAIK').map(item => ({...item, keterangan: item.keterangan || ''})),
-          kerusakanLain: kerusakanLainWithUrl.keterangan ? { keterangan: kerusakanLainWithUrl.keterangan, foto: kerusakanLainWithUrl.foto } : undefined,
+          items: reportItems,
+          kerusakanLain: kerusakanLainWithUrl.keterangan 
+            ? { 
+                keterangan: kerusakanLainWithUrl.keterangan, 
+                foto: kerusakanLainWithUrl.foto 
+              } 
+            : undefined,
       };
       
       await submitReport(reportData);
