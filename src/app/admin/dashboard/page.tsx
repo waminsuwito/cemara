@@ -1,4 +1,7 @@
 
+"use client";
+
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -110,10 +113,6 @@ const allVehicles: {id: string; type: string; operator: string; location: string
   }))
 ].sort((a, b) => a.id.localeCompare(b.id));
 
-const checkedInVehicleIds = recentReports.map(r => r.vehicleId);
-const checkedInVehicles = allVehicles.filter(v => checkedInVehicleIds.includes(v.id));
-const notCheckedInVehicles = allVehicles.filter(v => !checkedInVehicleIds.includes(v.id));
-
 const StatCard = ({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) => (
     <Card className="hover:bg-muted/50 transition-colors">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -171,19 +170,35 @@ const DetailTable = ({ vehicles, statusFilter }: { vehicles: typeof allVehicles,
 };
 
 export default function DashboardPage() {
-  const totalCount = allVehicles.length;
-  const baikCount = allVehicles.filter((v) => v.status === "Baik").length;
-  const rusakCount = allVehicles.filter((v) => v.status === "Rusak").length;
-  const perhatianCount = allVehicles.filter((v) => v.status === "Perlu Perhatian").length;
+  const [selectedLocation, setSelectedLocation] = useState("all");
+
+  const filteredVehiclesByLocation = selectedLocation === "all"
+    ? allVehicles
+    : allVehicles.filter(v => v.location === selectedLocation);
+
+  const filteredRecentReports = selectedLocation === "all"
+    ? recentReports
+    : recentReports.filter(r => r.location === selectedLocation);
+
+  const totalCount = filteredVehiclesByLocation.length;
+  const baikCount = filteredVehiclesByLocation.filter((v) => v.status === "Baik").length;
+  const rusakCount = filteredVehiclesByLocation.filter((v) => v.status === "Rusak").length;
+  const perhatianCount = filteredVehiclesByLocation.filter((v) => v.status === "Perlu Perhatian").length;
+
+  const checkedInVehicleIds = filteredRecentReports.map(r => r.vehicleId);
+  const checkedInVehicles = filteredVehiclesByLocation.filter(v => checkedInVehicleIds.includes(v.id));
+  const notCheckedInVehicles = filteredVehiclesByLocation.filter(v => !checkedInVehicleIds.includes(v.id));
+
   const checkedInCount = checkedInVehicles.length;
   const notCheckedInCount = notCheckedInVehicles.length;
+
 
   return (
     <>
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
         <div className="flex items-center space-x-2">
-          <Select>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Semua Lokasi BP" />
             </SelectTrigger>
@@ -200,17 +215,17 @@ export default function DashboardPage() {
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total semua alat berat" />
+                    <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total alat di lokasi ini" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
                 <DialogHeader>
                     <DialogTitle>Detail Total Alat</DialogTitle>
                     <DialogDescription>
-                        Berikut adalah daftar semua alat berat yang terdaftar.
+                        Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={allVehicles} />
+                <DetailTable vehicles={filteredVehiclesByLocation} />
             </DialogContent>
         </Dialog>
 
@@ -251,7 +266,7 @@ export default function DashboardPage() {
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="+5 dari kemarin" />
+                    <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="Total alat kondisi baik" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
@@ -261,14 +276,14 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat dalam kondisi baik.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={allVehicles} statusFilter="Baik" />
+                <DetailTable vehicles={filteredVehiclesByLocation} statusFilter="Baik" />
             </DialogContent>
         </Dialog>
         
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="-2 dari kemarin" />
+                    <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="Total alat perlu perhatian" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
@@ -278,14 +293,14 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat yang memerlukan perhatian.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={allVehicles} statusFilter="Perlu Perhatian" />
+                <DetailTable vehicles={filteredVehiclesByLocation} statusFilter="Perlu Perhatian" />
             </DialogContent>
         </Dialog>
         
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="+1 dari kemarin" />
+                    <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="Total alat kondisi rusak" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
@@ -295,7 +310,7 @@ export default function DashboardPage() {
                         Berikut adalah daftar semua alat berat yang rusak.
                     </DialogDescription>
                 </DialogHeader>
-                <DetailTable vehicles={allVehicles} statusFilter="Rusak" />
+                <DetailTable vehicles={filteredVehiclesByLocation} statusFilter="Rusak" />
             </DialogContent>
         </Dialog>
       </div>
@@ -304,7 +319,7 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Laporan Terbaru</CardTitle>
           <CardDescription>
-            Checklist yang baru saja dikirim oleh operator.
+            Checklist yang baru saja dikirim oleh operator di lokasi yang dipilih.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -319,7 +334,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentReports.map((report, index) => (
+              {filteredRecentReports.map((report, index) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium">{report.operator}</TableCell>
                   <TableCell>{report.vehicle}</TableCell>
