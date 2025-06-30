@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Login Operator</CardTitle>
                 <CardDescription>
-                  Masukan username dan password untuk memulai checklist harian.
+                  Masukan email dan password untuk memulai checklist harian.
                 </CardDescription>
               </CardHeader>
               <CardContent>
