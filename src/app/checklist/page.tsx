@@ -72,9 +72,10 @@ function ChecklistForm() {
 
     const damagedItems = data.items.filter(item => item.status === 'RUSAK');
     const needsAttentionItems = data.items.filter(item => item.status === 'PERLU PERHATIAN');
+    const hasOtherDamage = data.kerusakanLain.keterangan.trim() !== '';
     
     let overallStatus: Report['overallStatus'] = 'Baik';
-    if (damagedItems.length > 0) {
+    if (damagedItems.length > 0 || hasOtherDamage) {
         overallStatus = 'Rusak';
     } else if (needsAttentionItems.length > 0) {
         overallStatus = 'Perlu Perhatian';
