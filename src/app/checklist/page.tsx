@@ -90,13 +90,21 @@ function ChecklistForm() {
       const itemsWithUrls = await Promise.all(
         data.items.map(async (item) => {
           const fotoUrl = await uploadImageAndGetURL(item.foto);
-          return { ...item, foto: fotoUrl };
+          // Explicitly create a new object to avoid carrying over RHF properties
+          return {
+            id: item.id,
+            label: item.label,
+            status: item.status,
+            keterangan: item.keterangan,
+            foto: fotoUrl,
+          };
         })
       );
 
       const kerusakanLainFotoUrl = await uploadImageAndGetURL(data.kerusakanLain.foto);
+      // Explicitly create a new object for "other damage"
       const kerusakanLainWithUrl = {
-        ...data.kerusakanLain,
+        keterangan: data.kerusakanLain.keterangan,
         foto: kerusakanLainFotoUrl,
       };
       
