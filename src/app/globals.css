@@ -85,3 +85,19 @@ body {
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background-color: white;
+  }
+}

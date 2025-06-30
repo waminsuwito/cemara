@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -26,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -212,12 +211,12 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 };
 
 // Printable Report Component
-const PrintableDashboard = React.forwardRef<HTMLDivElement, { stats: { label: string, value: number }[], selectedLocation: string }>(({ stats, selectedLocation }, ref) => {
+const PrintableDashboard = ({ stats, selectedLocation }: { stats: { label: string, value: number }[], selectedLocation: string }) => {
     const locationDisplay = selectedLocation === 'all' ? 'Semua Lokasi' : selectedLocation;
     const printDate = format(new Date(), 'dd MMMM yyyy', { locale: localeID });
 
     return (
-        <div ref={ref} className="p-10 text-black bg-white font-sans">
+        <div className="p-10 text-black bg-white font-sans">
             <h1 className="text-3xl font-bold mb-2 text-center">PT FARIKA RIAU PERKASA</h1>
             <h2 className="text-xl font-semibold mb-4 text-center">Laporan Harian Kondisi Alat</h2>
             <div className="flex justify-between mb-6">
@@ -246,7 +245,7 @@ const PrintableDashboard = React.forwardRef<HTMLDivElement, { stats: { label: st
             </div>
         </div>
     );
-});
+};
 PrintableDashboard.displayName = 'PrintableDashboard';
 
 
@@ -255,12 +254,9 @@ export default function DashboardPage() {
   const { vehicles, reports, locationNames } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  const componentRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-      content: () => componentRef.current,
-      documentTitle: `Laporan-Kondisi-Alat-${format(new Date(), 'yyyy-MM-dd')}`,
-      onAfterPrint: () => console.log('print success')
-  });
+  const handlePrint = () => {
+    window.print();
+  };
 
   const [selectedLocation, setSelectedLocation] = useState(
     isSuperAdmin ? "all" : user?.location || "all"
@@ -326,168 +322,168 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div style={{ display: "none" }}>
-          <PrintableDashboard ref={componentRef} stats={reportStats} selectedLocation={selectedLocation} />
+      <div className="print-only">
+          <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} />
       </div>
 
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
-        <div className="flex items-center space-x-2">
-           <button 
-             onClick={handlePrint} 
-             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
-           >
-             <Printer className="mr-2 h-4 w-4" />
-             Print Laporan
-           </button>
-          <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Semua Lokasi BP" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Lokasi BP</SelectItem>
-              {locationNames.map(loc => (
-                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="no-print flex flex-col gap-4 lg:gap-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={handlePrint} 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Print Laporan
+            </button>
+            <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Semua Lokasi BP" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Lokasi BP</SelectItem>
+                {locationNames.map(loc => (
+                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total alat di lokasi ini" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <VehicleDetailContent
-                    title="Detail Total Alat"
-                    description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
-                    vehicles={masterVehiclesForLocation}
-                />
-            </DialogContent>
-        </Dialog>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Dialog>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer">
+                        <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total alat di lokasi ini" />
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px]">
+                    <VehicleDetailContent
+                        title="Detail Total Alat"
+                        description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
+                        vehicles={masterVehiclesForLocation}
+                    />
+                </DialogContent>
+            </Dialog>
 
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Alat Sudah Checklist" value={`${checkedInCount}`} icon={ClipboardCheck} description="Alat yang sudah dicek hari ini" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <VehicleDetailContent
-                    title="Detail Alat Sudah Checklist"
-                    description="Berikut adalah daftar alat berat yang sudah melakukan checklist hari ini."
-                    vehicles={checkedInVehicles}
-                />
-            </DialogContent>
-        </Dialog>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer">
+                        <StatCard title="Alat Sudah Checklist" value={`${checkedInCount}`} icon={ClipboardCheck} description="Alat yang sudah dicek hari ini" />
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px]">
+                    <VehicleDetailContent
+                        title="Detail Alat Sudah Checklist"
+                        description="Berikut adalah daftar alat berat yang sudah melakukan checklist hari ini."
+                        vehicles={checkedInVehicles}
+                    />
+                </DialogContent>
+            </Dialog>
 
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Alat Belum Checklist" value={`${notCheckedInCount}`} icon={ClipboardX} description="Alat yang belum dicek hari ini" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <VehicleDetailContent
-                    title="Detail Alat Belum Checklist"
-                    description="Berikut adalah daftar alat berat yang belum melakukan checklist hari ini."
-                    vehicles={notCheckedInVehicles}
-                />
-            </DialogContent>
-        </Dialog>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer">
+                        <StatCard title="Alat Belum Checklist" value={`${notCheckedInCount}`} icon={ClipboardX} description="Alat yang belum dicek hari ini" />
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px]">
+                    <VehicleDetailContent
+                        title="Detail Alat Belum Checklist"
+                        description="Berikut adalah daftar alat berat yang belum melakukan checklist hari ini."
+                        vehicles={notCheckedInVehicles}
+                    />
+                </DialogContent>
+            </Dialog>
 
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="Total alat kondisi baik" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <VehicleDetailContent
-                    title="Detail Alat Baik"
-                    description="Berikut adalah daftar semua alat berat dalam kondisi baik."
-                    vehicles={baikVehicles}
-                    statusFilter="Baik"
-                />
-            </DialogContent>
-        </Dialog>
-        
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="Total alat perlu perhatian" valueClassName="text-accent" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <VehicleDetailContent
-                    title="Detail Alat Perlu Perhatian"
-                    description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
-                    vehicles={perhatianVehicles}
-                    statusFilter="Perlu Perhatian"
-                />
-            </DialogContent>
-        </Dialog>
-        
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="Total alat kondisi rusak" valueClassName="text-destructive" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <VehicleDetailContent
-                    title="Detail Alat Rusak"
-                    description="Berikut adalah daftar semua alat berat yang rusak."
-                    vehicles={rusakVehicles}
-                    statusFilter="Rusak"
-                />
-            </DialogContent>
-        </Dialog>
-      </div>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer">
+                        <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="Total alat kondisi baik" />
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px]">
+                    <VehicleDetailContent
+                        title="Detail Alat Baik"
+                        description="Berikut adalah daftar semua alat berat dalam kondisi baik."
+                        vehicles={baikVehicles}
+                        statusFilter="Baik"
+                    />
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer">
+                        <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="Total alat perlu perhatian" valueClassName="text-accent" />
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px]">
+                    <VehicleDetailContent
+                        title="Detail Alat Perlu Perhatian"
+                        description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
+                        vehicles={perhatianVehicles}
+                        statusFilter="Perlu Perhatian"
+                    />
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer">
+                        <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="Total alat kondisi rusak" valueClassName="text-destructive" />
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[800px]">
+                    <VehicleDetailContent
+                        title="Detail Alat Rusak"
+                        description="Berikut adalah daftar semua alat berat yang rusak."
+                        vehicles={rusakVehicles}
+                        statusFilter="Rusak"
+                    />
+                </DialogContent>
+            </Dialog>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Laporan Terbaru Hari Ini</CardTitle>
-          <CardDescription>
-            Checklist yang baru saja dikirim oleh operator di lokasi yang dipilih hari ini.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Operator</TableHead>
-                <TableHead>Kendaraan</TableHead>
-                <TableHead>Lokasi</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Waktu Lapor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentReportsForLocation.length > 0 ? recentReportsForLocation.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell className="font-medium">{report.operatorName}</TableCell>
-                  <TableCell>{report.vehicleType} {report.vehicleId}</TableCell>
-                  <TableCell>{report.location}</TableCell>
-                  <TableCell>{getStatusBadge(report.overallStatus)}</TableCell>
-                  <TableCell>{format(new Date(report.timestamp), 'HH:mm:ss')}</TableCell>
-                </TableRow>
-              )) : (
+        <Card>
+            <CardHeader>
+            <CardTitle>Laporan Terbaru Hari Ini</CardTitle>
+            <CardDescription>
+                Checklist yang baru saja dikirim oleh operator di lokasi yang dipilih hari ini.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Table>
+                <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">
-                        Belum ada laporan hari ini.
-                    </TableCell>
+                    <TableHead>Operator</TableHead>
+                    <TableHead>Kendaraan</TableHead>
+                    <TableHead>Lokasi</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Waktu Lapor</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                {recentReportsForLocation.length > 0 ? recentReportsForLocation.map((report) => (
+                    <TableRow key={report.id}>
+                    <TableCell className="font-medium">{report.operatorName}</TableCell>
+                    <TableCell>{report.vehicleType} {report.vehicleId}</TableCell>
+                    <TableCell>{report.location}</TableCell>
+                    <TableCell>{getStatusBadge(report.overallStatus)}</TableCell>
+                    <TableCell>{format(new Date(report.timestamp), 'HH:mm:ss')}</TableCell>
+                    </TableRow>
+                )) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">
+                            Belum ada laporan hari ini.
+                        </TableCell>
+                    </TableRow>
+                )}
+                </TableBody>
+            </Table>
+            </CardContent>
+        </Card>
+      </div>
     </>
   );
 }
-
-    
