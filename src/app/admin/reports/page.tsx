@@ -74,7 +74,7 @@ export default function VehicleManagementPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (vehicleId: number) => {
+  const handleDelete = (vehicleId: string) => {
     deleteVehicle(vehicleId);
   };
   

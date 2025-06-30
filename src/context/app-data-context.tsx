@@ -3,51 +3,20 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initialUsers, initialVehicles, initialReports, initialLocations, User, Vehicle, Report, Location } from '@/lib/data';
-import { isSameDay } from 'date-fns';
-
-// Helper function to get data from localStorage, ensuring it only runs on the client
-const getFromStorage = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    try {
-        const item = window.localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-    } catch (error) {
-        console.warn(`Error reading from localStorage key “${key}”:`, error);
-        return defaultValue;
-    }
-};
-
-// Helper function to set data to localStorage
-const saveToStorage = <T,>(key: string, value: T) => {
-    if (typeof window === 'undefined') {
-        console.warn('Cannot save to storage: not in browser context.');
-        return;
-    }
-    try {
-        window.localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-        console.error(`Error writing to localStorage key “${key}”:`, error);
-    }
-};
-
-const USERS_STORAGE_KEY = 'app_users';
-const VEHICLES_STORAGE_KEY = 'app_vehicles';
-const REPORTS_STORAGE_KEY = 'app_reports';
-const LOCATIONS_STORAGE_KEY = 'app_locations';
+import { User, Vehicle, Report, Location } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
 
 type AppDataContextType = {
   users: User[];
   addUser: (user: Omit<User, 'id'>) => void;
   updateUser: (user: User) => void;
-  deleteUser: (userId: number) => void;
+  deleteUser: (userId: string) => void;
 
   vehicles: Vehicle[];
   addVehicle: (vehicle: Omit<Vehicle, 'id'>) => void;
   updateVehicle: (vehicle: Vehicle) => void;
-  deleteVehicle: (vehicleId: number) => void;
+  deleteVehicle: (vehicleId: string) => void;
   
   reports: Report[];
   submitReport: (report: Omit<Report, 'id' | 'timestamp'>) => void;
@@ -56,7 +25,7 @@ type AppDataContextType = {
   locationNames: string[];
   addLocation: (location: Omit<Location, 'id'>) => void;
   updateLocation: (location: Location) => void;
-  deleteLocation: (locationId: number) => void;
+  deleteLocation: (locationId: string) => void;
 };
 
 const AppDataContext = createContext<AppDataContextType | null>(null);
@@ -68,61 +37,127 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  // Load initial data from localStorage on mount
   useEffect(() => {
-    setUsers(getFromStorage(USERS_STORAGE_KEY, initialUsers));
-    setVehicles(getFromStorage(VEHICLES_STORAGE_KEY, initialVehicles));
-    setReports(getFromStorage(REPORTS_STORAGE_KEY, initialReports));
-    setLocations(getFromStorage(LOCATIONS_STORAGE_KEY, initialLocations));
-    setIsDataLoaded(true);
+    const fetchData = async () => {
+      setIsDataLoaded(false);
+      try {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersList);
+
+        const vehiclesSnapshot = await getDocs(collection(db, "vehicles"));
+        const vehiclesList = vehiclesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
+        setVehicles(vehiclesList);
+
+        const reportsSnapshot = await getDocs(collection(db, "reports"));
+        const reportsList = reportsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Firestore timestamps need to be converted to JS numbers
+            const timestamp = data.timestamp?.toMillis ? data.timestamp.toMillis() : data.timestamp;
+            return {
+                id: doc.id,
+                ...data,
+                timestamp,
+            } as Report
+        }).sort((a, b) => b.timestamp - a.timestamp);
+        setReports(reportsList);
+
+        const locationsSnapshot = await getDocs(collection(db, "locations"));
+        const locationsList = locationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
+        setLocations(locationsList);
+
+      } catch (error) {
+        console.error("Error fetching data from Firestore:", error);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    };
+    fetchData();
   }, []);
   
-  // Persist state to localStorage whenever it changes, but only after initial load
-  useEffect(() => { if (isDataLoaded) saveToStorage(USERS_STORAGE_KEY, users); }, [users, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) saveToStorage(VEHICLES_STORAGE_KEY, vehicles); }, [vehicles, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) saveToStorage(REPORTS_STORAGE_KEY, reports); }, [reports, isDataLoaded]);
-  useEffect(() => { if (isDataLoaded) saveToStorage(LOCATIONS_STORAGE_KEY, locations); }, [locations, isDataLoaded]);
-  
   // CRUD for Users
-  const addUser = (user: Omit<User, 'id'>) => setUsers(prev => [...prev, { ...user, id: Date.now() }]);
-  const updateUser = (updatedUser: User) => setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-  const deleteUser = (userId: number) => setUsers(prev => prev.filter(u => u.id !== userId));
-
-  // CRUD for Vehicles
-  const addVehicle = (vehicle: Omit<Vehicle, 'id'>) => setVehicles(prev => [...prev, { ...vehicle, id: Date.now() }]);
-  const updateVehicle = (updatedVehicle: Vehicle) => setVehicles(prev => prev.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
-  const deleteVehicle = (vehicleId: number) => setVehicles(prev => prev.filter(v => v.id !== vehicleId));
-
-  // CRUD for Locations
-  const addLocation = (location: Omit<Location, 'id'>) => setLocations(prev => [...prev, { ...location, id: Date.now() }]);
-  const updateLocation = (updatedLocation: Location) => setLocations(prev => prev.map(l => l.id === updatedLocation.id ? updatedLocation : l));
-  const deleteLocation = (locationId: number) => setLocations(prev => prev.filter(l => l.id !== locationId));
-  
-  const submitReport = (newReportData: Omit<Report, 'id' | 'timestamp'>) => {
-    const timestamp = Date.now();
-    const newReport: Report = {
-      ...newReportData,
-      id: String(timestamp),
-      timestamp,
-    };
-
-    setReports(prevReports => {
-      const today = new Date();
-      const existingReportIndex = prevReports.findIndex(
-        (r) => r.vehicleId === newReport.vehicleId && isSameDay(new Date(r.timestamp), today)
-      );
-
-      if (existingReportIndex !== -1) {
-        const updatedReports = [...prevReports];
-        updatedReports[existingReportIndex] = newReport;
-        return updatedReports;
-      } else {
-        return [...prevReports, newReport];
-      }
-    });
+  const addUser = async (user: Omit<User, 'id'>) => {
+    try {
+        const docRef = await addDoc(collection(db, "users"), user);
+        setUsers(prev => [...prev, { ...user, id: docRef.id }]);
+    } catch (e) {
+        console.error("Error adding user: ", e);
+    }
+  };
+  const updateUser = async (updatedUser: User) => {
+    const userDoc = doc(db, "users", updatedUser.id);
+    const { id, ...dataToUpdate } = updatedUser;
+    await updateDoc(userDoc, dataToUpdate);
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  };
+  const deleteUser = async (userId: string) => {
+    await deleteDoc(doc(db, "users", userId));
+    setUsers(prev => prev.filter(u => u.id !== userId));
   };
 
-  const locationNames = locations.map(l => l.namaBP);
+  // CRUD for Vehicles
+  const addVehicle = async (vehicle: Omit<Vehicle, 'id'>) => {
+    const docRef = await addDoc(collection(db, "vehicles"), vehicle);
+    setVehicles(prev => [...prev, { ...vehicle, id: docRef.id }]);
+  };
+  const updateVehicle = async (updatedVehicle: Vehicle) => {
+    const vehicleDoc = doc(db, "vehicles", updatedVehicle.id);
+    const { id, ...dataToUpdate } = updatedVehicle;
+    await updateDoc(vehicleDoc, dataToUpdate);
+    setVehicles(prev => prev.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+  };
+  const deleteVehicle = async (vehicleId: string) => {
+    await deleteDoc(doc(db, "vehicles", vehicleId));
+    setVehicles(prev => prev.filter(v => v.id !== vehicleId));
+  };
+
+  // CRUD for Locations
+  const addLocation = async (location: Omit<Location, 'id'>) => {
+    const docRef = await addDoc(collection(db, "locations"), location);
+    setLocations(prev => [...prev, { ...location, id: docRef.id }]);
+  };
+  const updateLocation = async (updatedLocation: Location) => {
+    const locationDoc = doc(db, "locations", updatedLocation.id);
+    const { id, ...dataToUpdate } = updatedLocation;
+    await updateDoc(locationDoc, dataToUpdate);
+    setLocations(prev => prev.map(l => l.id === updatedLocation.id ? updatedLocation : l));
+  };
+  const deleteLocation = async (locationId: string) => {
+    await deleteDoc(doc(db, "locations", locationId));
+    setLocations(prev => prev.filter(l => l.id !== locationId));
+  };
+  
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp'>) => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const q = query(collection(db, "reports"), 
+        where("vehicleId", "==", newReportData.vehicleId),
+        where("timestamp", ">=", todayStart),
+        where("timestamp", "<=", todayEnd)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    const reportWithTimestamp = {
+        ...newReportData,
+        timestamp: new Date()
+    };
+    
+    if (!querySnapshot.empty) {
+        const existingDoc = querySnapshot.docs[0];
+        await updateDoc(doc(db, "reports", existingDoc.id), reportWithTimestamp);
+        setReports(prev => prev.map(r => r.id === existingDoc.id ? { ...reportWithTimestamp, id: existingDoc.id, timestamp: reportWithTimestamp.timestamp.getTime() } : r).sort((a,b) => b.timestamp - a.timestamp));
+    } else {
+        const docRef = await addDoc(collection(db, "reports"), reportWithTimestamp);
+        setReports(prev => [...prev, { ...reportWithTimestamp, id: docRef.id, timestamp: reportWithTimestamp.timestamp.getTime() }].sort((a,b) => b.timestamp - a.timestamp));
+    }
+  };
+
+  const locationNames = locations.map(l => l.namaBP).sort();
 
   const value = {
     users, addUser, updateUser, deleteUser,
@@ -134,7 +169,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   if (!isDataLoaded) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
-            Memuat...
+            Memuat data dari Firestore...
         </div>
     );
   }

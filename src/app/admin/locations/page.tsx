@@ -78,7 +78,7 @@ export default function LocationsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (locationId: number) => {
+  const handleDelete = (locationId: string) => {
     deleteLocation(locationId);
   };
 

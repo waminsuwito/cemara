@@ -86,7 +86,7 @@ export default function UserManagementPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (userId: number) => {
+  const handleDelete = (userId: string) => {
     deleteUser(userId);
   };
 
@@ -94,12 +94,16 @@ export default function UserManagementPage() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const role = formData.get("role") as UserRole;
+    const password = formData.get("password") as string;
 
-    const baseData = {
+    const baseData: Partial<User> = {
       name: formData.get("name") as string,
-      password: formData.get("password") as string,
       role,
     };
+    if (password) {
+        baseData.password = password;
+    }
+
 
     let userData: Omit<User, 'id'>;
 
@@ -121,9 +125,19 @@ export default function UserManagementPage() {
     }
 
     if (editingUser) {
-      updateUser({ ...editingUser, ...(userData as Partial<User>) });
+      // Create a new object for update to avoid passing undefined password if not changed
+      const updateData = {...editingUser, ...userData};
+      if(!password) {
+        delete updateData.password;
+      }
+      updateUser(updateData);
     } else {
-      addUser(userData);
+      if (!password) {
+        // Handle error: password is required for new users
+        alert("Password is required for new users.");
+        return;
+      }
+      addUser(userData as Omit<User, 'id'>);
     }
 
     setIsDialogOpen(false);
@@ -200,7 +214,7 @@ export default function UserManagementPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          disabled={user.role === 'SUPER_ADMIN' && user.id === 101}
+                          disabled={user.username === 'superadmin'}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Hapus</span>
@@ -312,7 +326,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                 
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="password" className="text-right">Password</Label>
-                    <Input id="password" name="password" type="password" defaultValue={editingUser?.password} className="col-span-3" required placeholder={editingUser ? "Isi untuk mengubah" : ""} />
+                    <Input id="password" name="password" type="password" className="col-span-3" required={!editingUser} placeholder={editingUser ? "Isi untuk mengubah" : ""} />
                 </div>
 
                 {role !== 'SUPER_ADMIN' && (
