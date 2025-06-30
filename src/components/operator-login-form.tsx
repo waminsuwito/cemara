@@ -60,7 +60,7 @@ export function OperatorLoginForm() {
       if (foundUser) {
         if (foundUser.batangan) {
             const vehicle = vehicles.find(v => 
-                v.hullNumber?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
+                v.licensePlate?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
             );
             
             if (vehicle) {
@@ -74,7 +74,7 @@ export function OperatorLoginForm() {
                  toast({
                     variant: "destructive",
                     title: "Login Gagal",
-                    description: `Kendaraan dengan nomor lambung "${foundUser.batangan}" tidak ditemukan. Pastikan data "Batangan" di profil Operator cocok dengan "Nomor Lambung" di data Alat.`,
+                    description: `Kendaraan dengan nomor polisi "${foundUser.batangan}" tidak ditemukan. Pastikan data "Batangan" di profil Operator cocok dengan "Nomor Polisi" di data Alat.`,
                 });
             }
         } else {

@@ -32,7 +32,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 function ChecklistForm() {
-  const { user: operator, logout } = useOperatorAuth();
+  const { user: operator, vehicle: vehicleHullNumber, logout } = useOperatorAuth();
   const { submitReport, vehicles } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -63,9 +63,9 @@ function ChecklistForm() {
         return;
     }
 
-    const vehicle = vehicles.find(v => v.hullNumber === operator.batangan);
+    const vehicle = vehicles.find(v => v.hullNumber === vehicleHullNumber);
     if (!vehicle) {
-        toast({ variant: "destructive", title: "Error", description: "Kendaraan tidak ditemukan." });
+        toast({ variant: "destructive", title: "Error", description: `Kendaraan dengan nomor lambung "${vehicleHullNumber}" tidak ditemukan.` });
         setIsLoading(false);
         return;
     }
