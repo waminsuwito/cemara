@@ -76,7 +76,14 @@ const getStatusBadge = (status: string) => {
   }
 }
 
-const VehicleDetailContainer = ({ vehicles, statusFilter, title, description }: { vehicles: typeof allVehicles, statusFilter?: string, title: string, description: string }) => {
+type VehicleWithStatus = (typeof allVehicles)[0] & { status: string };
+
+const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
+  vehicles: VehicleWithStatus[];
+  statusFilter?: string;
+  title: string;
+  description: string;
+}) => {
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
@@ -94,7 +101,7 @@ const VehicleDetailContainer = ({ vehicles, statusFilter, title, description }: 
     const filteredVehicles = statusFilter ? vehicles.filter(v => v.status === statusFilter) : vehicles;
     
     return (
-        <DialogContent className="sm:max-w-[800px]">
+        <>
             {view === 'list' ? (
                 <>
                     <DialogHeader>
@@ -178,7 +185,7 @@ const VehicleDetailContainer = ({ vehicles, statusFilter, title, description }: 
                                  <Card>
                                     <CardHeader>
                                         <CardTitle className="text-lg">Kerusakan Lainnya</CardTitle>
-                                    </Header>
+                                    </CardHeader>
                                     <CardContent>
                                         <p>{report.kerusakanLain.keterangan}</p>
                                          {report.kerusakanLain.foto && (
@@ -195,9 +202,9 @@ const VehicleDetailContainer = ({ vehicles, statusFilter, title, description }: 
                     </div>
                 </>
             )}
-        </DialogContent>
+        </>
     );
-}
+};
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
@@ -260,11 +267,13 @@ export default function DashboardPage() {
                     <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total alat di lokasi ini" />
                 </div>
             </DialogTrigger>
-            <VehicleDetailContainer
-                title="Detail Total Alat"
-                description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
-                vehicles={todayVehicles}
-            />
+            <DialogContent className="sm:max-w-[800px]">
+                <VehicleDetailContent
+                    title="Detail Total Alat"
+                    description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
+                    vehicles={todayVehicles}
+                />
+            </DialogContent>
         </Dialog>
 
         <Dialog>
@@ -273,11 +282,13 @@ export default function DashboardPage() {
                     <StatCard title="Alat Sudah Checklist" value={`${checkedInCount}`} icon={ClipboardCheck} description="Alat yang sudah dicek hari ini" />
                 </div>
             </DialogTrigger>
-            <VehicleDetailContainer
-                title="Detail Alat Sudah Checklist"
-                description="Berikut adalah daftar alat berat yang sudah melakukan checklist."
-                vehicles={checkedInVehicles}
-            />
+            <DialogContent className="sm:max-w-[800px]">
+                <VehicleDetailContent
+                    title="Detail Alat Sudah Checklist"
+                    description="Berikut adalah daftar alat berat yang sudah melakukan checklist."
+                    vehicles={checkedInVehicles}
+                />
+            </DialogContent>
         </Dialog>
 
         <Dialog>
@@ -286,11 +297,13 @@ export default function DashboardPage() {
                     <StatCard title="Alat Belum Checklist" value={`${notCheckedInCount}`} icon={ClipboardX} description="Alat yang belum dicek hari ini" />
                 </div>
             </DialogTrigger>
-            <VehicleDetailContainer
-                title="Detail Alat Belum Checklist"
-                description="Berikut adalah daftar alat berat yang belum melakukan checklist."
-                vehicles={notCheckedInVehicles}
-            />
+            <DialogContent className="sm:max-w-[800px]">
+                <VehicleDetailContent
+                    title="Detail Alat Belum Checklist"
+                    description="Berikut adalah daftar alat berat yang belum melakukan checklist."
+                    vehicles={notCheckedInVehicles}
+                />
+            </DialogContent>
         </Dialog>
 
         <Dialog>
@@ -299,12 +312,14 @@ export default function DashboardPage() {
                     <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="Total alat kondisi baik" />
                 </div>
             </DialogTrigger>
-            <VehicleDetailContainer
-                title="Detail Alat Baik"
-                description="Berikut adalah daftar semua alat berat dalam kondisi baik."
-                vehicles={todayVehicles}
-                statusFilter="Baik"
-            />
+            <DialogContent className="sm:max-w-[800px]">
+                <VehicleDetailContent
+                    title="Detail Alat Baik"
+                    description="Berikut adalah daftar semua alat berat dalam kondisi baik."
+                    vehicles={todayVehicles}
+                    statusFilter="Baik"
+                />
+            </DialogContent>
         </Dialog>
         
         <Dialog>
@@ -313,12 +328,14 @@ export default function DashboardPage() {
                     <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="Total alat perlu perhatian" valueClassName="text-accent" />
                 </div>
             </DialogTrigger>
-            <VehicleDetailContainer
-                title="Detail Alat Perlu Perhatian"
-                description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
-                vehicles={todayVehicles}
-                statusFilter="Perlu Perhatian"
-            />
+            <DialogContent className="sm:max-w-[800px]">
+                <VehicleDetailContent
+                    title="Detail Alat Perlu Perhatian"
+                    description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
+                    vehicles={todayVehicles}
+                    statusFilter="Perlu Perhatian"
+                />
+            </DialogContent>
         </Dialog>
         
         <Dialog>
@@ -327,12 +344,14 @@ export default function DashboardPage() {
                     <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="Total alat kondisi rusak" valueClassName="text-destructive" />
                 </div>
             </DialogTrigger>
-            <VehicleDetailContainer
-                title="Detail Alat Rusak"
-                description="Berikut adalah daftar semua alat berat yang rusak."
-                vehicles={todayVehicles}
-                statusFilter="Rusak"
-            />
+            <DialogContent className="sm:max-w-[800px]">
+                <VehicleDetailContent
+                    title="Detail Alat Rusak"
+                    description="Berikut adalah daftar semua alat berat yang rusak."
+                    vehicles={todayVehicles}
+                    statusFilter="Rusak"
+                />
+            </DialogContent>
         </Dialog>
       </div>
 
@@ -371,3 +390,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
