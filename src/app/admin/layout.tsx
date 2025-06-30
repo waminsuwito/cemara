@@ -73,7 +73,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        Memuat Sesi Admin...
+        Memuat...
       </div>
     );
   }
@@ -87,7 +87,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Truck className="h-6 w-6 text-primary" />
-              <span className="font-headline">Checklis Harian Alat</span>
+              <span className="font-headline">Checklist Harian Alat</span>
             </Link>
           </div>
           <div className="flex-1">
@@ -125,7 +125,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Truck className="h-6 w-6 text-primary" />
-                  <span className="sr-only">Checklis Harian Alat</span>
+                  <span className="sr-only">Checklist Harian Alat</span>
                 </Link>
                 {accessibleNavItems.map((item) => (
                   <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />

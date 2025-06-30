@@ -7,8 +7,8 @@ import { OperatorAuthProvider } from '@/context/operator-auth-context';
 import { AppDataProvider } from '@/context/app-data-context';
 
 export const metadata: Metadata = {
-  title: 'Checklis Harian Alat',
-  description: 'Aplikasi untuk ceklist harian kendaraan/alat berat',
+  title: 'Checklist Harian Alat',
+  description: 'Aplikasi untuk checklist harian kendaraan/alat berat',
 };
 
 export default function RootLayout({

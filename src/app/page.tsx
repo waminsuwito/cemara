@@ -9,7 +9,7 @@ import { Truck } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-gradient-to-br from-background via-gray-900/50 to-background">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-gradient-to-br from-background via-purple-900/50 to-background">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-6">
           <p className="text-lg font-semibold text-primary tracking-wider">
@@ -18,7 +18,7 @@ export default function Home() {
           <div className="flex items-center gap-3 mt-2">
             <Truck className="h-10 w-10 text-primary" />
             <h1 className="text-3xl font-bold text-foreground font-headline">
-              Checklis Harian Alat
+              Checklist Harian Alat
             </h1>
           </div>
         </div>

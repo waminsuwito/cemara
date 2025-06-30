@@ -139,7 +139,7 @@ export default function ChecklistPage() {
   if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        Memverifikasi sesi...
+        Memuat...
       </div>
     );
   }
@@ -150,7 +150,7 @@ export default function ChecklistPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center">
           <h1 className="text-2xl font-semibold md:text-3xl font-headline">
-            Daily Checklist Kendaraan
+            Checklist Harian Alat
           </h1>
         </div>
         <ChecklistForm />

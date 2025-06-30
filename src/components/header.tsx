@@ -40,7 +40,7 @@ export function Header() {
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
           <Truck className="h-6 w-6 text-primary" />
-          <span className="font-headline">Checklis Harian Alat</span>
+          <span className="font-headline">Checklist Harian Alat</span>
         </Link>
       </nav>
       <Sheet>
@@ -57,7 +57,7 @@ export function Header() {
               className="flex items-center gap-2 text-lg font-semibold"
             >
               <Truck className="h-6 w-6 text-primary" />
-              <span className="sr-only">Checklis Harian Alat</span>
+              <span className="sr-only">Checklist Harian Alat</span>
             </Link>
           </nav>
         </SheetContent>
