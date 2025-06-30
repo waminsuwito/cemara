@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import {
   Card,
   CardContent,
@@ -34,6 +35,7 @@ import {
   ClipboardCheck,
   ClipboardX,
   ChevronLeft,
+  Printer,
 } from "lucide-react";
 import {
   Dialog,
@@ -48,6 +50,8 @@ import { useAppData } from "@/context/app-data-context";
 import { cn } from "@/lib/utils";
 import { type Report, type Vehicle } from "@/lib/data";
 import { format, isSameDay, isBefore, startOfToday } from "date-fns";
+import { id as localeID } from "date-fns/locale";
+
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
     <Card className="hover:bg-muted/50 transition-colors">
@@ -207,10 +211,56 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
     );
 };
 
+// Printable Report Component
+const PrintableDashboard = React.forwardRef<HTMLDivElement, { stats: { label: string, value: number }[], selectedLocation: string }>(({ stats, selectedLocation }, ref) => {
+    const locationDisplay = selectedLocation === 'all' ? 'Semua Lokasi' : selectedLocation;
+    const printDate = format(new Date(), 'dd MMMM yyyy', { locale: localeID });
+
+    return (
+        <div ref={ref} className="p-10 text-black bg-white font-sans">
+            <h1 className="text-3xl font-bold mb-2 text-center">PT FARIKA RIAU PERKASA</h1>
+            <h2 className="text-xl font-semibold mb-4 text-center">Laporan Harian Kondisi Alat</h2>
+            <div className="flex justify-between mb-6">
+                <p><span className="font-semibold">Lokasi:</span> {locationDisplay}</p>
+                <p><span className="font-semibold">Tanggal:</span> {printDate}</p>
+            </div>
+            <table className="w-full text-sm border-collapse border border-gray-600">
+                <thead>
+                    <tr className="bg-gray-200">
+                        <th className="border border-gray-600 p-2 text-left">Status Kondisi</th>
+                        <th className="border border-gray-600 p-2 text-right">Jumlah Alat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {stats.map((stat, index) => (
+                        <tr key={index} className="even:bg-gray-50">
+                            <td className="border border-gray-600 p-2">{stat.label}</td>
+                            <td className="border border-gray-600 p-2 text-right">{stat.value}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <div className="mt-12 text-sm text-gray-500">
+                <p>Laporan ini dibuat secara otomatis oleh sistem Checklist Harian Alat.</p>
+                <p>Dicetak pada: {format(new Date(), 'dd MMMM yyyy, HH:mm:ss')}</p>
+            </div>
+        </div>
+    );
+});
+PrintableDashboard.displayName = 'PrintableDashboard';
+
+
 export default function DashboardPage() {
   const { user } = useAdminAuth();
   const { vehicles, reports, locationNames } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const componentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+      content: () => componentRef.current,
+      documentTitle: `Laporan-Kondisi-Alat-${format(new Date(), 'yyyy-MM-dd')}`,
+      onAfterPrint: () => console.log('print success')
+  });
 
   const [selectedLocation, setSelectedLocation] = useState(
     isSuperAdmin ? "all" : user?.location || "all"
@@ -229,15 +279,11 @@ export default function DashboardPage() {
       if (latestReport) {
         const reportDate = new Date(latestReport.timestamp);
         if (isSameDay(reportDate, today)) {
-          // If report is from today, use its status
           status = latestReport.overallStatus;
         } else if (isBefore(reportDate, today)) {
-          // If report is from the past
           if (latestReport.overallStatus === 'Rusak' || latestReport.overallStatus === 'Perlu Perhatian') {
-            // Persist problematic status
             status = latestReport.overallStatus;
           }
-          // If it was 'Baik', it becomes 'Belum Checklist' for today
         }
       }
       
@@ -269,12 +315,28 @@ export default function DashboardPage() {
   const perhatianVehicles = masterVehiclesForLocation.filter(v => v.status === 'Perlu Perhatian');
   const rusakVehicles = masterVehiclesForLocation.filter(v => v.status === 'Rusak');
 
+  const reportStats = [
+      { label: 'Total Alat', value: totalCount },
+      { label: 'Alat Sudah Checklist', value: checkedInCount },
+      { label: 'Alat Belum Checklist', value: notCheckedInCount },
+      { label: 'Kondisi Baik', value: baikCount },
+      { label: 'Perlu Perhatian', value: perhatianCount },
+      { label: 'Kondisi Rusak', value: rusakCount },
+  ];
 
   return (
     <>
+      <div style={{ display: "none" }}>
+          <PrintableDashboard ref={componentRef} stats={reportStats} selectedLocation={selectedLocation} />
+      </div>
+
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
         <div className="flex items-center space-x-2">
+           <Button onClick={handlePrint}>
+             <Printer className="mr-2 h-4 w-4" />
+             Print Laporan
+           </Button>
           <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Semua Lokasi BP" />
