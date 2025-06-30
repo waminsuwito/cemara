@@ -333,7 +333,10 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
         <div className="flex items-center space-x-2">
-           <button onClick={handlePrint} className={cn(buttonVariants())}>
+           <button 
+             onClick={handlePrint} 
+             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
+           >
              <Printer className="mr-2 h-4 w-4" />
              Print Laporan
            </button>
@@ -486,3 +489,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
