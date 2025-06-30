@@ -2,10 +2,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, from 'react';
 import { User, Vehicle, Report, Location } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "firebase/firestore";
+import { useToast } from '@/hooks/use-toast';
 
 type AppDataContextType = {
   users: User[];
@@ -19,7 +20,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => void;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp'>) => void;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => void;
   
   locations: Location[];
   locationNames: string[];
@@ -28,16 +29,18 @@ type AppDataContextType = {
   deleteLocation: (locationId: string) => void;
 };
 
-const AppDataContext = createContext<AppDataContextType | null>(null);
+const AppDataContext = React.createContext<AppDataContextType | null>(null);
 
 export const AppDataProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [vehicles, setVehicles] = React.useState<Vehicle[]>([]);
+  const [reports, setReports] = React.useState<Report[]>([]);
+  const [locations, setLocations] = React.useState<Location[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = React.useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
+
+  React.useEffect(() => {
     // Flag to ensure we only set isDataLoaded once
     let initialLoadsPending = 4;
     const markLoadComplete = () => {
@@ -139,24 +142,21 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     await deleteDoc(doc(db, "locations", locationId));
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp'>) => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => {
+    const today = new Date();
+    const reportDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const q = query(collection(db, "reports"), 
         where("vehicleId", "==", newReportData.vehicleId),
-        where("timestamp", ">=", todayStart),
-        where("timestamp", "<=", todayEnd)
+        where("reportDate", "==", reportDate)
     );
 
     const querySnapshot = await getDocs(q);
 
     const reportWithTimestamp = {
         ...newReportData,
-        timestamp: new Date()
+        timestamp: new Date(),
+        reportDate: reportDate
     };
     
     if (!querySnapshot.empty) {
@@ -188,7 +188,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAppData = () => {
-  const context = useContext(AppDataContext);
+  const context = React.useContext(AppDataContext);
   if (!context) {
     throw new Error('useAppData must be used within an AppDataProvider');
   }

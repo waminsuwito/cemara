@@ -72,7 +72,7 @@ function ChecklistForm() {
         return;
     }
 
-    const vehicle = vehicles.find(v => v.hullNumber === vehicleHullNumber);
+    const vehicle = vehicles.find(v => v.hullNumber.trim().toLowerCase() === vehicleHullNumber.trim().toLowerCase());
     if (!vehicle) {
         toast({ variant: "destructive", title: "Error", description: `Kendaraan dengan nomor lambung "${vehicleHullNumber}" tidak ditemukan.` });
         setIsLoading(false);
@@ -87,7 +87,7 @@ function ChecklistForm() {
         return await getDownloadURL(storageRef);
       };
 
-      const itemsWithUrls = await Promise.all(
+      const processedItems = await Promise.all(
         data.items.map(async (item) => ({
             id: item.id,
             label: item.label,
@@ -99,8 +99,8 @@ function ChecklistForm() {
 
       const kerusakanLainFotoUrl = await uploadImageAndGetURL(data.kerusakanLain.foto);
       
-      const damagedItems = itemsWithUrls.filter(item => item.status === 'RUSAK');
-      const needsAttentionItems = itemsWithUrls.filter(item => item.status === 'PERLU PERHATIAN');
+      const damagedItems = processedItems.filter(item => item.status === 'RUSAK');
+      const needsAttentionItems = processedItems.filter(item => item.status === 'PERLU PERHATIAN');
       const hasOtherDamage = data.kerusakanLain.keterangan.trim() !== '';
       
       let overallStatus: Report['overallStatus'] = 'Baik';
@@ -111,7 +111,7 @@ function ChecklistForm() {
       }
 
       const reportItems: ReportItem[] = [];
-        itemsWithUrls
+      processedItems
         .filter(item => item.status !== 'BAIK')
         .forEach(item => {
             const cleanItem: ReportItem = {
@@ -126,7 +126,7 @@ function ChecklistForm() {
             reportItems.push(cleanItem);
         });
 
-      const reportData: Omit<Report, 'id' | 'timestamp'> = {
+      const reportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'> = {
           vehicleId: vehicle.hullNumber,
           vehicleType: vehicle.type,
           operatorName: operator.name,

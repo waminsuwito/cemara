@@ -40,6 +40,7 @@ export type Report = {
     operatorName: string;
     location: string;
     timestamp: number;
+    reportDate: string; // YYYY-MM-DD
     items: ReportItem[];
     kerusakanLain?: {
         keterangan: string;

@@ -10,7 +10,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "timestamp",
+          "fieldPath": "reportDate",
           "order": "ASCENDING"
         }
       ]
