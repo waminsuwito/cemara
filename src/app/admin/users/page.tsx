@@ -37,10 +37,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type User = {
   id: number;
@@ -53,17 +60,22 @@ type User = {
 
 const initialUsers: User[] = [
   { id: 1, name: "Umar Santoso", nik: "1001", password: "password", batangan: "EX-01", location: "BP Pekanbaru" },
-  { id: 2, name: "Aep Saefudin", nik: "1002", password: "password", batangan: "DT-05", location: "BP Baung" },
-  { id: 3, name: "Amirul", nik: "1003", password: "password", batangan: "BD-02", location: "BP Dumai" },
-  { id: 4, name: "Solihin", nik: "1004", password: "password", batangan: "GD-03", location: "BP IKN" },
-  { id: 5, name: "Siswanto", nik: "1005", password: "password", batangan: "CP-01", location: "BP Pekanbaru" },
+  { id: 2, name: "Aep Saefudin", nik: "1002", password: "password", batangan: "DT-01", location: "BP Baung" },
+  { id: 3, name: "Amirul", nik: "1003", password: "password", batangan: "CP-01", location: "BP Dumai" },
+  { id: 4, name: "Solihin", nik: "1004", password: "password", batangan: "TM-01", location: "BP IKN" },
+  { id: 5, name: "Siswanto", nik: "1005", password: "password", batangan: "FK-01", location: "BP Pekanbaru" },
+  { id: 6, name: "Budi", nik: "1006", password: "password", batangan: "GS-01", location: "BP Baung" },
+  { id: 7, name: "Charlie", nik: "1007", password: "password", batangan: "BP-01", location: "BP Dumai" },
+  { id: 8, name: "Dedi", nik: "1008", password: "password", batangan: "KI-01", location: "BP IKN" },
+  { id: 9, name: "Eko", nik: "1009", password: "password", batangan: "KT-01", location: "BP Pekanbaru" },
 ];
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  
+  const [locationFilter, setLocationFilter] = useState("all");
+
   const handleAddNew = () => {
     setEditingUser(null);
     setIsDialogOpen(true);
@@ -77,7 +89,7 @@ export default function UserManagementPage() {
   const handleDelete = (userId: number) => {
     setUsers(users.filter((u) => u.id !== userId));
   };
-  
+
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -91,16 +103,25 @@ export default function UserManagementPage() {
 
     if (editingUser) {
       // Update existing user
-      setUsers(users.map((u) => u.id === editingUser.id ? { ...u, ...userData } : u));
+      setUsers(
+        users.map((u) => (u.id === editingUser.id ? { ...u, ...userData } : u))
+      );
     } else {
       // Add new user
       const newUser = { id: Date.now(), ...userData };
       setUsers([...users, newUser]);
     }
-    
+
     setIsDialogOpen(false);
     setEditingUser(null);
   };
+
+  const uniqueLocations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
+
+  const filteredUsers =
+    locationFilter === "all"
+      ? users
+      : users.filter((u) => u.location === locationFilter);
 
   return (
     <>
@@ -112,10 +133,25 @@ export default function UserManagementPage() {
               Tambah, edit, atau hapus data pengguna (sopir/operator).
             </CardDescription>
           </div>
-          <Button onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Tambah Pengguna
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter Lokasi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Lokasi</SelectItem>
+                {uniqueLocations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleAddNew}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Tambah Pengguna
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -130,7 +166,7 @@ export default function UserManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.nik}</TableCell>
@@ -138,34 +174,47 @@ export default function UserManagementPage() {
                   <TableCell>{user.batangan}</TableCell>
                   <TableCell>{user.location}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(user)}
+                    >
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit</span>
                     </Button>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                        >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Hapus</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Apakah Anda yakin?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tindakan ini tidak dapat diurungkan. Ini akan menghapus data pengguna secara permanen.
+                            Tindakan ini tidak dapat diurungkan. Ini akan
+                            menghapus data pengguna secara permanen.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Batal</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(user.id)} className="bg-destructive hover:bg-destructive/90">
+                          <AlertDialogAction
+                            onClick={() => handleDelete(user.id)}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
                             Hapus
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-
                   </TableCell>
                 </TableRow>
               ))}
@@ -173,14 +222,18 @@ export default function UserManagementPage() {
           </Table>
         </CardContent>
       </Card>
-      
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <form onSubmit={handleSave}>
             <DialogHeader>
-              <DialogTitle>{editingUser ? 'Edit Pengguna' : 'Tambah Pengguna Baru'}</DialogTitle>
+              <DialogTitle>
+                {editingUser ? "Edit Pengguna" : "Tambah Pengguna Baru"}
+              </DialogTitle>
               <DialogDescription>
-                {editingUser ? 'Ubah detail pengguna dan klik simpan.' : 'Isi detail pengguna baru dan klik tambah.'}
+                {editingUser
+                  ? "Ubah detail pengguna dan klik simpan."
+                  : "Isi detail pengguna baru dan klik tambah."}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -188,38 +241,73 @@ export default function UserManagementPage() {
                 <Label htmlFor="name" className="text-right">
                   Nama
                 </Label>
-                <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
+                <Input
+                  id="name"
+                  name="name"
+                  defaultValue={editingUser?.name}
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="nik" className="text-right">
                   NIK
                 </Label>
-                <Input id="nik" name="nik" defaultValue={editingUser?.nik} className="col-span-3" required />
+                <Input
+                  id="nik"
+                  name="nik"
+                  defaultValue={editingUser?.nik}
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="password" className="text-right">
                   Password
                 </Label>
-                <Input id="password" name="password" type="password" defaultValue={editingUser?.password} className="col-span-3" required />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  defaultValue={editingUser?.password}
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="batangan" className="text-right">
                   Batangan
                 </Label>
-                <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" required />
+                <Input
+                  id="batangan"
+                  name="batangan"
+                  defaultValue={editingUser?.batangan}
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="location" className="text-right">
                   Lokasi
                 </Label>
-                <Input id="location" name="location" defaultValue={editingUser?.location} className="col-span-3" required />
+                <Input
+                  id="location"
+                  name="location"
+                  defaultValue={editingUser?.location}
+                  className="col-span-3"
+                  required
+                />
               </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="secondary">Batal</Button>
+                <Button type="button" variant="secondary">
+                  Batal
+                </Button>
               </DialogClose>
-              <Button type="submit">{editingUser ? 'Simpan Perubahan' : 'Tambah Pengguna'}</Button>
+              <Button type="submit">
+                {editingUser ? "Simpan Perubahan" : "Tambah Pengguna"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

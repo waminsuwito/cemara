@@ -45,40 +45,40 @@ const recentReports = [
   {
     operator: "Umar Santoso",
     vehicleId: "EX-01",
-    vehicle: "Excavator EX-01",
+    vehicle: "Exavator EX-01",
     location: locations[0],
     status: "Perlu Perhatian",
     date: "2024-05-20",
   },
   {
     operator: "Aep Saefudin",
-    vehicleId: "DT-05",
-    vehicle: "Dump Truck DT-05",
+    vehicleId: "DT-01",
+    vehicle: "Dump Truck DT-01",
     location: locations[1],
     status: "Baik",
     date: "2024-05-20",
   },
   {
     operator: "Amirul",
-    vehicleId: "BD-02",
-    vehicle: "Bulldozer BD-02",
-    location: locations[0],
+    vehicleId: "CP-01",
+    vehicle: "CP CP-01",
+    location: locations[2],
     status: "Rusak",
     date: "2024-05-19",
   },
   {
     operator: "Solihin",
-    vehicleId: "GD-03",
-    vehicle: "Grader GD-03",
-    location: locations[2],
+    vehicleId: "TM-01",
+    vehicle: "Truck mixer TM-01",
+    location: locations[3],
     status: "Baik",
     date: "2024-05-19",
   },
   {
     operator: "Siswanto",
-    vehicleId: "CP-01",
-    vehicle: "Compactor CP-01",
-    location: locations[1],
+    vehicleId: "FK-01",
+    vehicle: "Foco kren FK-01",
+    location: locations[0],
     status: "Baik",
     date: "2024-05-18",
   },
@@ -86,20 +86,21 @@ const recentReports = [
 
 const allVehicles: {id: string; type: string; operator: string; location: string; status: string}[] = [
   // Rusak (2)
-  { id: "BD-02", type: "Bulldozer", operator: "Amirul", location: locations[0], status: "Rusak" },
-  { id: "BD-04", type: "Bulldozer", operator: "Amirul", location: locations[1], status: "Rusak" },
+  { id: "CP-01", type: "CP", operator: "Amirul", location: locations[2], status: "Rusak" },
+  { id: "GS-01", type: "Genset", operator: "Budi", location: locations[1], status: "Rusak" },
 
-  // Perlu Perhatian (5)
-  { id: "EX-01", type: "Excavator", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
-  { id: "DT-06", type: "Dump Truck", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
-  { id: "DT-07", type: "Dump Truck", operator: "Solihin", location: locations[2], status: "Perlu Perhatian" },
-  { id: "GR-01", type: "Grader", operator: "Aep Saefudin", location: locations[1], status: "Perlu Perhatian"},
-  { id: "CP-02", type: "Compactor", operator: "Siswanto", location: locations[3], status: "Perlu Perhatian"},
-
-  // Baik (65)
-  { id: "DT-05", type: "Dump Truck", operator: "Aep Saefudin", location: locations[1], status: "Baik" },
-  { id: "GD-03", type: "Grader", operator: "Solihin", location: locations[2], status: "Baik" },
-  { id: "CP-01", type: "Compactor", operator: "Siswanto", location: locations[1], status: "Baik" },
+  // Perlu Perhatian (2)
+  { id: "EX-01", type: "Exavator", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
+  { id: "TM-01", type: "Truck mixer", operator: "Solihin", location: locations[3], status: "Perlu Perhatian" },
+  
+  // Baik (5)
+  { id: "DT-01", type: "Dump Truck", operator: "Aep Saefudin", location: locations[1], status: "Baik" },
+  { id: "FK-01", type: "Foco kren", operator: "Siswanto", location: locations[0], status: "Baik" },
+  { id: "BP-01", type: "BP", operator: "Charlie", location: locations[2], status: "Baik" },
+  { id: "KI-01", type: "Kendaraan Inventaris", operator: "Dedi", location: locations[3], status: "Baik" },
+  { id: "KT-01", type: "Kapsul Semen", operator: "Eko", location: locations[0], status: "Baik" },
+  
+  // Dummy Baik (62)
   ...Array.from({ length: 62 }, (_, i) => ({
     id: `BAIK-${String(i + 1).padStart(3, '0')}`,
     type: "Various",
