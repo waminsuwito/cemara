@@ -16,32 +16,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  nik: z.string().min(1, { message: "NIK harus diisi." }),
-  operatorName: z.string({ required_error: "Nama operator harus dipilih." }),
-  vehicleNumber: z.string().min(1, { message: "Nomor kendaraan harus diisi." }),
-  vehicleType: z.string().min(1, { message: "Jenis kendaraan harus diisi." }),
-  location: z.string().min(1, { message: "Lokasi BP harus diisi." }),
+  username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
+  password: z.string().min(1, { message: "Password harus diisi." }),
 });
-
-const operatorNames = [
-  "Umar Santoso",
-  "Aep Saefudin",
-  "Amirul",
-  "Solihin",
-  "Solehan",
-  "Siswanto",
-];
 
 export function OperatorLoginForm() {
   const router = useRouter();
@@ -51,36 +32,48 @@ export function OperatorLoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nik: "",
-      vehicleNumber: "",
-      vehicleType: "",
-      location: "",
+      username: "",
+      password: "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Simulate API call and redirect
+    
+    // Simulate API call for login
+    // In a real application, this would be handled by an authentication service.
     setTimeout(() => {
-      toast({
-        title: "Login Berhasil",
-        description: `Selamat datang, ${values.operatorName}.`,
-      });
-      router.push("/checklist");
+      const validUsernames = ["umar", "aep", "amirul", "solihin", "siswanto", "operator"];
+      const username = values.username.toLowerCase();
+
+      if (validUsernames.includes(username) && values.password === "password") {
+        toast({
+          title: "Login Berhasil",
+          description: `Selamat datang, ${values.username}.`,
+        });
+        router.push("/checklist");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: "Username atau password salah.",
+        });
+        setIsLoading(false);
+      }
     }, 1000);
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="nik"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>NIK</FormLabel>
+              <FormLabel>Username (NIK/Nama)</FormLabel>
               <FormControl>
-                <Input placeholder="Masukkan NIK Anda" {...field} />
+                <Input placeholder="Masukkan NIK atau Nama Anda" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,68 +81,18 @@ export function OperatorLoginForm() {
         />
         <FormField
           control={form.control}
-          name="operatorName"
+          name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Operator/Driver</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih Nama Anda" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {operatorNames.map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="vehicleNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nomor Kendaraan</FormLabel>
+              <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input placeholder="Contoh: B 1234 XYZ" {...field} />
+                <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="vehicleType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Jenis Kendaraan</FormLabel>
-              <FormControl>
-                <Input placeholder="Contoh: Dump Truck, Excavator" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Lokasi BP</FormLabel>
-              <FormControl>
-                <Input placeholder="Contoh: Site A, Plant B" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login & Mulai Checklist
         </Button>

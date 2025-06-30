@@ -26,7 +26,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Login Operator</CardTitle>
                 <CardDescription>
-                  Masukan data Anda untuk memulai checklist harian.
+                  Masukan username dan password untuk memulai checklist harian.
                 </CardDescription>
               </CardHeader>
               <CardContent>
