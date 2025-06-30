@@ -60,8 +60,14 @@ function ChecklistForm() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     
-    if (!operator || !operator.batangan) {
-        toast({ variant: "destructive", title: "Error", description: "Sesi operator tidak valid." });
+    if (!operator || !vehicleHullNumber) {
+        toast({ variant: "destructive", title: "Error", description: "Sesi operator atau kendaraan tidak valid." });
+        setIsLoading(false);
+        return;
+    }
+
+    if (!operator.location) {
+        toast({ variant: "destructive", title: "Submit Gagal", description: "Profil Anda tidak memiliki lokasi. Mohon hubungi admin." });
         setIsLoading(false);
         return;
     }
@@ -109,7 +115,7 @@ function ChecklistForm() {
           vehicleId: vehicle.hullNumber,
           vehicleType: vehicle.type,
           operatorName: operator.name,
-          location: operator.location!,
+          location: operator.location,
           overallStatus,
           items: itemsWithUrls.filter(item => item.status !== 'BAIK').map(item => ({...item, keterangan: item.keterangan || ''})),
           kerusakanLain: kerusakanLainWithUrl.keterangan ? { keterangan: kerusakanLainWithUrl.keterangan, foto: kerusakanLainWithUrl.foto } : undefined,
