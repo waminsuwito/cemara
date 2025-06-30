@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import { User, Vehicle, Report, Location } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 
 type AppDataContextType = {
@@ -41,63 +41,52 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
 
   React.useEffect(() => {
-    // Flag to ensure we only set isDataLoaded once
-    let initialLoadsPending = 4;
-    const markLoadComplete = () => {
-      initialLoadsPending--;
-      if (initialLoadsPending === 0 && !isDataLoaded) {
+    const fetchData = async () => {
+      try {
+        // We are no longer using onSnapshot for real-time updates to debug the publish issue.
+        // We will fetch the data once.
+        const usersQuery = getDocs(collection(db, "users"));
+        const vehiclesQuery = getDocs(collection(db, "vehicles"));
+        const reportsQuery = getDocs(collection(db, "reports"));
+        const locationsQuery = getDocs(collection(db, "locations"));
+
+        const [usersSnapshot, vehiclesSnapshot, reportsSnapshot, locationsSnapshot] = await Promise.all([
+          usersQuery,
+          vehiclesQuery,
+          reportsQuery,
+          locationsQuery
+        ]);
+
+        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersList);
+
+        const vehiclesList = vehiclesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
+        setVehicles(vehiclesList);
+        
+        const reportsList = reportsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const timestamp = data.timestamp?.toMillis ? data.timestamp.toMillis() : data.timestamp;
+            return { id: doc.id, ...data, timestamp } as Report;
+        }).sort((a, b) => b.timestamp - a.timestamp);
+        setReports(reportsList);
+
+        const locationsList = locationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
+        setLocations(locationsList);
+
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast({
+            variant: "destructive",
+            title: "Gagal Memuat Data",
+            description: "Tidak dapat mengambil data dari server. Periksa koneksi internet Anda.",
+        });
+      } finally {
         setIsDataLoaded(true);
       }
     };
-
-    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
-      const usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      setUsers(usersList);
-      markLoadComplete();
-    }, (error) => {
-      console.error("Error fetching users:", error);
-      markLoadComplete();
-    });
-
-    const unsubVehicles = onSnapshot(collection(db, "vehicles"), (snapshot) => {
-      const vehiclesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
-      setVehicles(vehiclesList);
-      markLoadComplete();
-    }, (error) => {
-      console.error("Error fetching vehicles:", error);
-      markLoadComplete();
-    });
-
-    const unsubReports = onSnapshot(collection(db, "reports"), (snapshot) => {
-      const reportsList = snapshot.docs.map(doc => {
-          const data = doc.data();
-          const timestamp = data.timestamp?.toMillis ? data.timestamp.toMillis() : data.timestamp;
-          return { id: doc.id, ...data, timestamp } as Report;
-      }).sort((a, b) => b.timestamp - a.timestamp);
-      setReports(reportsList);
-      markLoadComplete();
-    }, (error) => {
-      console.error("Error fetching reports:", error);
-      markLoadComplete();
-    });
     
-    const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => {
-      const locationsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
-      setLocations(locationsList);
-      markLoadComplete();
-    }, (error) => {
-      console.error("Error fetching locations:", error);
-      markLoadComplete();
-    });
-
-    // Cleanup function to unsubscribe from listeners on component unmount
-    return () => {
-      unsubUsers();
-      unsubVehicles();
-      unsubReports();
-      unsubLocations();
-    };
-  }, []); // Empty dependency array ensures this runs only once on mount
+    fetchData();
+  }, [toast]);
   
   // CRUD for Users
   const addUser = async (user: Omit<User, 'id'>) => {
