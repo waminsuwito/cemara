@@ -85,7 +85,7 @@ export default function AdminLayout({
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Truck className="h-6 w-6 text-primary" />
-              <span className="font-headline">Heavy Duty Checklist</span>
+              <span className="font-headline">Checklis Harian Alat</span>
             </Link>
           </div>
           <div className="flex-1">
@@ -123,7 +123,7 @@ export default function AdminLayout({
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Truck className="h-6 w-6 text-primary" />
-                  <span className="sr-only">Heavy Duty Checklist</span>
+                  <span className="sr-only">Checklis Harian Alat</span>
                 </Link>
                 {navItems.map((item) => (
                   <NavLink key={item.href} {...item} />

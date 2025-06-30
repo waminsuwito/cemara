@@ -14,7 +14,7 @@ export default function Home() {
         <div className="flex justify-center items-center gap-4 mb-6">
           <Truck className="h-10 w-10 text-primary" />
           <h1 className="text-3xl font-bold text-center text-foreground font-headline">
-            Heavy Duty Checklist
+            Checklis Harian Alat
           </h1>
         </div>
         <Tabs defaultValue="operator" className="w-full">
@@ -27,7 +27,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Login Operator</CardTitle>
                 <CardDescription>
-                  Masukan email dan password untuk memulai checklist harian.
+                  Masukan NIK/Nama dan password untuk memulai checklist harian.
                 </CardDescription>
               </CardHeader>
               <CardContent>

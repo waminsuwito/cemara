@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Heavy Duty Checklist',
+  title: 'Checklis Harian Alat',
   description: 'Aplikasi untuk ceklist harian kendaraan/alat berat',
 };
 
