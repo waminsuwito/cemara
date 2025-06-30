@@ -46,7 +46,7 @@ import {
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import { cn } from "@/lib/utils";
-import { locations, type Report, type Vehicle } from "@/lib/data";
+import { type Report, type Vehicle } from "@/lib/data";
 import { format, isSameDay, isBefore, startOfToday } from "date-fns";
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
@@ -209,7 +209,7 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
-  const { vehicles, reports } = useAppData();
+  const { vehicles, reports, locationNames } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const [selectedLocation, setSelectedLocation] = useState(
@@ -281,7 +281,7 @@ export default function DashboardPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Semua Lokasi BP</SelectItem>
-              {locations.map(loc => (
+              {locationNames.map(loc => (
                 <SelectItem key={loc} value={loc}>{loc}</SelectItem>
               ))}
             </SelectContent>

@@ -7,7 +7,7 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import { initialUsers } from "@/lib/data";
+import { useAppData } from "@/context/app-data-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,7 @@ export function AdminLoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const { login } = useAdminAuth();
+  const { users } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,7 +45,7 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTimeout(() => {
-      const foundUser = initialUsers.find(
+      const foundUser = users.find(
         (u) =>
           (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
           u.username === values.username &&

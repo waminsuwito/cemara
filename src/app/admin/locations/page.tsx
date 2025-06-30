@@ -42,23 +42,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Trash2, ShieldAlert } from "lucide-react";
 import { useAdminAuth } from "@/context/admin-auth-context";
+import { useAppData } from "@/context/app-data-context";
+import type { Location } from "@/lib/data";
 
-type Location = {
-  id: number;
-  namaBP: string;
-  lokasiBP: string;
-};
-
-const initialLocations: Location[] = [
-  { id: 1, namaBP: "BP Pekanbaru", lokasiBP: "Kubang Raya" },
-  { id: 2, namaBP: "BP Baung", lokasiBP: "OKI" },
-  { id: 3, namaBP: "BP Dumai", lokasiBP: "Bagan Besar" },
-  { id: 4, namaBP: "BP IKN", lokasiBP: "Kalimantan" },
-];
 
 export default function LocationsPage() {
   const { user } = useAdminAuth();
-  const [locations, setLocations] = useState<Location[]>(initialLocations);
+  const { locations, addLocation, updateLocation, deleteLocation } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
@@ -89,7 +79,7 @@ export default function LocationsPage() {
   };
 
   const handleDelete = (locationId: number) => {
-    setLocations(locations.filter((loc) => loc.id !== locationId));
+    deleteLocation(locationId);
   };
 
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
@@ -101,14 +91,9 @@ export default function LocationsPage() {
     };
 
     if (editingLocation) {
-      setLocations(
-        locations.map((loc) =>
-          loc.id === editingLocation.id ? { ...loc, ...locationData } : loc
-        )
-      );
+      updateLocation({ ...editingLocation, ...locationData });
     } else {
-      const newLocation = { id: Date.now(), ...locationData };
-      setLocations([...locations, newLocation]);
+      addLocation(locationData);
     }
 
     setIsDialogOpen(false);

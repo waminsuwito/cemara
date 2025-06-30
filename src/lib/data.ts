@@ -48,8 +48,20 @@ export type Report = {
     overallStatus: 'Baik' | 'Rusak' | 'Perlu Perhatian';
 };
 
+export type Location = {
+  id: number;
+  namaBP: string;
+  lokasiBP: string;
+};
 
-export const locations: string[] = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
+export const initialLocations: Location[] = [
+  { id: 1, namaBP: "BP Pekanbaru", lokasiBP: "Kubang Raya" },
+  { id: 2, namaBP: "BP Baung", lokasiBP: "OKI" },
+  { id: 3, namaBP: "BP Dumai", lokasiBP: "Bagan Besar" },
+  { id: 4, namaBP: "BP IKN", lokasiBP: "Kalimantan" },
+];
+
+export const locationNames: string[] = initialLocations.map(l => l.namaBP);
 export const roles: UserRole[] = ["OPERATOR", "LOCATION_ADMIN", "SUPER_ADMIN"];
 
 export const initialUsers: User[] = [

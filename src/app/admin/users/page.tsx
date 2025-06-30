@@ -49,16 +49,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import { initialUsers, locations, roles, type User, type UserRole } from "@/lib/data";
+import { useAppData } from "@/context/app-data-context";
+import { roles, type User, type UserRole } from "@/lib/data";
 
 export default function UserManagementPage() {
-  const { user } = useAdminAuth();
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const { user: currentUser } = useAdminAuth();
+  const { users, addUser, updateUser, deleteUser, locationNames } = useAppData();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [locationFilter, setLocationFilter] = useState("all");
   
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   if (!isSuperAdmin) {
     return (
@@ -85,7 +87,7 @@ export default function UserManagementPage() {
   };
 
   const handleDelete = (userId: number) => {
-    setUsers(users.filter((u) => u.id !== userId));
+    deleteUser(userId);
   };
 
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
@@ -93,7 +95,7 @@ export default function UserManagementPage() {
     const formData = new FormData(event.currentTarget);
     const role = formData.get("role") as UserRole;
 
-    const baseData: Partial<User> = {
+    const baseData = {
       name: formData.get("name") as string,
       password: formData.get("password") as string,
       role,
@@ -118,14 +120,10 @@ export default function UserManagementPage() {
       };
     }
 
-
     if (editingUser) {
-      setUsers(
-        users.map((u) => (u.id === editingUser.id ? { id: u.id, ...(userData as User) } : u))
-      );
+      updateUser({ ...editingUser, ...(userData as Partial<User>) });
     } else {
-      const newUser = { id: Date.now(), ...(userData as User) };
-      setUsers([...users, newUser]);
+      addUser(userData);
     }
 
     setIsDialogOpen(false);
@@ -154,7 +152,7 @@ export default function UserManagementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Lokasi</SelectItem>
-                {locations.map((location) => (
+                {locationNames.map((location) => (
                   <SelectItem key={location} value={location}>
                     {location}
                   </SelectItem>
@@ -253,6 +251,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
     onSave: (e: React.FormEvent<HTMLFormElement>) => void
 }) {
     const [role, setRole] = useState<UserRole>(editingUser?.role || 'OPERATOR');
+    const { locationNames } = useAppData();
 
     React.useEffect(() => {
         if (isOpen) {
@@ -313,18 +312,18 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                 
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="password" className="text-right">Password</Label>
-                    <Input id="password" name="password" type="password" defaultValue={editingUser?.password} className="col-span-3" required />
+                    <Input id="password" name="password" type="password" defaultValue={editingUser?.password} className="col-span-3" required placeholder={editingUser ? "Isi untuk mengubah" : ""} />
                 </div>
 
                 {role !== 'SUPER_ADMIN' && (
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="location" className="text-right">Lokasi</Label>
-                         <Select name="location" defaultValue={editingUser?.location || locations[0]} required>
+                         <Select name="location" defaultValue={editingUser?.location || locationNames[0]} required>
                             <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Pilih Lokasi" />
                             </SelectTrigger>
                             <SelectContent>
-                                {locations.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                                {locationNames.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

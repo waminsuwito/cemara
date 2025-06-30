@@ -49,13 +49,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import { initialVehicles, locations, type Vehicle } from "@/lib/data";
+import { useAppData } from "@/context/app-data-context";
+import type { Vehicle } from "@/lib/data";
 
 export default function VehicleManagementPage() {
   const { user } = useAdminAuth();
+  const { vehicles, addVehicle, updateVehicle, deleteVehicle, locationNames } = useAppData();
+  
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [locationFilter, setLocationFilter] = useState(
@@ -73,7 +75,7 @@ export default function VehicleManagementPage() {
   };
 
   const handleDelete = (vehicleId: number) => {
-    setVehicles(vehicles.filter((v) => v.id !== vehicleId));
+    deleteVehicle(vehicleId);
   };
   
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
@@ -88,10 +90,9 @@ export default function VehicleManagementPage() {
     };
 
     if (editingVehicle) {
-      setVehicles(vehicles.map((v) => v.id === editingVehicle.id ? { ...v, ...vehicleData } : v));
+      updateVehicle({ ...editingVehicle, ...vehicleData });
     } else {
-      const newVehicle = { id: Date.now(), ...vehicleData };
-      setVehicles([...vehicles, newVehicle]);
+      addVehicle(vehicleData);
     }
     
     setIsDialogOpen(false);
@@ -122,7 +123,7 @@ export default function VehicleManagementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Lokasi</SelectItem>
-                {locations.map((location) => (
+                {locationNames.map((location) => (
                   <SelectItem key={location} value={location}>
                     {location}
                   </SelectItem>
@@ -235,7 +236,7 @@ export default function VehicleManagementPage() {
                     <SelectValue placeholder="Pilih Lokasi" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map(loc => (
+                    {locationNames.map(loc => (
                       <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                     ))}
                   </SelectContent>

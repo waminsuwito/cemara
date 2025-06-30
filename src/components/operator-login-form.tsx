@@ -21,7 +21,6 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
-import { initialVehicles } from "@/lib/data";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
@@ -32,7 +31,7 @@ export function OperatorLoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const { login } = useOperatorAuth();
-  const { users } = useAppData();
+  const { users, vehicles } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -55,7 +54,7 @@ export function OperatorLoginForm() {
       );
 
       if (foundUser && foundUser.batangan) {
-        const vehicle = initialVehicles.find(v => v.hullNumber === foundUser.batangan);
+        const vehicle = vehicles.find(v => v.hullNumber === foundUser.batangan);
         if (vehicle) {
             login(foundUser, vehicle.hullNumber);
             toast({
