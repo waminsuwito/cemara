@@ -21,6 +21,9 @@ export default {
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
       },
+      boxShadow: {
+        'inner-glow': 'inset 0 2px 8px 0 hsl(var(--primary) / 0.25)',
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

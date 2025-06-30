@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -45,7 +46,7 @@ const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.Element
       href={href}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-        isActive && "bg-muted text-primary"
+        isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow"
       )}
     >
       <Icon className="h-4 w-4" />
@@ -81,7 +82,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 md:block">
+      <div className="hidden border-r bg-muted/20 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -97,7 +98,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <div className="mt-auto p-4">
-            <Button size="sm" className="w-full" onClick={handleLogout}>
+            <Button size="sm" className="w-full" onClick={handleLogout} variant="secondary">
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -105,7 +106,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/20 px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -117,7 +118,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col">
+            <SheetContent side="left" className="flex flex-col bg-card/95 backdrop-blur-sm">
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
                   href="#"
@@ -131,7 +132,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 ))}
               </nav>
               <div className="mt-auto">
-                 <Button size="sm" className="w-full" onClick={handleLogout}>
+                 <Button size="sm" className="w-full" onClick={handleLogout} variant="secondary">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </Button>
@@ -150,8 +151,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-                <CircleUser className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <CircleUser className="h-5 w-5 text-primary" />
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>

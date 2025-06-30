@@ -9,7 +9,7 @@ import { Truck } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-gradient-to-br from-background via-gray-900/50 to-background">
       <div className="w-full max-w-md">
         <div className="flex justify-center items-center gap-4 mb-6">
           <Truck className="h-10 w-10 text-primary" />
@@ -23,7 +23,7 @@ export default function Home() {
             <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
           <TabsContent value="operator">
-            <Card className="border-0 shadow-none sm:border sm:shadow-sm">
+            <Card className="bg-card/80 backdrop-blur-sm border-white/10">
               <CardHeader>
                 <CardTitle>Login Operator</CardTitle>
                 <CardDescription>
@@ -36,7 +36,7 @@ export default function Home() {
             </Card>
           </TabsContent>
           <TabsContent value="admin">
-            <Card className="border-0 shadow-none sm:border sm:shadow-sm">
+            <Card className="bg-card/80 backdrop-blur-sm border-white/10">
               <CardHeader>
                 <CardTitle>Login Admin</CardTitle>
                 <CardDescription>
