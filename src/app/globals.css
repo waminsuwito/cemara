@@ -87,31 +87,38 @@ body {
 }
 
 @media print {
-  /* Hide elements on screen that should not be printed */
   .print-hide {
     display: none !important;
   }
 
-  /* Hide everything in the body by default */
-  body > * {
-    visibility: hidden;
-  }
-
-  /* Make the .print-only container and all of its children visible */
-  .print-only, .print-only * {
-    visibility: visible;
-  }
-
-  /* Position the .print-only container to fill the entire page */
-  .print-only {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: auto;
-  }
-
   body {
     background-color: white !important;
+  }
+  
+  .print-page-main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .print-page-container {
+     max-width: none !important;
+     margin: 0 !important;
+     padding: 0 !important;
+     box-shadow: none !important;
+     border: none !important;
+  }
+  
+  .print-page-report {
+     padding: 1.5cm !important;
+     font-size: 10pt;
+  }
+  .print-page-report h1 {
+    font-size: 18pt;
+  }
+  .print-page-report h2 {
+    font-size: 14pt;
+  }
+  .print-page-report h3 {
+    font-size: 12pt;
   }
 }

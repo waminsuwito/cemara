@@ -42,7 +42,7 @@ const PrintableReport = ({ selectedLocation, vehicles }: {
     ];
 
     return (
-        <div className="p-10 text-black bg-white font-sans print-only">
+        <div className="p-10 text-black bg-white font-sans print-page-report">
             <h1 className="text-3xl font-bold mb-2 text-center">PT FARIKA RIAU PERKASA</h1>
             <h2 className="text-xl font-semibold mb-4 text-center">Laporan Harian Kondisi Alat</h2>
             <div className="flex justify-between mb-6">
@@ -188,8 +188,8 @@ function PrintPageContent() {
                     </Button>
                 </div>
             </header>
-            <main className="p-8">
-                <div className="max-w-4xl mx-auto bg-white shadow-lg">
+            <main className="p-8 print-page-main">
+                <div className="max-w-4xl mx-auto bg-white shadow-lg print-page-container">
                     <PrintableReport selectedLocation={selectedLocation} vehicles={vehiclesForPrint} />
                 </div>
             </main>
