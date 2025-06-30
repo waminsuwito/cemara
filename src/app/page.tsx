@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +12,6 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-6">
-          <img 
-            src="https://drive.google.com/uc?export=view&id=1pQpxpIAqmuQUu_Aa_HuaiH9vfu_dnshz" 
-            alt="Logo PT Farika Riau Perkasa" 
-            className="w-32 mb-4"
-          />
           <p className="text-lg font-semibold text-primary tracking-wider mb-4">
             PT FARIKA RIAU PERKASA
           </p>
