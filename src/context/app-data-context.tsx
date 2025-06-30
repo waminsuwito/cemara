@@ -27,6 +27,7 @@ type AppDataContextType = {
   addLocation: (location: Omit<Location, 'id'>) => Promise<void>;
   updateLocation: (location: Location) => Promise<void>;
   deleteLocation: (locationId: string) => Promise<void>;
+  isDataLoaded: boolean;
 };
 
 const AppDataContext = React.createContext<AppDataContextType | null>(null);
@@ -36,10 +37,13 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribes: (() => void)[] = [];
+    let loadedCount = 0;
+    const totalCollections = 4;
 
     const collectionsToWatch = [
       { name: 'users', setter: setUsers },
@@ -60,6 +64,12 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             return { id: doc.id, ...docData };
         });
         setter(data as any);
+        
+        loadedCount++;
+        if(loadedCount === totalCollections) {
+            setIsDataLoaded(true);
+        }
+
       }, (error) => {
         console.error(`Error fetching ${name}: `, error);
         toast({
@@ -178,7 +188,14 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-        throw new Error(`Laporan untuk kendaraan ${newReportData.vehicleId} hari ini sudah ada.`);
+        // Find the vehicle in the state to get more details for the error message.
+        const vehicle = vehicles.find(v => v.hullNumber === newReportData.vehicleId);
+        // Construct a more descriptive identifier. Show type and license plate if possible.
+        const vehicleIdentifier = vehicle 
+            ? `${vehicle.type} (${vehicle.licensePlate})` 
+            : newReportData.vehicleId; // Fallback to hull number if not found
+
+        throw new Error(`Laporan untuk kendaraan ${vehicleIdentifier} hari ini sudah ada.`);
     }
 
     const reportWithTimestamp = {
@@ -196,6 +213,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     vehicles, addVehicle, updateVehicle, deleteVehicle,
     reports, submitReport,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
+    isDataLoaded,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
