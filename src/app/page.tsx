@@ -1,7 +1,6 @@
 
 "use client";
 
-import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OperatorLoginForm } from "@/components/operator-login-form";
@@ -12,17 +11,15 @@ export default function Home() {
   const logoUrl = "https://i.ibb.co/68z01P6/logo-farika.png";
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-gradient-to-br from-background via-purple-900/50 to-background">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-6">
-           <Image
+           <img
             src={logoUrl}
             alt="Logo PT Farika Riau Perkasa"
             width={128}
             height={128}
             className="mb-4"
-            priority
-            data-ai-hint="company logo"
           />
           <p className="text-lg font-semibold text-primary tracking-wider">
             PT FARIKA RIAU PERKASA
