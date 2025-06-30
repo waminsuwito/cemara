@@ -211,7 +211,11 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 };
 
 // Printable Report Component
-const PrintableDashboard = ({ stats, selectedLocation }: { stats: { label: string, value: number }[], selectedLocation: string }) => {
+const PrintableDashboard = ({ stats, selectedLocation, vehicles }: { 
+    stats: { label: string, value: number }[], 
+    selectedLocation: string,
+    vehicles: VehicleWithStatus[] 
+}) => {
     const locationDisplay = selectedLocation === 'all' ? 'Semua Lokasi' : selectedLocation;
     const printDate = format(new Date(), 'dd MMMM yyyy', { locale: localeID });
 
@@ -223,6 +227,8 @@ const PrintableDashboard = ({ stats, selectedLocation }: { stats: { label: strin
                 <p><span className="font-semibold">Lokasi:</span> {locationDisplay}</p>
                 <p><span className="font-semibold">Tanggal:</span> {printDate}</p>
             </div>
+            
+            <h3 className="text-lg font-semibold mb-2 mt-6">Ringkasan Status</h3>
             <table className="w-full text-sm border-collapse border border-gray-600">
                 <thead>
                     <tr className="bg-gray-200">
@@ -239,6 +245,31 @@ const PrintableDashboard = ({ stats, selectedLocation }: { stats: { label: strin
                     ))}
                 </tbody>
             </table>
+
+            <h3 className="text-lg font-semibold mb-2 mt-8">Daftar Alat dan Operator</h3>
+            <table className="w-full text-sm border-collapse border border-gray-600">
+                <thead>
+                    <tr className="bg-gray-200">
+                        <th className="border border-gray-600 p-2 text-left">No.</th>
+                        <th className="border border-gray-600 p-2 text-left">Nomor Lambung</th>
+                        <th className="border border-gray-600 p-2 text-left">Jenis Alat</th>
+                        <th className="border border-gray-600 p-2 text-left">Sopir/Operator</th>
+                        <th className="border border-gray-600 p-2 text-left">Status Hari Ini</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {vehicles.map((vehicle, index) => (
+                        <tr key={vehicle.id} className="even:bg-gray-50">
+                            <td className="border border-gray-600 p-2">{index + 1}</td>
+                            <td className="border border-gray-600 p-2">{vehicle.hullNumber}</td>
+                            <td className="border border-gray-600 p-2">{vehicle.type}</td>
+                            <td className="border border-gray-600 p-2">{vehicle.operator}</td>
+                            <td className="border border-gray-600 p-2">{vehicle.status}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
             <div className="mt-12 text-sm text-gray-500">
                 <p>Laporan ini dibuat secara otomatis oleh sistem Checklist Harian Alat.</p>
                 <p>Dicetak pada: {format(new Date(), 'dd MMMM yyyy, HH:mm:ss')}</p>
@@ -323,20 +354,20 @@ export default function DashboardPage() {
   return (
     <>
       <div className="print-only">
-          <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} />
+          <PrintableDashboard stats={reportStats} selectedLocation={selectedLocation} vehicles={masterVehiclesForLocation} />
       </div>
 
-      <div className="flex flex-col gap-4 lg:gap-6">
+      <div className="flex flex-col gap-4 lg:gap-6 no-print">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
           <div className="flex items-center space-x-2">
-            <button 
-              onClick={handlePrint} 
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
-            >
-              <Printer className="mr-2 h-4 w-4" />
-              Print Laporan
-            </button>
+           <button 
+             onClick={handlePrint} 
+             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
+           >
+             <Printer className="mr-2 h-4 w-4" />
+             Print Laporan
+           </button>
             <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Semua Lokasi BP" />
