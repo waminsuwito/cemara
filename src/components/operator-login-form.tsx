@@ -57,23 +57,31 @@ export function OperatorLoginForm() {
         return userNik === inputUsername || userName === inputUsername;
       });
 
-      if (foundUser && foundUser.batangan) {
-        const vehicle = vehicles.find(v => 
-            v.hullNumber?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
-        );
-        
-        if (vehicle) {
-            login(foundUser, vehicle.hullNumber);
-            toast({
-              title: "Login Berhasil",
-              description: `Selamat datang, ${foundUser.name}.`,
-            });
-            router.push("/checklist");
+      if (foundUser) {
+        if (foundUser.batangan) {
+            const vehicle = vehicles.find(v => 
+                v.hullNumber?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
+            );
+            
+            if (vehicle) {
+                login(foundUser, vehicle.hullNumber);
+                toast({
+                  title: "Login Berhasil",
+                  description: `Selamat datang, ${foundUser.name}.`,
+                });
+                router.push("/checklist");
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Login Gagal",
+                    description: `Kendaraan dengan nomor lambung "${foundUser.batangan}" tidak ditemukan. Pastikan data "Batangan" di profil Operator cocok dengan "Nomor Lambung" di data Alat.`,
+                });
+            }
         } else {
              toast({
                 variant: "destructive",
                 title: "Login Gagal",
-                description: "Kendaraan yang ditugaskan untuk Anda tidak ditemukan.",
+                description: `Operator "${foundUser.name}" tidak memiliki kendaraan (batangan) yang ditugaskan.`,
             });
         }
       } else {
