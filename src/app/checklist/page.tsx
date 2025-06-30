@@ -66,41 +66,52 @@ function ChecklistForm() {
         return;
     }
 
+    const vehicle = vehicles.find(v => v.hullNumber === vehicleHullNumber);
+
+    if (!vehicle) {
+        toast({ variant: "destructive", title: "Error", description: `Kendaraan dengan nomor lambung "${vehicleHullNumber}" tidak ditemukan.` });
+        setIsLoading(false);
+        return;
+    }
+    
     if (!operator.location) {
         toast({ variant: "destructive", title: "Submit Gagal", description: "Profil Anda tidak memiliki lokasi. Mohon hubungi admin." });
         setIsLoading(false);
         return;
     }
 
-    const vehicle = vehicles.find(v => v.hullNumber.trim().toLowerCase() === vehicleHullNumber.trim().toLowerCase());
-    if (!vehicle) {
-        toast({ variant: "destructive", title: "Error", description: `Kendaraan dengan nomor lambung "${vehicleHullNumber}" tidak ditemukan.` });
-        setIsLoading(false);
-        return;
-    }
-
     try {
-      const uploadImageAndGetURL = async (file: File) => {
+      const uploadImageAndGetURL = async (file: File): Promise<string | undefined> => {
         if (!file || !(file instanceof File)) return undefined;
         const storageRef = ref(storage, `report-images/${uuidv4()}-${file.name}`);
         await uploadBytes(storageRef, file);
-        return await getDownloadURL(storageRef);
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
       };
 
-      const processedItems = await Promise.all(
-        data.items.map(async (item) => ({
+      const reportItems: ReportItem[] = [];
+      for (const item of data.items) {
+        if (item.status !== 'BAIK') {
+          const cleanItem: ReportItem = {
             id: item.id,
             label: item.label,
             status: item.status,
-            keterangan: item.keterangan,
-            foto: await uploadImageAndGetURL(item.foto),
-        }))
-      );
+            keterangan: item.keterangan || '',
+          };
+          if (item.foto) {
+            const fotoUrl = await uploadImageAndGetURL(item.foto);
+            if (fotoUrl) {
+              cleanItem.foto = fotoUrl;
+            }
+          }
+          reportItems.push(cleanItem);
+        }
+      }
 
       const kerusakanLainFotoUrl = await uploadImageAndGetURL(data.kerusakanLain.foto);
       
-      const damagedItems = processedItems.filter(item => item.status === 'RUSAK');
-      const needsAttentionItems = processedItems.filter(item => item.status === 'PERLU PERHATIAN');
+      const damagedItems = reportItems.filter(item => item.status === 'RUSAK');
+      const needsAttentionItems = reportItems.filter(item => item.status === 'PERLU PERHATIAN');
       const hasOtherDamage = data.kerusakanLain.keterangan.trim() !== '';
       
       let overallStatus: Report['overallStatus'] = 'Baik';
@@ -109,22 +120,6 @@ function ChecklistForm() {
       } else if (needsAttentionItems.length > 0) {
           overallStatus = 'Perlu Perhatian';
       }
-
-      const reportItems: ReportItem[] = [];
-      processedItems
-        .filter(item => item.status !== 'BAIK')
-        .forEach(item => {
-            const cleanItem: ReportItem = {
-                id: item.id,
-                label: item.label,
-                status: item.status,
-                keterangan: item.keterangan || '',
-            };
-            if (item.foto) {
-                cleanItem.foto = item.foto;
-            }
-            reportItems.push(cleanItem);
-        });
 
       const reportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'> = {
           vehicleId: vehicle.hullNumber,
@@ -135,14 +130,13 @@ function ChecklistForm() {
           items: reportItems,
       };
       
-      if (data.kerusakanLain.keterangan) {
-          const kerusakanLainData: { keterangan: string, foto?: string } = {
+      if (hasOtherDamage) {
+          reportData.kerusakanLain = {
               keterangan: data.kerusakanLain.keterangan,
           };
           if (kerusakanLainFotoUrl) {
-              kerusakanLainData.foto = kerusakanLainFotoUrl;
+              reportData.kerusakanLain.foto = kerusakanLainFotoUrl;
           }
-          reportData.kerusakanLain = kerusakanLainData;
       }
       
       await submitReport(reportData);

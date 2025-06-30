@@ -1,12 +1,12 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
-import React from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Vehicle, Report, Location } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 type AppDataContextType = {
   users: User[];
@@ -32,42 +32,170 @@ type AppDataContextType = {
 const AppDataContext = React.createContext<AppDataContextType | null>(null);
 
 export const AppDataProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = React.useState<User[]>([]);
-  const [vehicles, setVehicles] = React.useState<Vehicle[]>([]);
-  const [reports, setReports] = React.useState<Report[]>([]);
-  const [locations, setLocations] = React.useState<Location[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = React.useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const unsubscribes: (() => void)[] = [];
 
-  // DEBUG: Temporarily disable all data fetching to isolate publish error
-  React.useEffect(() => {
-    // We set empty data and mark as loaded to allow the app to render.
-    // This will break functionality, but is a test to see if Firebase calls
-    // are causing the build to fail.
-    setIsDataLoaded(true);
+    const collectionsToWatch = [
+      { name: 'users', setter: setUsers },
+      { name: 'vehicles', setter: setVehicles },
+      { name: 'reports', setter: setReports },
+      { name: 'locations', setter: setLocations },
+    ];
+    
+    collectionsToWatch.forEach(({ name, setter }) => {
+      const q = query(collection(db, name));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const data = querySnapshot.docs.map(doc => {
+            const docData = doc.data();
+            // Convert Firestore Timestamps to JS numbers for client-side usage
+            if (docData.timestamp && docData.timestamp instanceof Timestamp) {
+                docData.timestamp = docData.timestamp.toMillis();
+            }
+            return { id: doc.id, ...docData };
+        });
+        setter(data as any);
+      }, (error) => {
+        console.error(`Error fetching ${name}: `, error);
+        toast({
+            variant: "destructive",
+            title: `Gagal Memuat Data ${name}`,
+            description: "Terjadi masalah saat mengambil data. Silakan coba muat ulang halaman.",
+        });
+      });
+      unsubscribes.push(unsubscribe);
+    });
+
+    // Assume data is 'loaded' after setting up listeners.
+    // The UI will be reactive to data arriving.
+    const timer = setTimeout(() => {
+        setIsDataLoaded(true);
+    }, 1500); // Give it a moment to fetch initial data to avoid flicker.
+
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+      clearTimeout(timer);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const addUser = async (userData: Omit<User, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'users'), userData);
+      toast({ title: "Sukses", description: "Pengguna baru berhasil ditambahkan." });
+    } catch (e) {
+      console.error("Error adding user: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menambahkan pengguna." });
+    }
+  };
+
+  const updateUser = async (user: User) => {
+    const { id, ...userData } = user;
+    try {
+      await updateDoc(doc(db, 'users', id), userData);
+      toast({ title: "Sukses", description: "Data pengguna berhasil diperbarui." });
+    } catch (e) {
+      console.error("Error updating user: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui data pengguna." });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      toast({ title: "Sukses", description: "Pengguna berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting user: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus pengguna." });
+    }
+  };
+
+  const addVehicle = async (vehicleData: Omit<Vehicle, 'id'>) => {
+    try {
+        await addDoc(collection(db, 'vehicles'), vehicleData);
+        toast({ title: "Sukses", description: "Alat baru berhasil ditambahkan." });
+    } catch (e) {
+        console.error("Error adding vehicle: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal menambahkan alat." });
+    }
+  };
+
+  const updateVehicle = async (vehicle: Vehicle) => {
+    const { id, ...vehicleData } = vehicle;
+    try {
+        await updateDoc(doc(db, 'vehicles', id), vehicleData);
+        toast({ title: "Sukses", description: "Data alat berhasil diperbarui." });
+    } catch (e) {
+        console.error("Error updating vehicle: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui data alat." });
+    }
+  };
+
+  const deleteVehicle = async (vehicleId: string) => {
+    try {
+        await deleteDoc(doc(db, 'vehicles', vehicleId));
+        toast({ title: "Sukses", description: "Alat berhasil dihapus." });
+    } catch (e) {
+        console.error("Error deleting vehicle: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal menghapus alat." });
+    }
+  };
   
-  // CRUD functions are now placeholders to prevent runtime errors
-  const addUser = async (user: Omit<User, 'id'>) => { console.log('addUser disabled for debugging'); };
-  const updateUser = async (updatedUser: User) => { console.log('updateUser disabled for debugging'); };
-  const deleteUser = async (userId: string) => { console.log('deleteUser disabled for debugging'); };
+  const addLocation = async (locationData: Omit<Location, 'id'>) => {
+    try {
+        await addDoc(collection(db, 'locations'), locationData);
+        toast({ title: "Sukses", description: "Lokasi baru berhasil ditambahkan." });
+    } catch (e) {
+        console.error("Error adding location: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal menambahkan lokasi." });
+    }
+  };
 
-  const addVehicle = async (vehicle: Omit<Vehicle, 'id'>) => { console.log('addVehicle disabled for debugging'); };
-  const updateVehicle = async (updatedVehicle: Vehicle) => { console.log('updateVehicle disabled for debugging'); };
-  const deleteVehicle = async (vehicleId: string) => { console.log('deleteVehicle disabled for debugging'); };
+  const updateLocation = async (location: Location) => {
+      const { id, ...locationData } = location;
+      try {
+          await updateDoc(doc(db, 'locations', id), locationData);
+          toast({ title: "Sukses", description: "Data lokasi berhasil diperbarui." });
+      } catch (e) {
+          console.error("Error updating location: ", e);
+          toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui data lokasi." });
+      }
+  };
 
-  const addLocation = async (location: Omit<Location, 'id'>) => { console.log('addLocation disabled for debugging'); };
-  const updateLocation = async (updatedLocation: Location) => { console.log('updateLocation disabled for debugging'); };
-  const deleteLocation = async (locationId: string) => { console.log('deleteLocation disabled for debugging'); };
+  const deleteLocation = async (locationId: string) => {
+      try {
+          await deleteDoc(doc(db, 'locations', locationId));
+          toast({ title: "Sukses", description: "Lokasi berhasil dihapus." });
+      } catch (e) {
+          console.error("Error deleting location: ", e);
+          toast({ variant: "destructive", title: "Error", description: "Gagal menghapus lokasi." });
+      }
+  };
   
   const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => {
-    console.log('submitReport disabled for debugging');
-    toast({
-      variant: "destructive",
-      title: "Fitur Dinonaktifkan",
-      description: "Pengiriman laporan dinonaktifkan untuk sementara selama proses debug.",
-    });
+    const today = new Date();
+    const reportDateStr = format(today, 'yyyy-MM-dd');
+
+    const reportsRef = collection(db, 'reports');
+    const q = query(reportsRef, where("vehicleId", "==", newReportData.vehicleId), where("reportDate", "==", reportDateStr));
+    
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        throw new Error(`Laporan untuk kendaraan ${newReportData.vehicleId} hari ini sudah ada.`);
+    }
+
+    const reportWithTimestamp = {
+      ...newReportData,
+      timestamp: serverTimestamp(),
+      reportDate: reportDateStr,
+    };
+    await addDoc(collection(db, 'reports'), reportWithTimestamp);
   };
 
   const locationNames = locations.map(l => l.namaBP).sort();
@@ -82,7 +210,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   if (!isDataLoaded) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
-            Memuat data (Mode Debug)...
+            Memuat data...
         </div>
     );
   }
@@ -91,7 +219,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAppData = () => {
-  const context = React.useContext(AppDataContext);
+  const context = useContext(AppDataContext);
   if (!context) {
     throw new Error('useAppData must be used within an AppDataProvider');
   }
