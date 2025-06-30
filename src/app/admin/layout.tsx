@@ -43,7 +43,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/admin/reports", icon: FileText, label: "Daftar Laporan" },
+  { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat" },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi" },
   { href: "/admin/users", icon: Users, label: "Manajemen Pengguna" },
   { href: "/admin/analysis", icon: LineChart, label: "Laporan dan Analisis" },
