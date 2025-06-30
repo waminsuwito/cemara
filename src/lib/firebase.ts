@@ -3,25 +3,15 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// =================================================================
-// >> PENTING <<
-// Ganti nilai-nilai di bawah ini dengan konfigurasi proyek Firebase Anda
-// yang bisa Anda dapatkan dari konsol Firebase.
-//
-// Cara menemukan kunci ini:
-// 1. Buka Firebase Console (https://console.firebase.google.com/)
-// 2. Pilih Proyek Anda
-// 3. Klik ikon gerigi (⚙️) -> Project settings
-// 4. Gulir ke bawah ke "Your apps"
-// 5. Pilih aplikasi web Anda dan salin konfigurasinya di sini.
-// =================================================================
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // GANTI DENGAN API KEY ANDA
-  authDomain: "your-project-id.firebaseapp.com",     // GANTI DENGAN AUTH DOMAIN ANDA
-  projectId: "your-project-id",                     // GANTI DENGAN PROJECT ID ANDA
-  storageBucket: "your-project-id.appspot.com",   // GANTI DENGAN STORAGE BUCKET ANDA
-  messagingSenderId: "123456789012",                // GANTI DENGAN MESSAGING SENDER ID ANDA
-  appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0" // GANTI DENGAN APP ID ANDA
+  apiKey: "AIzaSyCqlLDtfD8i0SgfIb9mZEcwb8o9EnpQxug",
+  authDomain: "frp-ceklist-armada.firebaseapp.com",
+  projectId: "frp-ceklist-armada",
+  storageBucket: "frp-ceklist-armada.appspot.com",
+  messagingSenderId: "428879600526",
+  appId: "1:428879600526:web:0437c1c03b11914a3ba2df",
+  measurementId: "G-PHZC8ZV670"
 };
 
 // Initialize Firebase
