@@ -26,6 +26,8 @@ import {
   CheckCircle2,
   Truck,
   Wrench,
+  ClipboardCheck,
+  ClipboardX,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +41,7 @@ import {
 const recentReports = [
   {
     operator: "Umar Santoso",
+    vehicleId: "EX-01",
     vehicle: "Excavator EX-01",
     location: "Site A",
     status: "Perlu Perhatian",
@@ -46,6 +49,7 @@ const recentReports = [
   },
   {
     operator: "Aep Saefudin",
+    vehicleId: "DT-05",
     vehicle: "Dump Truck DT-05",
     location: "Site B",
     status: "Baik",
@@ -53,6 +57,7 @@ const recentReports = [
   },
   {
     operator: "Amirul",
+    vehicleId: "BD-02",
     vehicle: "Bulldozer BD-02",
     location: "Site A",
     status: "Rusak",
@@ -60,6 +65,7 @@ const recentReports = [
   },
   {
     operator: "Solihin",
+    vehicleId: "GD-03",
     vehicle: "Grader GD-03",
     location: "Site C",
     status: "Baik",
@@ -67,6 +73,7 @@ const recentReports = [
   },
   {
     operator: "Siswanto",
+    vehicleId: "CP-01",
     vehicle: "Compactor CP-01",
     location: "Site B",
     status: "Baik",
@@ -98,6 +105,10 @@ const allVehicles: {id: string; type: string; operator: string; location: string
     operator: `Operator ${i+1}`
   }))
 ].sort((a, b) => a.id.localeCompare(b.id));
+
+const checkedInVehicleIds = recentReports.map(r => r.vehicleId);
+const checkedInVehicles = allVehicles.filter(v => checkedInVehicleIds.includes(v.id));
+const notCheckedInVehicles = allVehicles.filter(v => !checkedInVehicleIds.includes(v.id));
 
 const StatCard = ({ title, value, icon: Icon, description }: { title: string, value: string, icon: React.ElementType, description: string }) => (
     <Card className="hover:bg-muted/50 transition-colors">
@@ -156,6 +167,13 @@ const DetailTable = ({ vehicles, statusFilter }: { vehicles: typeof allVehicles,
 };
 
 export default function DashboardPage() {
+  const totalCount = allVehicles.length;
+  const baikCount = allVehicles.filter((v) => v.status === "Baik").length;
+  const rusakCount = allVehicles.filter((v) => v.status === "Rusak").length;
+  const perhatianCount = allVehicles.filter((v) => v.status === "Perlu Perhatian").length;
+  const checkedInCount = checkedInVehicles.length;
+  const notCheckedInCount = notCheckedInVehicles.length;
+
   return (
     <>
       <div className="flex items-center justify-between space-y-2">
@@ -174,11 +192,11 @@ export default function DashboardPage() {
           </Select>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Total Alat" value="72" icon={Truck} description="Total semua alat berat" />
+                    <StatCard title="Total Alat" value={`${totalCount}`} icon={Truck} description="Total semua alat berat" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
@@ -191,11 +209,45 @@ export default function DashboardPage() {
                 <DetailTable vehicles={allVehicles} />
             </DialogContent>
         </Dialog>
-        
+
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Alat Baik" value="65" icon={CheckCircle2} description="+5 dari kemarin" />
+                    <StatCard title="Alat Sudah Checklist" value={`${checkedInCount}`} icon={ClipboardCheck} description="Alat yang sudah dicek hari ini" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Alat Sudah Checklist</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar alat berat yang sudah melakukan checklist.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={checkedInVehicles} />
+            </DialogContent>
+        </Dialog>
+
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Alat Belum Checklist" value={`${notCheckedInCount}`} icon={ClipboardX} description="Alat yang belum dicek hari ini" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Alat Belum Checklist</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar alat berat yang belum melakukan checklist.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={notCheckedInVehicles} />
+            </DialogContent>
+        </Dialog>
+
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Alat Baik" value={`${baikCount}`} icon={CheckCircle2} description="+5 dari kemarin" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
@@ -212,24 +264,7 @@ export default function DashboardPage() {
         <Dialog>
             <DialogTrigger asChild>
                 <div className="cursor-pointer">
-                    <StatCard title="Alat Rusak" value="2" icon={Wrench} description="+1 dari kemarin" />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px]">
-                <DialogHeader>
-                    <DialogTitle>Detail Alat Rusak</DialogTitle>
-                    <DialogDescription>
-                        Berikut adalah daftar semua alat berat yang rusak.
-                    </DialogDescription>
-                </DialogHeader>
-                <DetailTable vehicles={allVehicles} statusFilter="Rusak" />
-            </DialogContent>
-        </Dialog>
-
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer">
-                    <StatCard title="Perlu Perhatian" value="5" icon={AlertTriangle} description="-2 dari kemarin" />
+                    <StatCard title="Perlu Perhatian" value={`${perhatianCount}`} icon={AlertTriangle} description="-2 dari kemarin" />
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[800px]">
@@ -240,6 +275,23 @@ export default function DashboardPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <DetailTable vehicles={allVehicles} statusFilter="Perlu Perhatian" />
+            </DialogContent>
+        </Dialog>
+        
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="cursor-pointer">
+                    <StatCard title="Alat Rusak" value={`${rusakCount}`} icon={Wrench} description="+1 dari kemarin" />
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Detail Alat Rusak</DialogTitle>
+                    <DialogDescription>
+                        Berikut adalah daftar semua alat berat yang rusak.
+                    </DialogDescription>
+                </DialogHeader>
+                <DetailTable vehicles={allVehicles} statusFilter="Rusak" />
             </DialogContent>
         </Dialog>
       </div>
