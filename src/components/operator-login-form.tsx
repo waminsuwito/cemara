@@ -46,15 +46,22 @@ export function OperatorLoginForm() {
     setIsLoading(true);
     
     setTimeout(() => {
-      const foundUser = users.find(
-        (user) =>
-          user.role === 'OPERATOR' &&
-          (String(user.nik) === values.username || (user.name && user.name.toLowerCase() === values.username.toLowerCase())) &&
-          user.password === values.password
-      );
+      const foundUser = users.find((user) => {
+        if (user.role !== 'OPERATOR' || user.password !== values.password) {
+            return false;
+        }
+        const inputUsername = values.username.trim().toLowerCase();
+        const userNik = user.nik?.toString().trim().toLowerCase();
+        const userName = user.name?.trim().toLowerCase();
+        
+        return userNik === inputUsername || userName === inputUsername;
+      });
 
       if (foundUser && foundUser.batangan) {
-        const vehicle = vehicles.find(v => v.hullNumber === foundUser.batangan);
+        const vehicle = vehicles.find(v => 
+            v.hullNumber?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
+        );
+        
         if (vehicle) {
             login(foundUser, vehicle.hullNumber);
             toast({
