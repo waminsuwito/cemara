@@ -6,8 +6,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +21,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Format email tidak valid." }),
+  username: z.string().min(1, { message: "Username harus diisi." }),
   password: z.string().min(1, { message: "Password harus diisi." }),
 });
 
@@ -35,30 +33,29 @@ export function AdminLoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Login Berhasil",
-        description: "Anda akan diarahkan ke dashboard admin.",
-      });
-      router.push("/admin/dashboard");
-    } catch (error) {
-      console.error("Firebase login error:", error);
-      toast({
-        variant: "destructive",
-        title: "Login Gagal",
-        description: "Email atau password salah. Pastikan Anda sudah terdaftar.",
-      });
-    } finally {
+    setTimeout(() => {
+      if (values.username === "admin" && values.password === "1") {
+        toast({
+          title: "Login Berhasil",
+          description: "Anda akan diarahkan ke dashboard admin.",
+        });
+        router.push("/admin/dashboard");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: "Username atau password salah.",
+        });
+      }
       setIsLoading(false);
-    }
+    }, 1000);
   }
 
   return (
@@ -66,12 +63,12 @@ export function AdminLoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="email"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="admin@example.com" {...field} />
+                <Input placeholder="admin" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

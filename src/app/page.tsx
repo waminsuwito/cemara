@@ -40,7 +40,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Login Admin</CardTitle>
                 <CardDescription>
-                  Masuk ke panel admin untuk memonitor laporan.
+                  Masukan username dan password untuk memonitor laporan.
                 </CardDescription>
               </CardHeader>
               <CardContent>
