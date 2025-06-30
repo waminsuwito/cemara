@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,32 +13,44 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Camera, FileImage } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
+import { Camera } from "lucide-react";
+import { Collapsible, CollapsibleContent } from "./ui/collapsible";
 import { Button } from "./ui/button";
+import { useFormContext, Controller } from "react-hook-form";
 
 type Status = "BAIK" | "RUSAK" | "PERLU PERHATIAN";
 
 type ChecklistItemProps = {
   label: string;
+  index: number;
 };
 
-export function ChecklistItem({ label }: ChecklistItemProps) {
-  const [status, setStatus] = useState<Status>("BAIK");
-  const showDetails = status === "RUSAK" || status === "PERLU PERHATIAN";
-  const [isOpen, setIsOpen] = useState(false);
+export function ChecklistItem({ label, index }: ChecklistItemProps) {
+  const { control, watch, setValue } = useFormContext();
+  const status: Status = watch(`items.${index}.status`);
+  const [isOpen, setIsOpen] = useState(status !== "BAIK");
   const [imageName, setImageName] = useState("");
 
   const handleStatusChange = (newStatus: Status) => {
-    setStatus(newStatus);
-    setIsOpen(newStatus === "RUSAK" || newStatus === "PERLU PERHATIAN");
+    setValue(`items.${index}.status`, newStatus, { shouldValidate: true });
+    setIsOpen(newStatus !== "BAIK");
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setImageName(event.target.files[0].name);
+      const file = event.target.files[0];
+      setImageName(file.name);
+      // In a real app, you'd upload this and store the URL,
+      // for now we'll just store the name as a placeholder.
+      // Or convert to base64
+       const reader = new FileReader();
+       reader.onloadend = () => {
+         setValue(`items.${index}.foto`, reader.result as string, { shouldValidate: true });
+       };
+       reader.readAsDataURL(file);
     } else {
       setImageName("");
+      setValue(`items.${index}.foto`, "", { shouldValidate: true });
     }
   };
 
@@ -67,14 +80,17 @@ export function ChecklistItem({ label }: ChecklistItemProps) {
             </div>
           </RadioGroup>
           
-          <CollapsibleTrigger asChild>
-            <button className="hidden">Toggle</button>
-          </CollapsibleTrigger>
-          
           <CollapsibleContent className="space-y-4 pt-4 animate-accordion-down">
-            <Textarea
-              placeholder="Tuliskan keterangan kerusakan..."
-              className="mt-4"
+            <Controller
+              name={`items.${index}.keterangan`}
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  {...field}
+                  placeholder="Tuliskan keterangan kerusakan..."
+                  className="mt-4"
+                />
+              )}
             />
             <div className="relative">
               <Input type="file" id={`file-${label}`} className="pr-10" accept="image/*" onChange={handleFileChange} />
@@ -96,14 +112,24 @@ export function ChecklistItem({ label }: ChecklistItemProps) {
 }
 
 export function OtherDamageItem() {
+  const { control, setValue } = useFormContext();
   const [imageName, setImageName] = useState("");
+  
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setImageName(event.target.files[0].name);
+      const file = event.target.files[0];
+      setImageName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setValue('kerusakanLain.foto', reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
     } else {
       setImageName("");
+      setValue('kerusakanLain.foto', '', { shouldValidate: true });
     }
   };
+
   return (
     <Card className="md:col-span-2 lg:col-span-1">
       <CardHeader>
@@ -113,7 +139,13 @@ export function OtherDamageItem() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Textarea placeholder="Tuliskan keterangan kerusakan lainnya..." />
+        <Controller
+          name="kerusakanLain.keterangan"
+          control={control}
+          render={({ field }) => (
+            <Textarea {...field} placeholder="Tuliskan keterangan kerusakan lainnya..." />
+          )}
+        />
         <div className="relative">
           <Input type="file" id="file-other" className="pr-10" accept="image/*" onChange={handleFileChange} />
           <Label htmlFor="file-other" className="absolute right-2 top-1/2 -translate-y-1/2">

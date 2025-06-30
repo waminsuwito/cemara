@@ -1,35 +1,147 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChecklistItem, OtherDamageItem } from "@/components/checklist-item";
 import { Header } from "@/components/header";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { checklistItems } from "@/lib/data";
+import { useOperatorAuth } from "@/context/operator-auth-context";
+import { useAppData } from "@/context/app-data-context";
+import { checklistItems, Report, initialVehicles } from "@/lib/data";
+import { useForm, FormProvider } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export default function ChecklistPage() {
+const formSchema = z.object({
+  items: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    status: z.enum(["BAIK", "RUSAK", "PERLU PERHATIAN"]),
+    keterangan: z.string(),
+    foto: z.string().optional(),
+  })),
+  kerusakanLain: z.object({
+    keterangan: z.string(),
+    foto: z.string().optional(),
+  }),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+function ChecklistForm() {
+  const { user: operator, logout } = useOperatorAuth();
+  const { submitReport, vehicles } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsLoading(true);
+  const methods = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      items: checklistItems.map((item) => ({
+        ...item,
+        status: "BAIK",
+        keterangan: "",
+        foto: "",
+      })),
+      kerusakanLain: {
+        keterangan: "",
+        foto: "",
+      },
+    },
+  });
 
-    // In a real app, you would collect data from all child components
-    // and send it to the server.
+  const onSubmit = (data: FormData) => {
+    setIsLoading(true);
+    
+    if (!operator || !operator.batangan) {
+        toast({ variant: "destructive", title: "Error", description: "Sesi operator tidak valid." });
+        setIsLoading(false);
+        return;
+    }
+
+    const vehicle = vehicles.find(v => v.hullNumber === operator.batangan);
+    if (!vehicle) {
+        toast({ variant: "destructive", title: "Error", description: "Kendaraan tidak ditemukan." });
+        setIsLoading(false);
+        return;
+    }
+
+    const damagedItems = data.items.filter(item => item.status === 'RUSAK');
+    const needsAttentionItems = data.items.filter(item => item.status === 'PERLU PERHATIAN');
+    
+    let overallStatus: Report['overallStatus'] = 'Baik';
+    if (damagedItems.length > 0) {
+        overallStatus = 'Rusak';
+    } else if (needsAttentionItems.length > 0) {
+        overallStatus = 'Perlu Perhatian';
+    }
+
+    const reportData: Omit<Report, 'id' | 'timestamp'> = {
+        vehicleId: vehicle.hullNumber,
+        vehicleType: vehicle.type,
+        operatorName: operator.name,
+        location: operator.location!,
+        overallStatus,
+        items: data.items.filter(item => item.status !== 'BAIK').map(item => ({...item, keterangan: item.keterangan || ''})),
+        kerusakanLain: data.kerusakanLain.keterangan ? { keterangan: data.kerusakanLain.keterangan, foto: data.kerusakanLain.foto } : undefined,
+    };
+    
+    submitReport(reportData);
+    
     setTimeout(() => {
       setIsLoading(false);
       toast({
         title: "Laporan Terkirim",
         description: "Checklist harian Anda telah berhasil dikirim.",
       });
+      logout();
       router.push("/");
-    }, 1500);
+    }, 1000);
   };
+  
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(onSubmit)} className="grid gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {checklistItems.map((item, index) => (
+            <ChecklistItem key={item.id} index={index} label={item.label} />
+          ))}
+          <OtherDamageItem />
+        </div>
+
+        <div className="flex justify-end">
+          <Button size="lg" type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Kirim Laporan
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
+  );
+}
+
+
+export default function ChecklistPage() {
+  const { user, isLoading } = useOperatorAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        Memverifikasi sesi...
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -40,21 +152,7 @@ export default function ChecklistPage() {
             Daily Checklist Kendaraan
           </h1>
         </div>
-        <form onSubmit={handleSubmit} className="grid gap-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {checklistItems.map((item) => (
-              <ChecklistItem key={item.id} label={item.label} />
-            ))}
-            <OtherDamageItem />
-          </div>
-
-          <div className="flex justify-end">
-            <Button size="lg" type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Kirim Laporan
-            </Button>
-          </div>
-        </form>
+        <ChecklistForm />
       </main>
     </div>
   );

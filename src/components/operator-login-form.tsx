@@ -19,7 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { initialUsers } from "@/lib/data";
+import { useOperatorAuth } from "@/context/operator-auth-context";
+import { useAppData } from "@/context/app-data-context";
+import { initialVehicles } from "@/lib/data";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
@@ -29,6 +31,8 @@ const formSchema = z.object({
 export function OperatorLoginForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useOperatorAuth();
+  const { users } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -42,21 +46,30 @@ export function OperatorLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
-    // Simulate API call for login
     setTimeout(() => {
-      const foundUser = initialUsers.find(
+      const foundUser = users.find(
         (user) =>
           user.role === 'OPERATOR' &&
           (user.nik === values.username || (user.name && user.name.toLowerCase() === values.username.toLowerCase())) &&
           user.password === values.password
       );
 
-      if (foundUser) {
-        toast({
-          title: "Login Berhasil",
-          description: `Selamat datang, ${foundUser.name}.`,
-        });
-        router.push("/checklist");
+      if (foundUser && foundUser.batangan) {
+        const vehicle = initialVehicles.find(v => v.hullNumber === foundUser.batangan);
+        if (vehicle) {
+            login(foundUser, vehicle.hullNumber);
+            toast({
+              title: "Login Berhasil",
+              description: `Selamat datang, ${foundUser.name}.`,
+            });
+            router.push("/checklist");
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Login Gagal",
+                description: "Kendaraan yang ditugaskan untuk Anda tidak ditemukan.",
+            });
+        }
       } else {
         toast({
           variant: "destructive",

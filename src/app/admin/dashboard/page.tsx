@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -41,12 +41,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAdminAuth } from "@/context/admin-auth-context";
+import { useAppData } from "@/context/app-data-context";
 import { cn } from "@/lib/utils";
-import { locations, recentReports, allVehicles, reportDetails, type ReportDetail } from "@/lib/data";
-
+import { locations, type Report, type Vehicle } from "@/lib/data";
+import { format, isSameDay, isBefore, startOfToday } from "date-fns";
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
     <Card className="hover:bg-muted/50 transition-colors">
@@ -70,13 +70,13 @@ const getStatusBadge = (status: string) => {
     case "Rusak":
       return <Badge variant="destructive">Rusak</Badge>;
     case "Belum Checklist":
-       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Belum Checklist</Badge>;
+       return <Badge variant="secondary" className="bg-gray-200 text-gray-800">Belum Checklist</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
 }
 
-type VehicleWithStatus = (typeof allVehicles)[0] & { status: string };
+type VehicleWithStatus = Vehicle & { status: string; latestReport?: Report };
 
 const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
   vehicles: VehicleWithStatus[];
@@ -85,19 +85,19 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
   description: string;
 }) => {
     const [view, setView] = useState<'list' | 'detail'>('list');
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+    const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithStatus | null>(null);
 
-    const handleDetailClick = (vehicleId: string) => {
-        setSelectedVehicleId(vehicleId);
+    const handleDetailClick = (vehicle: VehicleWithStatus) => {
+        setSelectedVehicle(vehicle);
         setView('detail');
     };
 
     const handleBackClick = () => {
-        setSelectedVehicleId(null);
+        setSelectedVehicle(null);
         setView('list');
     };
 
-    const report = selectedVehicleId ? reportDetails.find(r => r.vehicleId === selectedVehicleId) : undefined;
+    const report = selectedVehicle?.latestReport;
     const filteredVehicles = statusFilter ? vehicles.filter(v => v.status === statusFilter) : vehicles;
     
     return (
@@ -123,14 +123,14 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                             <TableBody>
                                 {filteredVehicles.map((vehicle) => (
                                     <TableRow key={vehicle.id}>
-                                        <TableCell className="font-medium">{vehicle.id}</TableCell>
+                                        <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
                                         <TableCell>{vehicle.type}</TableCell>
                                         <TableCell>{vehicle.location}</TableCell>
                                         <TableCell>{vehicle.operator}</TableCell>
                                         <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
                                         <TableCell className="text-right">
-                                            {(vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && reportDetails.some(r => r.vehicleId === vehicle.id) && (
-                                                <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle.id)}>
+                                            {vehicle.latestReport && (vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && (
+                                                <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle)}>
                                                     Detail
                                                 </Button>
                                             )}
@@ -150,8 +150,8 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                                 <span className="sr-only">Kembali</span>
                             </Button>
                             <div>
-                                <DialogTitle>Detail Laporan Kerusakan: {selectedVehicleId}</DialogTitle>
-                                <DialogDescription>Laporan dikirim pada tanggal {report?.date}.</DialogDescription>
+                                <DialogTitle>Detail Laporan Kerusakan: {selectedVehicle?.hullNumber}</DialogTitle>
+                                <DialogDescription>Laporan dikirim pada tanggal {report ? format(new Date(report.timestamp), 'dd MMMM yyyy, HH:mm') : '-'}.</DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
@@ -160,7 +160,7 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                              <div className="py-4 text-center text-muted-foreground">Tidak ada detail laporan kerusakan untuk kendaraan ini.</div>
                         ): (
                             <>
-                            {report.items.length > 0 && (
+                            {report.items && report.items.length > 0 && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-lg">Item Checklist</CardTitle>
@@ -168,12 +168,12 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                                     <CardContent className="space-y-4">
                                         {report.items.map((item, index) => (
                                             <div key={index} className="border-b pb-2 last:border-b-0 last:pb-0">
-                                                <p className="font-semibold">{item.item}</p>
+                                                <p className="font-semibold">{item.label}</p>
                                                 <p><span className={`font-medium ${item.status === 'RUSAK' ? 'text-destructive' : 'text-accent'}`}>{item.status}</span>: {item.keterangan}</p>
                                                 {item.foto && (
                                                     <div className="mt-2">
                                                         <p className="text-sm text-muted-foreground mb-1">Foto:</p>
-                                                        <img src={item.foto} alt={`Foto ${item.item}`} className="rounded-md w-full max-w-xs" data-ai-hint="machine damage" />
+                                                        <img src={item.foto} alt={`Foto ${item.label}`} className="rounded-md w-full max-w-xs" data-ai-hint="machine damage" />
                                                     </div>
                                                 )}
                                             </div>
@@ -208,39 +208,66 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
+  const { vehicles, reports } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const [selectedLocation, setSelectedLocation] = useState(
     isSuperAdmin ? "all" : user?.location || "all"
   );
+  
+  const vehiclesWithStatus = useMemo(() => {
+    const today = startOfToday();
+    return vehicles.map((vehicle): VehicleWithStatus => {
+      const reportsForVehicle = reports
+        .filter(r => r.vehicleId === vehicle.hullNumber)
+        .sort((a, b) => b.timestamp - a.timestamp);
+      
+      const latestReport = reportsForVehicle[0];
+      let status = 'Belum Checklist';
+
+      if (latestReport) {
+        const reportDate = new Date(latestReport.timestamp);
+        if (isSameDay(reportDate, today)) {
+          // If report is from today, use its status
+          status = latestReport.overallStatus;
+        } else if (isBefore(reportDate, today)) {
+          // If report is from the past
+          if (latestReport.overallStatus === 'Rusak' || latestReport.overallStatus === 'Perlu Perhatian') {
+            // Persist problematic status
+            status = latestReport.overallStatus;
+          }
+          // If it was 'Baik', it becomes 'Belum Checklist' for today
+        }
+      }
+      
+      return { ...vehicle, status, latestReport };
+    });
+  }, [vehicles, reports]);
 
   const masterVehiclesForLocation = selectedLocation === "all"
-    ? allVehicles
-    : allVehicles.filter(v => v.location === selectedLocation);
+    ? vehiclesWithStatus
+    : vehiclesWithStatus.filter(v => v.location === selectedLocation);
 
-  const filteredRecentReports = selectedLocation === "all"
-    ? recentReports
-    : recentReports.filter(r => r.location === selectedLocation);
+  const recentReportsForLocation = useMemo(() => {
+      const today = new Date();
+      return reports.filter(r => 
+          (selectedLocation === "all" || r.location === selectedLocation) && isSameDay(new Date(r.timestamp), today)
+      ).sort((a, b) => b.timestamp - a.timestamp);
+  }, [reports, selectedLocation]);
 
-  const reportMap = new Map(filteredRecentReports.map(r => [r.vehicleId, r.status]));
-
-  const todayVehicles = masterVehiclesForLocation.map(vehicle => {
-    const todayStatus = reportMap.get(vehicle.id);
-    return {
-      ...vehicle,
-      status: todayStatus || 'Belum Checklist'
-    };
-  });
-
-  const totalCount = todayVehicles.length;
-  const baikCount = todayVehicles.filter((v) => v.status === "Baik").length;
-  const rusakCount = todayVehicles.filter((v) => v.status === "Rusak").length;
-  const perhatianCount = todayVehicles.filter((v) => v.status === "Perlu Perhatian").length;
-  const notCheckedInCount = todayVehicles.filter((v) => v.status === "Belum Checklist").length;
+  const totalCount = masterVehiclesForLocation.length;
+  const baikCount = masterVehiclesForLocation.filter((v) => v.status === "Baik").length;
+  const rusakCount = masterVehiclesForLocation.filter((v) => v.status === "Rusak").length;
+  const perhatianCount = masterVehiclesForLocation.filter((v) => v.status === "Perlu Perhatian").length;
+  const notCheckedInCount = masterVehiclesForLocation.filter((v) => v.status === "Belum Checklist").length;
   const checkedInCount = totalCount - notCheckedInCount;
 
-  const checkedInVehicles = todayVehicles.filter(v => v.status !== 'Belum Checklist');
-  const notCheckedInVehicles = todayVehicles.filter(v => v.status === 'Belum Checklist');
+  const checkedInVehicles = masterVehiclesForLocation.filter(v => v.status !== 'Belum Checklist');
+  const notCheckedInVehicles = masterVehiclesForLocation.filter(v => v.status === 'Belum Checklist');
+  const baikVehicles = masterVehiclesForLocation.filter(v => v.status === 'Baik');
+  const perhatianVehicles = masterVehiclesForLocation.filter(v => v.status === 'Perlu Perhatian');
+  const rusakVehicles = masterVehiclesForLocation.filter(v => v.status === 'Rusak');
+
 
   return (
     <>
@@ -271,7 +298,7 @@ export default function DashboardPage() {
                 <VehicleDetailContent
                     title="Detail Total Alat"
                     description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
-                    vehicles={todayVehicles}
+                    vehicles={masterVehiclesForLocation}
                 />
             </DialogContent>
         </Dialog>
@@ -285,7 +312,7 @@ export default function DashboardPage() {
             <DialogContent className="sm:max-w-[800px]">
                 <VehicleDetailContent
                     title="Detail Alat Sudah Checklist"
-                    description="Berikut adalah daftar alat berat yang sudah melakukan checklist."
+                    description="Berikut adalah daftar alat berat yang sudah melakukan checklist hari ini."
                     vehicles={checkedInVehicles}
                 />
             </DialogContent>
@@ -300,7 +327,7 @@ export default function DashboardPage() {
             <DialogContent className="sm:max-w-[800px]">
                 <VehicleDetailContent
                     title="Detail Alat Belum Checklist"
-                    description="Berikut adalah daftar alat berat yang belum melakukan checklist."
+                    description="Berikut adalah daftar alat berat yang belum melakukan checklist hari ini."
                     vehicles={notCheckedInVehicles}
                 />
             </DialogContent>
@@ -316,7 +343,7 @@ export default function DashboardPage() {
                 <VehicleDetailContent
                     title="Detail Alat Baik"
                     description="Berikut adalah daftar semua alat berat dalam kondisi baik."
-                    vehicles={todayVehicles}
+                    vehicles={baikVehicles}
                     statusFilter="Baik"
                 />
             </DialogContent>
@@ -332,7 +359,7 @@ export default function DashboardPage() {
                 <VehicleDetailContent
                     title="Detail Alat Perlu Perhatian"
                     description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
-                    vehicles={todayVehicles}
+                    vehicles={perhatianVehicles}
                     statusFilter="Perlu Perhatian"
                 />
             </DialogContent>
@@ -348,7 +375,7 @@ export default function DashboardPage() {
                 <VehicleDetailContent
                     title="Detail Alat Rusak"
                     description="Berikut adalah daftar semua alat berat yang rusak."
-                    vehicles={todayVehicles}
+                    vehicles={rusakVehicles}
                     statusFilter="Rusak"
                 />
             </DialogContent>
@@ -357,9 +384,9 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Laporan Terbaru</CardTitle>
+          <CardTitle>Laporan Terbaru Hari Ini</CardTitle>
           <CardDescription>
-            Checklist yang baru saja dikirim oleh operator di lokasi yang dipilih.
+            Checklist yang baru saja dikirim oleh operator di lokasi yang dipilih hari ini.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -370,19 +397,25 @@ export default function DashboardPage() {
                 <TableHead>Kendaraan</TableHead>
                 <TableHead>Lokasi</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Tanggal</TableHead>
+                <TableHead>Waktu Lapor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRecentReports.map((report, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{report.operator}</TableCell>
-                  <TableCell>{report.vehicle}</TableCell>
+              {recentReportsForLocation.length > 0 ? recentReportsForLocation.map((report) => (
+                <TableRow key={report.id}>
+                  <TableCell className="font-medium">{report.operatorName}</TableCell>
+                  <TableCell>{report.vehicleType} {report.vehicleId}</TableCell>
                   <TableCell>{report.location}</TableCell>
-                  <TableCell>{getStatusBadge(report.status)}</TableCell>
-                  <TableCell>{report.date}</TableCell>
+                  <TableCell>{getStatusBadge(report.overallStatus)}</TableCell>
+                  <TableCell>{format(new Date(report.timestamp), 'HH:mm:ss')}</TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                        Belum ada laporan hari ini.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -390,5 +423,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

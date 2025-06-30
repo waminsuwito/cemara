@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -14,33 +15,21 @@ import { cn } from "@/lib/utils";
 import { CircleUser, LogOut, Menu, Truck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-
-type NavLinkProps = {
-  href: string;
-  children: React.ReactNode;
-};
-
-const NavLink = ({ href, children }: NavLinkProps) => {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "transition-colors hover:text-foreground",
-        isActive ? "text-foreground" : "text-muted-foreground"
-      )}
-    >
-      {children}
-    </Link>
-  );
-};
+import { useOperatorAuth } from "@/context/operator-auth-context";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 export function Header() {
     const router = useRouter();
+    const pathname = usePathname();
+    const { user: operatorUser, logout: operatorLogout } = useOperatorAuth();
+    
+    // The admin layout has its own header, so this is primarily for the operator checklist page.
+    const isChecklistPage = pathname.startsWith('/checklist');
 
     const handleLogout = () => {
+        if (isChecklistPage) {
+            operatorLogout();
+        }
         router.push('/');
     }
   return (
@@ -73,26 +62,34 @@ export function Header() {
           </nav>
         </SheetContent>
       </Sheet>
-      <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>Settings</DropdownMenuItem>
-            <DropdownMenuItem disabled>Support</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Logout</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex w-full items-center justify-between gap-4 md:ml-auto md:gap-2 lg:gap-4">
+        {isChecklistPage && operatorUser && (
+            <div className="flex-1 text-sm text-muted-foreground">
+                Operator: <span className="font-semibold text-primary">{operatorUser.name}</span>, 
+                Kendaraan: <span className="font-semibold text-primary">{operatorUser.batangan}</span>
+            </div>
+        )}
+        <div className="flex items-center gap-4">
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                <CircleUser className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{operatorUser?.name || 'My Account'}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+                <DropdownMenuItem disabled>Support</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       </div>
     </header>
   );
