@@ -92,10 +92,9 @@ export default function AnalysisPage() {
     isSuperAdmin ? "all" : user?.location || "all"
   );
   
-  const reportRef = useRef<PrintableReport>(null);
-
+  const componentToPrintRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
-    content: () => reportRef.current,
+    content: () => componentToPrintRef.current,
     documentTitle: `Laporan-Kondisi-Alat-${selectedLocation}-${format(new Date(), 'yyyy-MM-dd')}`,
   });
 
@@ -229,9 +228,12 @@ export default function AnalysisPage() {
           )}
         </CardContent>
       </Card>
-      <div className="hidden">
-        <PrintableReport ref={reportRef} vehicles={filteredVehiclesForReport} />
+      <div style={{ display: 'none' }}>
+        <div ref={componentToPrintRef}>
+            <PrintableReport vehicles={filteredVehiclesForReport} />
+        </div>
       </div>
     </>
   );
 }
+
