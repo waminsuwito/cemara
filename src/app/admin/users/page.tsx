@@ -51,10 +51,12 @@ import {
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import { roles, type User, type UserRole } from "@/lib/data";
+import { useToast } from "@/hooks/use-toast";
 
 export default function UserManagementPage() {
   const { user: currentUser } = useAdminAuth();
   const { users, addUser, updateUser, deleteUser, locationNames } = useAppData();
+  const { toast } = useToast();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -94,7 +96,45 @@ export default function UserManagementPage() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const role = formData.get("role") as UserRole;
+    const nik = formData.get("nik") as string;
+    const username = formData.get("username") as string;
     const password = formData.get("password") as string;
+
+    // Validation for OPERATOR NIK uniqueness
+    if (role === "OPERATOR" && nik) {
+      const isNikTaken = users.some(
+        (u) =>
+          u.role === "OPERATOR" &&
+          u.nik?.toLowerCase() === nik.toLowerCase() &&
+          u.id !== editingUser?.id
+      );
+      if (isNikTaken) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Menyimpan",
+          description: `Operator dengan NIK ${nik} sudah terdaftar.`,
+        });
+        return;
+      }
+    }
+
+    // Validation for ADMIN USERNAME uniqueness
+    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN") && username) {
+      const isAdminUsernameTaken = users.some(
+        (u) =>
+          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN") &&
+          u.username?.toLowerCase() === username.toLowerCase() &&
+          u.id !== editingUser?.id
+      );
+      if (isAdminUsernameTaken) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Menyimpan",
+          description: `Admin dengan username '${username}' sudah terdaftar.`,
+        });
+        return;
+      }
+    }
 
     const baseData: Partial<User> = {
       name: formData.get("name") as string,
@@ -104,14 +144,13 @@ export default function UserManagementPage() {
         baseData.password = password;
     }
 
-
     let userData: Omit<User, 'id'>;
 
     if (role === 'OPERATOR') {
       userData = {
         ...baseData,
         role: 'OPERATOR',
-        nik: formData.get("nik") as string,
+        nik: nik,
         batangan: formData.get("batangan") as string,
         location: formData.get("location") as string,
       };
@@ -119,7 +158,7 @@ export default function UserManagementPage() {
       userData = {
         ...baseData,
         role: role,
-        username: formData.get("username") as string,
+        username: username,
         location: role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined,
       };
     }
@@ -134,7 +173,11 @@ export default function UserManagementPage() {
     } else {
       if (!password) {
         // Handle error: password is required for new users
-        alert("Password is required for new users.");
+        toast({
+          variant: "destructive",
+          title: "Gagal Menyimpan",
+          description: "Password wajib diisi untuk pengguna baru.",
+        });
         return;
       }
       addUser(userData as Omit<User, 'id'>);

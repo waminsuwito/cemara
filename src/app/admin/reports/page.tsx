@@ -51,10 +51,12 @@ import {
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import type { Vehicle } from "@/lib/data";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VehicleManagementPage() {
   const { user } = useAdminAuth();
   const { vehicles, addVehicle, updateVehicle, deleteVehicle, locationNames } = useAppData();
+  const { toast } = useToast();
   
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -81,8 +83,24 @@ export default function VehicleManagementPage() {
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    const hullNumber = formData.get("hullNumber") as string;
+
+    // Validation for hullNumber uniqueness
+    const isHullNumberTaken = vehicles.some(
+      (v) => v.hullNumber.toLowerCase() === hullNumber.toLowerCase() && v.id !== editingVehicle?.id
+    );
+
+    if (isHullNumberTaken) {
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan",
+        description: `Alat dengan Nomor Lambung ${hullNumber} sudah terdaftar.`,
+      });
+      return;
+    }
+
     const vehicleData = {
-      hullNumber: formData.get("hullNumber") as string,
+      hullNumber,
       licensePlate: formData.get("licensePlate") as string,
       type: formData.get("type") as string,
       operator: formData.get("operator") as string,
