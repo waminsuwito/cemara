@@ -1,8 +1,9 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +21,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<'created' | 'updated'>;
   
   locations: Location[];
   locationNames: string[];
@@ -179,7 +180,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => {
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<'created' | 'updated'> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
 
@@ -187,23 +188,76 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     const q = query(reportsRef, where("vehicleId", "==", newReportData.vehicleId), where("reportDate", "==", reportDateStr));
     
     const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        // Find the vehicle in the state to get more details for the error message.
-        const vehicle = vehicles.find(v => v.hullNumber === newReportData.vehicleId);
-        // Construct a more descriptive identifier. Show type and license plate if possible.
-        const vehicleIdentifier = vehicle 
-            ? `${vehicle.type} (${vehicle.licensePlate})` 
-            : newReportData.vehicleId; // Fallback to hull number if not found
-
-        throw new Error(`Laporan untuk kendaraan ${vehicleIdentifier} hari ini sudah ada.`);
+    
+    // If no report exists for this vehicle today, create a new one.
+    if (querySnapshot.empty) {
+        const reportWithTimestamp = {
+          ...newReportData,
+          timestamp: serverTimestamp(),
+          reportDate: reportDateStr,
+        };
+        await addDoc(collection(db, 'reports'), reportWithTimestamp);
+        return 'created';
     }
 
-    const reportWithTimestamp = {
-      ...newReportData,
-      timestamp: serverTimestamp(),
-      reportDate: reportDateStr,
+    // If a report exists, update it.
+    const existingReportDoc = querySnapshot.docs[0];
+    const existingReportData = existingReportDoc.data() as Report;
+
+    // Case 1: The new checklist is "all clear", meaning the vehicle is now OK.
+    if (newReportData.overallStatus === 'Baik') {
+        await updateDoc(existingReportDoc.ref, {
+            overallStatus: 'Baik',
+            items: [], // Clear all previous damage items
+            kerusakanLain: null, // Clear other damages
+            timestamp: serverTimestamp() // Update to the latest time
+        });
+        return 'updated';
+    }
+
+    // Case 2: The new checklist adds or updates damage info.
+    // Merge checklist items. New status for an item overwrites the old one.
+    const combinedItemsMap = new Map<string, ReportItem>();
+    (existingReportData.items || []).forEach(item => combinedItemsMap.set(item.id, item));
+    (newReportData.items || []).forEach(item => combinedItemsMap.set(item.id, item));
+    const finalItems = Array.from(combinedItemsMap.values());
+    
+    // Merge "other damage" info. Append new description to old. New photo overwrites.
+    let finalKerusakanLain: Report['kerusakanLain'] = existingReportData.kerusakanLain;
+    if (newReportData.kerusakanLain?.keterangan) {
+        const newKeterangan = newReportData.kerusakanLain.keterangan;
+        const oldKeterangan = existingReportData.kerusakanLain?.keterangan;
+        const combinedKeterangan = oldKeterangan 
+            ? `${oldKeterangan}\n---\nLaporan Tambahan: ${newKeterangan}` 
+            : newKeterangan;
+        
+        finalKerusakanLain = {
+            keterangan: combinedKeterangan,
+            foto: newReportData.kerusakanLain.foto || existingReportData.kerusakanLain?.foto
+        };
+    }
+
+    // Recalculate overall status based on the final merged list of damages.
+    let finalOverallStatus: Report['overallStatus'] = 'Baik';
+    const hasRusak = finalItems.some(item => item.status === 'RUSAK') || (finalKerusakanLain && finalKerusakanLain.keterangan);
+    const hasPerhatian = finalItems.some(item => item.status === 'PERLU PERHATIAN');
+    
+    if (hasRusak) {
+        finalOverallStatus = 'Rusak';
+    } else if (hasPerhatian) {
+        finalOverallStatus = 'Perlu Perhatian';
+    }
+
+    // Prepare the final data and update the document.
+    const updateData = {
+        items: finalItems,
+        kerusakanLain: finalKerusakanLain || null,
+        overallStatus: finalOverallStatus,
+        timestamp: serverTimestamp()
     };
-    await addDoc(collection(db, 'reports'), reportWithTimestamp);
+    
+    await updateDoc(existingReportDoc.ref, updateData);
+    return 'updated';
   };
 
   const locationNames = locations.map(l => l.namaBP).sort();

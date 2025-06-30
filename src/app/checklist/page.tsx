@@ -83,10 +83,16 @@ function ChecklistForm() {
     try {
       const uploadImageAndGetURL = async (file: File): Promise<string | undefined> => {
         if (!file || !(file instanceof File)) return undefined;
-        const storageRef = ref(storage, `report-images/${uuidv4()}-${file.name}`);
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
-        return downloadURL;
+        try {
+          const storageRef = ref(storage, `report-images/${uuidv4()}-${file.name}`);
+          await uploadBytes(storageRef, file);
+          const downloadURL = await getDownloadURL(storageRef);
+          return downloadURL;
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          // Don't block submission, just log the error and proceed without the image
+          return undefined;
+        }
       };
 
       const reportItems: ReportItem[] = [];
@@ -99,10 +105,7 @@ function ChecklistForm() {
             keterangan: item.keterangan || '',
           };
           if (item.foto) {
-            const fotoUrl = await uploadImageAndGetURL(item.foto);
-            if (fotoUrl) {
-              cleanItem.foto = fotoUrl;
-            }
+            cleanItem.foto = await uploadImageAndGetURL(item.foto);
           }
           reportItems.push(cleanItem);
         }
@@ -130,7 +133,7 @@ function ChecklistForm() {
           items: reportItems,
       };
       
-      if (hasOtherDamage) {
+      if (hasOtherDamage || kerusakanLainFotoUrl) {
           reportData.kerusakanLain = {
               keterangan: data.kerusakanLain.keterangan,
           };
@@ -139,21 +142,23 @@ function ChecklistForm() {
           }
       }
       
-      await submitReport(reportData);
+      const result = await submitReport(reportData);
       
+      const toastDescription = result === 'updated'
+        ? "Laporan Anda untuk hari ini telah berhasil diperbarui."
+        : "Checklist harian Anda telah berhasil dikirim.";
+
       toast({
         title: "Laporan Terkirim",
-        description: "Checklist harian Anda telah berhasil dikirim.",
+        description: toastDescription,
       });
+
       logout();
       router.push("/");
 
     } catch (error) {
       console.error("Error during submission:", error);
-      let errorMessage = "Terjadi kesalahan saat mengirim laporan. Mohon coba lagi.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
+      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan yang tidak diketahui.";
       toast({
         variant: "destructive",
         title: "Submit Gagal",
