@@ -44,12 +44,9 @@ const chartConfig = {
   belumChecklist: { label: "Belum Checklist", color: "hsl(var(--secondary))" },
 } satisfies ChartConfig;
 
-// Converted to a class component to fix a compatibility issue with react-to-print and findDOMNode in React 18.
-class PrintableReport extends React.Component<{ vehicles: (Vehicle & { status: string })[] }> {
-  render() {
-    const { vehicles } = this.props;
+const PrintableReport = React.forwardRef<HTMLDivElement, { vehicles: (Vehicle & { status: string })[] }>(({ vehicles }, ref) => {
     return (
-      <div className="p-8">
+      <div ref={ref} className="p-8">
         <h1 className="text-2xl font-bold mb-4 text-center">Laporan Kondisi Alat</h1>
         <p className="text-center mb-6">Tanggal Cetak: {format(new Date(), 'dd MMMM yyyy')}</p>
         <table className="w-full text-sm border-collapse border border-gray-400">
@@ -80,8 +77,9 @@ class PrintableReport extends React.Component<{ vehicles: (Vehicle & { status: s
         </table>
       </div>
     );
-  }
-}
+});
+PrintableReport.displayName = 'PrintableReport';
+
 
 export default function AnalysisPage() {
   const { user } = useAdminAuth();
@@ -229,11 +227,8 @@ export default function AnalysisPage() {
         </CardContent>
       </Card>
       <div style={{ display: 'none' }}>
-        <div ref={componentToPrintRef}>
-            <PrintableReport vehicles={filteredVehiclesForReport} />
-        </div>
+        <PrintableReport ref={componentToPrintRef} vehicles={filteredVehiclesForReport} />
       </div>
     </>
   );
 }
-
