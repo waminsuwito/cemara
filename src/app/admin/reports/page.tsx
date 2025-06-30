@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -40,6 +41,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Vehicle = {
   id: number;
@@ -62,6 +70,7 @@ export default function VehicleManagementPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [locationFilter, setLocationFilter] = useState("all");
   
   const handleAddNew = () => {
     setEditingVehicle(null);
@@ -101,6 +110,12 @@ export default function VehicleManagementPage() {
     setEditingVehicle(null);
   };
 
+  const uniqueLocations = [...new Set(initialVehicles.map((v) => v.location))];
+
+  const filteredVehicles =
+    locationFilter === "all"
+      ? vehicles
+      : vehicles.filter((v) => v.location === locationFilter);
 
   return (
     <>
@@ -112,10 +127,25 @@ export default function VehicleManagementPage() {
               Tambah, edit, atau hapus data alat berat.
             </CardDescription>
           </div>
-          <Button onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Tambah Alat
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter Lokasi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Lokasi</SelectItem>
+                {uniqueLocations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleAddNew}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Tambah Alat
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -130,7 +160,7 @@ export default function VehicleManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vehicles.map((vehicle) => (
+              {filteredVehicles.map((vehicle) => (
                 <TableRow key={vehicle.id}>
                   <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
                   <TableCell>{vehicle.licensePlate}</TableCell>
