@@ -59,15 +59,15 @@ type Vehicle = {
 };
 
 const initialVehicles: Vehicle[] = [
-  { id: 1, hullNumber: "TM-01", licensePlate: "B 1111 TMX", type: "Truck mixer", operator: "Budi", location: "Site A" },
-  { id: 2, hullNumber: "DT-01", licensePlate: "B 2222 DTK", type: "Dump Truck", operator: "Charlie", location: "Site B" },
-  { id: 3, hullNumber: "CP-01", licensePlate: "B 3333 CPP", type: "CP", operator: "Dedi", location: "Site C" },
-  { id: 4, hullNumber: "EX-01", licensePlate: "B 4444 EXV", type: "Exavator", operator: "Eko", location: "Site A" },
-  { id: 5, hullNumber: "FK-01", licensePlate: "B 5555 FKK", type: "Foco kren", operator: "Fahri", location: "Site B" },
-  { id: 6, hullNumber: "GS-01", licensePlate: "B 6666 GST", type: "Genset", operator: "Gilang", location: "Site C" },
-  { id: 7, hullNumber: "BP-01", licensePlate: "B 7777 BPP", type: "BP", operator: "Hadi", location: "Site A" },
-  { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "Kendaraan Inventaris", operator: "Iwan", location: "Site B" },
-  { id: 9, hullNumber: "KT-01", licensePlate: "B 9999 KTS", type: "Kapsul Semen", operator: "Joko", location: "Site C" },
+  { id: 1, hullNumber: "TM-01", licensePlate: "B 1111 TMX", type: "Truck mixer", operator: "Budi", location: "BP Pekanbaru" },
+  { id: 2, hullNumber: "DT-01", licensePlate: "B 2222 DTK", type: "Dump Truck", operator: "Charlie", location: "BP Baung" },
+  { id: 3, hullNumber: "CP-01", licensePlate: "B 3333 CPP", type: "CP", operator: "Dedi", location: "BP Dumai" },
+  { id: 4, hullNumber: "EX-01", licensePlate: "B 4444 EXV", type: "Exavator", operator: "Eko", location: "BP IKN" },
+  { id: 5, hullNumber: "FK-01", licensePlate: "B 5555 FKK", type: "Foco kren", operator: "Fahri", location: "BP Pekanbaru" },
+  { id: 6, hullNumber: "GS-01", licensePlate: "B 6666 GST", type: "Genset", operator: "Gilang", location: "BP Baung" },
+  { id: 7, hullNumber: "BP-01", licensePlate: "B 7777 BPP", type: "BP", operator: "Hadi", location: "BP Dumai" },
+  { id: 8, hullNumber: "KI-01", licensePlate: "B 8888 KIV", type: "Kendaraan Inventaris", operator: "Iwan", location: "BP IKN" },
+  { id: 9, hullNumber: "KT-01", licensePlate: "B 9999 KTS", type: "Kapsul Semen", operator: "Joko", location: "BP Pekanbaru" },
 ];
 
 export default function VehicleManagementPage() {
@@ -114,7 +114,7 @@ export default function VehicleManagementPage() {
     setEditingVehicle(null);
   };
 
-  const uniqueLocations = [...new Set(initialVehicles.map((v) => v.location))];
+  const uniqueLocations = [...new Set(vehicles.map((v) => v.location))];
 
   const filteredVehicles =
     locationFilter === "all"

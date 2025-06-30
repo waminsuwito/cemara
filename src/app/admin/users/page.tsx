@@ -52,11 +52,11 @@ type User = {
 };
 
 const initialUsers: User[] = [
-  { id: 1, name: "Umar Santoso", nik: "1001", password: "password", batangan: "EX-01", location: "Site A" },
-  { id: 2, name: "Aep Saefudin", nik: "1002", password: "password", batangan: "DT-05", location: "Site B" },
-  { id: 3, name: "Amirul", nik: "1003", password: "password", batangan: "BD-02", location: "Site A" },
-  { id: 4, name: "Solihin", nik: "1004", password: "password", batangan: "GD-03", location: "Site C" },
-  { id: 5, name: "Siswanto", nik: "1005", password: "password", batangan: "CP-01", location: "Site B" },
+  { id: 1, name: "Umar Santoso", nik: "1001", password: "password", batangan: "EX-01", location: "BP Pekanbaru" },
+  { id: 2, name: "Aep Saefudin", nik: "1002", password: "password", batangan: "DT-05", location: "BP Baung" },
+  { id: 3, name: "Amirul", nik: "1003", password: "password", batangan: "BD-02", location: "BP Dumai" },
+  { id: 4, name: "Solihin", nik: "1004", password: "password", batangan: "GD-03", location: "BP IKN" },
+  { id: 5, name: "Siswanto", nik: "1005", password: "password", batangan: "CP-01", location: "BP Pekanbaru" },
 ];
 
 export default function UserManagementPage() {

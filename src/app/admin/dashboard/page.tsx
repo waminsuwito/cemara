@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -38,12 +39,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
+
 const recentReports = [
   {
     operator: "Umar Santoso",
     vehicleId: "EX-01",
     vehicle: "Excavator EX-01",
-    location: "Site A",
+    location: locations[0],
     status: "Perlu Perhatian",
     date: "2024-05-20",
   },
@@ -51,7 +54,7 @@ const recentReports = [
     operator: "Aep Saefudin",
     vehicleId: "DT-05",
     vehicle: "Dump Truck DT-05",
-    location: "Site B",
+    location: locations[1],
     status: "Baik",
     date: "2024-05-20",
   },
@@ -59,7 +62,7 @@ const recentReports = [
     operator: "Amirul",
     vehicleId: "BD-02",
     vehicle: "Bulldozer BD-02",
-    location: "Site A",
+    location: locations[0],
     status: "Rusak",
     date: "2024-05-19",
   },
@@ -67,7 +70,7 @@ const recentReports = [
     operator: "Solihin",
     vehicleId: "GD-03",
     vehicle: "Grader GD-03",
-    location: "Site C",
+    location: locations[2],
     status: "Baik",
     date: "2024-05-19",
   },
@@ -75,7 +78,7 @@ const recentReports = [
     operator: "Siswanto",
     vehicleId: "CP-01",
     vehicle: "Compactor CP-01",
-    location: "Site B",
+    location: locations[1],
     status: "Baik",
     date: "2024-05-18",
   },
@@ -83,25 +86,25 @@ const recentReports = [
 
 const allVehicles: {id: string; type: string; operator: string; location: string; status: string}[] = [
   // Rusak (2)
-  { id: "BD-02", type: "Bulldozer", operator: "Amirul", location: "Site A", status: "Rusak" },
-  { id: "BD-04", type: "Bulldozer", operator: "Amirul", location: "Site B", status: "Rusak" },
+  { id: "BD-02", type: "Bulldozer", operator: "Amirul", location: locations[0], status: "Rusak" },
+  { id: "BD-04", type: "Bulldozer", operator: "Amirul", location: locations[1], status: "Rusak" },
 
   // Perlu Perhatian (5)
-  { id: "EX-01", type: "Excavator", operator: "Umar Santoso", location: "Site A", status: "Perlu Perhatian" },
-  { id: "DT-06", type: "Dump Truck", operator: "Umar Santoso", location: "Site A", status: "Perlu Perhatian" },
-  { id: "DT-07", type: "Dump Truck", operator: "Solihin", location: "Site C", status: "Perlu Perhatian" },
-  { id: "GR-01", type: "Grader", operator: "Aep Saefudin", location: "Site B", status: "Perlu Perhatian"},
-  { id: "CP-02", type: "Compactor", operator: "Siswanto", location: "Site C", status: "Perlu Perhatian"},
+  { id: "EX-01", type: "Excavator", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
+  { id: "DT-06", type: "Dump Truck", operator: "Umar Santoso", location: locations[0], status: "Perlu Perhatian" },
+  { id: "DT-07", type: "Dump Truck", operator: "Solihin", location: locations[2], status: "Perlu Perhatian" },
+  { id: "GR-01", type: "Grader", operator: "Aep Saefudin", location: locations[1], status: "Perlu Perhatian"},
+  { id: "CP-02", type: "Compactor", operator: "Siswanto", location: locations[3], status: "Perlu Perhatian"},
 
   // Baik (65)
-  { id: "DT-05", type: "Dump Truck", operator: "Aep Saefudin", location: "Site B", status: "Baik" },
-  { id: "GD-03", type: "Grader", operator: "Solihin", location: "Site C", status: "Baik" },
-  { id: "CP-01", type: "Compactor", operator: "Siswanto", location: "Site B", status: "Baik" },
+  { id: "DT-05", type: "Dump Truck", operator: "Aep Saefudin", location: locations[1], status: "Baik" },
+  { id: "GD-03", type: "Grader", operator: "Solihin", location: locations[2], status: "Baik" },
+  { id: "CP-01", type: "Compactor", operator: "Siswanto", location: locations[1], status: "Baik" },
   ...Array.from({ length: 62 }, (_, i) => ({
     id: `BAIK-${String(i + 1).padStart(3, '0')}`,
     type: "Various",
     status: "Baik",
-    location: `Site ${["A", "B", "C"][i % 3]}`,
+    location: locations[i % locations.length],
     operator: `Operator ${i+1}`
   }))
 ].sort((a, b) => a.id.localeCompare(b.id));
@@ -185,9 +188,9 @@ export default function DashboardPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Semua Lokasi BP</SelectItem>
-              <SelectItem value="site-a">Site A</SelectItem>
-              <SelectItem value="site-b">Site B</SelectItem>
-              <SelectItem value="site-c">Site C</SelectItem>
+              {locations.map(loc => (
+                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
