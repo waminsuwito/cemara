@@ -23,7 +23,7 @@ import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
+  username: z.string().trim().min(1, { message: "Username (NIK/Nama) harus diisi." }),
   password: z.string().min(1, { message: "Password harus diisi." }),
 });
 
