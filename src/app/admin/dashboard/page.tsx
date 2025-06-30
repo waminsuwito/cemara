@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -41,6 +41,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAdminAuth } from "@/context/admin-auth-context";
+
 
 const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
 
@@ -170,7 +172,12 @@ const DetailTable = ({ vehicles, statusFilter }: { vehicles: typeof allVehicles,
 };
 
 export default function DashboardPage() {
-  const [selectedLocation, setSelectedLocation] = useState("all");
+  const { user } = useAdminAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const [selectedLocation, setSelectedLocation] = useState(
+    isSuperAdmin ? "all" : user?.location || "all"
+  );
 
   const filteredVehiclesByLocation = selectedLocation === "all"
     ? allVehicles
@@ -192,13 +199,12 @@ export default function DashboardPage() {
   const checkedInCount = checkedInVehicles.length;
   const notCheckedInCount = notCheckedInVehicles.length;
 
-
   return (
     <>
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
         <div className="flex items-center space-x-2">
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={!isSuperAdmin}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Semua Lokasi BP" />
             </SelectTrigger>

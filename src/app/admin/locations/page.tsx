@@ -40,7 +40,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 type Location = {
   id: number;
@@ -56,9 +57,26 @@ const initialLocations: Location[] = [
 ];
 
 export default function LocationsPage() {
+  const { user } = useAdminAuth();
   const [locations, setLocations] = useState<Location[]>(initialLocations);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  if (!isSuperAdmin) {
+    return (
+       <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
+        <div className="flex flex-col items-center gap-1 text-center">
+            <ShieldAlert className="h-16 w-16 text-muted-foreground" />
+            <h3 className="text-2xl font-bold tracking-tight">Akses Ditolak</h3>
+            <p className="text-sm text-muted-foreground">
+                Hanya Super Admin yang dapat mengakses halaman ini.
+            </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleAddNew = () => {
     setEditingLocation(null);

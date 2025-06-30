@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardHeader,
@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 type Vehicle = {
   id: number;
@@ -70,11 +71,18 @@ const initialVehicles: Vehicle[] = [
   { id: 9, hullNumber: "KT-01", licensePlate: "B 9999 KTS", type: "Kapsul Semen", operator: "Joko", location: "BP Pekanbaru" },
 ];
 
+const locations = ["BP Pekanbaru", "BP Baung", "BP Dumai", "BP IKN"];
+
 export default function VehicleManagementPage() {
+  const { user } = useAdminAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const [locationFilter, setLocationFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState(
+    isSuperAdmin ? "all" : user?.location || "all"
+  );
   
   const handleAddNew = () => {
     setEditingVehicle(null);
@@ -102,10 +110,8 @@ export default function VehicleManagementPage() {
     };
 
     if (editingVehicle) {
-      // Update existing vehicle
       setVehicles(vehicles.map((v) => v.id === editingVehicle.id ? { ...v, ...vehicleData } : v));
     } else {
-      // Add new vehicle
       const newVehicle = { id: Date.now(), ...vehicleData };
       setVehicles([...vehicles, newVehicle]);
     }
@@ -114,12 +120,12 @@ export default function VehicleManagementPage() {
     setEditingVehicle(null);
   };
 
-  const uniqueLocations = [...new Set(vehicles.map((v) => v.location))];
+  const vehiclesForCurrentUser = isSuperAdmin ? vehicles : vehicles.filter(v => v.location === user?.location);
 
   const filteredVehicles =
     locationFilter === "all"
-      ? vehicles
-      : vehicles.filter((v) => v.location === locationFilter);
+      ? vehiclesForCurrentUser
+      : vehiclesForCurrentUser.filter((v) => v.location === locationFilter);
 
   return (
     <>
@@ -132,13 +138,13 @@ export default function VehicleManagementPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <Select value={locationFilter} onValueChange={setLocationFilter} disabled={!isSuperAdmin}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter Lokasi" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Lokasi</SelectItem>
-                {uniqueLocations.map((location) => (
+                {locations.map((location) => (
                   <SelectItem key={location} value={location}>
                     {location}
                   </SelectItem>
@@ -246,7 +252,16 @@ export default function VehicleManagementPage() {
                 <Label htmlFor="location" className="text-right">
                   Lokasi
                 </Label>
-                <Input id="location" name="location" defaultValue={editingVehicle?.location} className="col-span-3" required />
+                <Select name="location" defaultValue={editingVehicle?.location || user?.location} required disabled={!isSuperAdmin}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Pilih Lokasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map(loc => (
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

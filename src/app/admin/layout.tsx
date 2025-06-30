@@ -1,33 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import React from 'react';
 import {
-  Bell,
   CircleUser,
   Home,
   LineChart,
   Menu,
-  Package,
-  Package2,
-  Search,
-  ShoppingCart,
   Truck,
   Users,
   MapPin,
-  FileText,
   Wrench,
   LogOut,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,20 +23,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { AdminAuthProvider, useAdminAuth } from "@/context/admin-auth-context";
 
 const navItems = [
-  { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat" },
-  { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi" },
-  { href: "/admin/users", icon: Users, label: "Manajemen Pengguna" },
-  { href: "/admin/analysis", icon: LineChart, label: "Laporan dan Analisis" },
+  { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
+  { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN'] },
+  { href: "/admin/analysis", icon: LineChart, label: "Laporan dan Analisis", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
 ];
 
-const NavLink = ({ href, icon: Icon, label }: (typeof navItems)[0]) => {
+const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -67,16 +54,30 @@ const NavLink = ({ href, icon: Icon, label }: (typeof navItems)[0]) => {
   );
 };
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { user, logout, isLoading } = useAdminAuth();
+  
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isLoading, router]);
 
   const handleLogout = () => {
+    logout();
     router.push('/');
   }
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        Memuat Sesi Admin...
+      </div>
+    );
+  }
+  
+  const accessibleNavItems = navItems.filter(item => item.roles.includes(user.role as 'SUPER_ADMIN' | 'LOCATION_ADMIN'));
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -90,8 +91,8 @@ export default function AdminLayout({
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {navItems.map((item) => (
-                <NavLink key={item.href} {...item} />
+              {accessibleNavItems.map((item) => (
+                <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
               ))}
             </nav>
           </div>
@@ -125,8 +126,8 @@ export default function AdminLayout({
                   <Truck className="h-6 w-6 text-primary" />
                   <span className="sr-only">Checklis Harian Alat</span>
                 </Link>
-                {navItems.map((item) => (
-                  <NavLink key={item.href} {...item} />
+                {accessibleNavItems.map((item) => (
+                  <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
                 ))}
               </nav>
               <div className="mt-auto">
@@ -138,7 +139,14 @@ export default function AdminLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            {/* Header Content can go here if needed */}
+             <div className="text-sm text-muted-foreground">
+                Role: <span className="font-semibold text-primary">{user.role}</span>
+                {user.location && (
+                    <>
+                    , Lokasi: <span className="font-semibold text-primary">{user.location}</span>
+                    </>
+                )}
+            </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -148,7 +156,7 @@ export default function AdminLayout({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user.username}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -161,5 +169,18 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminAuthProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminAuthProvider>
   );
 }
