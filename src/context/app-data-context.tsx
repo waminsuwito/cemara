@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Vehicle, Report, Location } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot } from "firebase/firestore";
 
 type AppDataContextType = {
   users: User[];
@@ -38,48 +38,68 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsDataLoaded(false);
-      try {
-        const usersSnapshot = await getDocs(collection(db, "users"));
-        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setUsers(usersList);
-
-        const vehiclesSnapshot = await getDocs(collection(db, "vehicles"));
-        const vehiclesList = vehiclesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
-        setVehicles(vehiclesList);
-
-        const reportsSnapshot = await getDocs(collection(db, "reports"));
-        const reportsList = reportsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Firestore timestamps need to be converted to JS numbers
-            const timestamp = data.timestamp?.toMillis ? data.timestamp.toMillis() : data.timestamp;
-            return {
-                id: doc.id,
-                ...data,
-                timestamp,
-            } as Report
-        }).sort((a, b) => b.timestamp - a.timestamp);
-        setReports(reportsList);
-
-        const locationsSnapshot = await getDocs(collection(db, "locations"));
-        const locationsList = locationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
-        setLocations(locationsList);
-
-      } catch (error) {
-        console.error("Error fetching data from Firestore:", error);
-      } finally {
+    // Flag to ensure we only set isDataLoaded once
+    let initialLoadsPending = 4;
+    const markLoadComplete = () => {
+      initialLoadsPending--;
+      if (initialLoadsPending === 0 && !isDataLoaded) {
         setIsDataLoaded(true);
       }
     };
-    fetchData();
-  }, []);
+
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      const usersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setUsers(usersList);
+      markLoadComplete();
+    }, (error) => {
+      console.error("Error fetching users:", error);
+      markLoadComplete();
+    });
+
+    const unsubVehicles = onSnapshot(collection(db, "vehicles"), (snapshot) => {
+      const vehiclesList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
+      setVehicles(vehiclesList);
+      markLoadComplete();
+    }, (error) => {
+      console.error("Error fetching vehicles:", error);
+      markLoadComplete();
+    });
+
+    const unsubReports = onSnapshot(collection(db, "reports"), (snapshot) => {
+      const reportsList = snapshot.docs.map(doc => {
+          const data = doc.data();
+          const timestamp = data.timestamp?.toMillis ? data.timestamp.toMillis() : data.timestamp;
+          return { id: doc.id, ...data, timestamp } as Report;
+      }).sort((a, b) => b.timestamp - a.timestamp);
+      setReports(reportsList);
+      markLoadComplete();
+    }, (error) => {
+      console.error("Error fetching reports:", error);
+      markLoadComplete();
+    });
+    
+    const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => {
+      const locationsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
+      setLocations(locationsList);
+      markLoadComplete();
+    }, (error) => {
+      console.error("Error fetching locations:", error);
+      markLoadComplete();
+    });
+
+    // Cleanup function to unsubscribe from listeners on component unmount
+    return () => {
+      unsubUsers();
+      unsubVehicles();
+      unsubReports();
+      unsubLocations();
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount
   
   // CRUD for Users
   const addUser = async (user: Omit<User, 'id'>) => {
     try {
-        const docRef = await addDoc(collection(db, "users"), user);
-        setUsers(prev => [...prev, { ...user, id: docRef.id }]);
+        await addDoc(collection(db, "users"), user);
     } catch (e) {
         console.error("Error adding user: ", e);
     }
@@ -88,43 +108,35 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     const userDoc = doc(db, "users", updatedUser.id);
     const { id, ...dataToUpdate } = updatedUser;
     await updateDoc(userDoc, dataToUpdate);
-    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
   const deleteUser = async (userId: string) => {
     await deleteDoc(doc(db, "users", userId));
-    setUsers(prev => prev.filter(u => u.id !== userId));
   };
 
   // CRUD for Vehicles
   const addVehicle = async (vehicle: Omit<Vehicle, 'id'>) => {
-    const docRef = await addDoc(collection(db, "vehicles"), vehicle);
-    setVehicles(prev => [...prev, { ...vehicle, id: docRef.id }]);
+    await addDoc(collection(db, "vehicles"), vehicle);
   };
   const updateVehicle = async (updatedVehicle: Vehicle) => {
     const vehicleDoc = doc(db, "vehicles", updatedVehicle.id);
     const { id, ...dataToUpdate } = updatedVehicle;
     await updateDoc(vehicleDoc, dataToUpdate);
-    setVehicles(prev => prev.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
   };
   const deleteVehicle = async (vehicleId: string) => {
     await deleteDoc(doc(db, "vehicles", vehicleId));
-    setVehicles(prev => prev.filter(v => v.id !== vehicleId));
   };
 
   // CRUD for Locations
   const addLocation = async (location: Omit<Location, 'id'>) => {
-    const docRef = await addDoc(collection(db, "locations"), location);
-    setLocations(prev => [...prev, { ...location, id: docRef.id }]);
+    await addDoc(collection(db, "locations"), location);
   };
   const updateLocation = async (updatedLocation: Location) => {
     const locationDoc = doc(db, "locations", updatedLocation.id);
     const { id, ...dataToUpdate } = updatedLocation;
     await updateDoc(locationDoc, dataToUpdate);
-    setLocations(prev => prev.map(l => l.id === updatedLocation.id ? updatedLocation : l));
   };
   const deleteLocation = async (locationId: string) => {
     await deleteDoc(doc(db, "locations", locationId));
-    setLocations(prev => prev.filter(l => l.id !== locationId));
   };
   
   const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp'>) => {
@@ -150,10 +162,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     if (!querySnapshot.empty) {
         const existingDoc = querySnapshot.docs[0];
         await updateDoc(doc(db, "reports", existingDoc.id), reportWithTimestamp);
-        setReports(prev => prev.map(r => r.id === existingDoc.id ? { ...reportWithTimestamp, id: existingDoc.id, timestamp: reportWithTimestamp.timestamp.getTime() } : r).sort((a,b) => b.timestamp - a.timestamp));
     } else {
-        const docRef = await addDoc(collection(db, "reports"), reportWithTimestamp);
-        setReports(prev => [...prev, { ...reportWithTimestamp, id: docRef.id, timestamp: reportWithTimestamp.timestamp.getTime() }].sort((a,b) => b.timestamp - a.timestamp));
+        await addDoc(collection(db, "reports"), reportWithTimestamp);
     }
   };
 

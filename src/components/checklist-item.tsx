@@ -40,17 +40,10 @@ export function ChecklistItem({ label, index }: ChecklistItemProps) {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       setImageName(file.name);
-      // In a real app, you'd upload this and store the URL,
-      // for now we'll just store the name as a placeholder.
-      // Or convert to base64
-       const reader = new FileReader();
-       reader.onloadend = () => {
-         setValue(`items.${index}.foto`, reader.result as string, { shouldValidate: true });
-       };
-       reader.readAsDataURL(file);
+      setValue(`items.${index}.foto`, file, { shouldValidate: true });
     } else {
       setImageName("");
-      setValue(`items.${index}.foto`, "", { shouldValidate: true });
+      setValue(`items.${index}.foto`, undefined, { shouldValidate: true });
     }
   };
 
@@ -119,14 +112,10 @@ export function OtherDamageItem() {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       setImageName(file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setValue('kerusakanLain.foto', reader.result as string, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
+      setValue('kerusakanLain.foto', file, { shouldValidate: true });
     } else {
       setImageName("");
-      setValue('kerusakanLain.foto', '', { shouldValidate: true });
+      setValue('kerusakanLain.foto', undefined, { shouldValidate: true });
     }
   };
 

@@ -14,6 +14,9 @@ import { checklistItems, Report } from "@/lib/data";
 import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { v4 as uuidv4 } from "uuid";
 
 const formSchema = z.object({
   items: z.array(z.object({
@@ -21,11 +24,11 @@ const formSchema = z.object({
     label: z.string(),
     status: z.enum(["BAIK", "RUSAK", "PERLU PERHATIAN"]),
     keterangan: z.string(),
-    foto: z.string().optional(),
+    foto: z.any().optional(),
   })),
   kerusakanLain: z.object({
     keterangan: z.string(),
-    foto: z.string().optional(),
+    foto: z.any().optional(),
   }),
 });
 
@@ -45,16 +48,16 @@ function ChecklistForm() {
         ...item,
         status: "BAIK",
         keterangan: "",
-        foto: "",
+        foto: undefined,
       })),
       kerusakanLain: {
         keterangan: "",
-        foto: "",
+        foto: undefined,
       },
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     
     if (!operator || !operator.batangan) {
@@ -70,38 +73,63 @@ function ChecklistForm() {
         return;
     }
 
-    const damagedItems = data.items.filter(item => item.status === 'RUSAK');
-    const needsAttentionItems = data.items.filter(item => item.status === 'PERLU PERHATIAN');
-    const hasOtherDamage = data.kerusakanLain.keterangan.trim() !== '';
-    
-    let overallStatus: Report['overallStatus'] = 'Baik';
-    if (damagedItems.length > 0 || hasOtherDamage) {
-        overallStatus = 'Rusak';
-    } else if (needsAttentionItems.length > 0) {
-        overallStatus = 'Perlu Perhatian';
-    }
+    try {
+      const uploadImageAndGetURL = async (file: File) => {
+        if (!file || !(file instanceof File)) return undefined;
+        const storageRef = ref(storage, `report-images/${uuidv4()}-${file.name}`);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
+      };
 
-    const reportData: Omit<Report, 'id' | 'timestamp'> = {
-        vehicleId: vehicle.hullNumber,
-        vehicleType: vehicle.type,
-        operatorName: operator.name,
-        location: operator.location!,
-        overallStatus,
-        items: data.items.filter(item => item.status !== 'BAIK').map(item => ({...item, keterangan: item.keterangan || ''})),
-        kerusakanLain: data.kerusakanLain.keterangan ? { keterangan: data.kerusakanLain.keterangan, foto: data.kerusakanLain.foto } : undefined,
-    };
-    
-    submitReport(reportData);
-    
-    setTimeout(() => {
-      setIsLoading(false);
+      const itemsWithUrls = await Promise.all(
+        data.items.map(async (item) => {
+          const fotoUrl = await uploadImageAndGetURL(item.foto);
+          return { ...item, foto: fotoUrl };
+        })
+      );
+
+      const kerusakanLainFotoUrl = await uploadImageAndGetURL(data.kerusakanLain.foto);
+      const kerusakanLainWithUrl = {
+        ...data.kerusakanLain,
+        foto: kerusakanLainFotoUrl,
+      };
+      
+      const damagedItems = itemsWithUrls.filter(item => item.status === 'RUSAK');
+      const needsAttentionItems = itemsWithUrls.filter(item => item.status === 'PERLU PERHATIAN');
+      const hasOtherDamage = kerusakanLainWithUrl.keterangan.trim() !== '';
+      
+      let overallStatus: Report['overallStatus'] = 'Baik';
+      if (damagedItems.length > 0 || hasOtherDamage) {
+          overallStatus = 'Rusak';
+      } else if (needsAttentionItems.length > 0) {
+          overallStatus = 'Perlu Perhatian';
+      }
+
+      const reportData: Omit<Report, 'id' | 'timestamp'> = {
+          vehicleId: vehicle.hullNumber,
+          vehicleType: vehicle.type,
+          operatorName: operator.name,
+          location: operator.location!,
+          overallStatus,
+          items: itemsWithUrls.filter(item => item.status !== 'BAIK').map(item => ({...item, keterangan: item.keterangan || ''})),
+          kerusakanLain: kerusakanLainWithUrl.keterangan ? { keterangan: kerusakanLainWithUrl.keterangan, foto: kerusakanLainWithUrl.foto } : undefined,
+      };
+      
+      await submitReport(reportData);
+      
       toast({
         title: "Laporan Terkirim",
         description: "Checklist harian Anda telah berhasil dikirim.",
       });
       logout();
       router.push("/");
-    }, 1000);
+
+    } catch (error) {
+      console.error("Error during submission:", error);
+      toast({ variant: "destructive", title: "Submit Gagal", description: "Terjadi kesalahan saat mengirim laporan. Mohon coba lagi."});
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
