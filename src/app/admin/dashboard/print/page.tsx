@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, Suspense, useEffect } from "react";
+import React, { useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppData } from "@/context/app-data-context";
 import { Printer, ArrowLeft } from "lucide-react";
@@ -9,32 +9,15 @@ import { format, isSameDay, isBefore, startOfToday } from "date-fns";
 import { id as localeID } from "date-fns/locale";
 import type { Report, Vehicle } from "@/lib/data";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 type VehicleWithStatus = Vehicle & { status: string; latestReport?: Report };
 
-
-// This component fetches the data and controls the UI (header with buttons)
 function PrintPageContent() {
     const searchParams = useSearchParams();
     const { vehicles, reports } = useAppData();
     const selectedLocation = searchParams.get('location') || 'all';
     
-    // This effect manually attaches the print event listener to the button.
-    // This is a robust way to bypass any potential framework interference that
-    // might have been blocking window.print() before.
-    useEffect(() => {
-        const printButton = document.getElementById('print-report-button');
-        if (printButton) {
-            const handlePrint = () => window.print();
-            printButton.addEventListener('click', handlePrint);
-
-            // Cleanup the event listener when the component unmounts
-            return () => {
-                printButton.removeEventListener('click', handlePrint);
-            }
-        }
-    }, []);
-
     const vehiclesWithStatus = useMemo(() => {
         const today = startOfToday();
         return vehicles.map((vehicle): VehicleWithStatus => {
@@ -93,20 +76,16 @@ function PrintPageContent() {
             <header className="bg-white shadow-md p-4 flex justify-between items-center print-hide">
                 <h1 className="text-xl font-semibold">Pratinjau Cetak Laporan</h1>
                 <div className="flex gap-2">
-                    <Link
-                        href={`/admin/dashboard?location=${selectedLocation}`}
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Kembali ke Dasbor
-                    </Link>
-                    <button
-                        id="print-report-button"
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-primary/50 hover:shadow-[0_0_15px_var(--primary)] h-10 px-4 py-2"
-                    >
+                    <Button asChild variant="outline">
+                        <Link href={`/admin/dashboard?location=${selectedLocation}`}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Kembali ke Dasbor
+                        </Link>
+                    </Button>
+                    <Button onClick={() => window.print()}>
                         <Printer className="mr-2 h-4 w-4" />
                         Cetak Laporan
-                    </button>
+                    </Button>
                 </div>
             </header>
             <main className="p-8 print-page-main">
