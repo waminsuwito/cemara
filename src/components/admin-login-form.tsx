@@ -44,34 +44,33 @@ export function AdminLoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setTimeout(() => {
-      const foundUser = users.find(
-        (u) =>
-          (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
-          u.username === values.username &&
-          u.password === values.password
-      );
+    
+    const foundUser = users.find(
+      (u) =>
+        (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
+        u.username === values.username &&
+        u.password === values.password
+    );
 
-      if (foundUser) {
-        login({
-          username: foundUser.username!,
-          role: foundUser.role,
-          location: foundUser.location,
-        });
-        toast({
-          title: "Login Berhasil",
-          description: `Selamat datang, ${foundUser.name}.`,
-        });
-        router.push("/admin/dashboard");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login Gagal",
-          description: "Username atau password salah.",
-        });
-      }
+    if (foundUser) {
+      login({
+        username: foundUser.username!,
+        role: foundUser.role,
+        location: foundUser.location,
+      });
+      toast({
+        title: "Login Berhasil",
+        description: `Selamat datang, ${foundUser.name}.`,
+      });
+      router.push("/admin/dashboard");
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Login Gagal",
+        description: "Username atau password salah.",
+      });
       setIsLoading(false);
-    }, 1000);
+    }
   }
 
   return (
