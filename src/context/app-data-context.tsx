@@ -183,13 +183,17 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<'created' | 'updated'> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
+    
+    const vehicle = vehicles.find(v => v.hullNumber === newReportData.vehicleId);
+    if (!vehicle) {
+        throw new Error(`Kendaraan dengan nomor lambung ${newReportData.vehicleId} tidak ditemukan.`);
+    }
 
     const reportsRef = collection(db, 'reports');
     const q = query(reportsRef, where("vehicleId", "==", newReportData.vehicleId), where("reportDate", "==", reportDateStr));
     
     const querySnapshot = await getDocs(q);
     
-    // If no report exists for this vehicle today, create a new one.
     if (querySnapshot.empty) {
         const reportWithTimestamp = {
           ...newReportData,
@@ -200,44 +204,53 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         return 'created';
     }
 
-    // If a report exists, update it.
     const existingReportDoc = querySnapshot.docs[0];
     const existingReportData = existingReportDoc.data() as Report;
 
-    // Case 1: The new checklist is "all clear", meaning the vehicle is now OK.
     if (newReportData.overallStatus === 'Baik') {
         await updateDoc(existingReportDoc.ref, {
             overallStatus: 'Baik',
-            items: [], // Clear all previous damage items
-            kerusakanLain: null, // Clear other damages
-            timestamp: serverTimestamp() // Update to the latest time
+            items: [],
+            kerusakanLain: null,
+            timestamp: serverTimestamp()
         });
         return 'updated';
     }
 
-    // Case 2: The new checklist adds or updates damage info.
-    // Merge checklist items. New status for an item overwrites the old one.
     const combinedItemsMap = new Map<string, ReportItem>();
     (existingReportData.items || []).forEach(item => combinedItemsMap.set(item.id, item));
     (newReportData.items || []).forEach(item => combinedItemsMap.set(item.id, item));
     const finalItems = Array.from(combinedItemsMap.values());
-    
-    // Merge "other damage" info. Append new description to old. New photo overwrites.
-    let finalKerusakanLain: Report['kerusakanLain'] = existingReportData.kerusakanLain;
-    if (newReportData.kerusakanLain?.keterangan) {
-        const newKeterangan = newReportData.kerusakanLain.keterangan;
-        const oldKeterangan = existingReportData.kerusakanLain?.keterangan;
-        const combinedKeterangan = oldKeterangan 
-            ? `${oldKeterangan}\n---\nLaporan Tambahan: ${newKeterangan}` 
-            : newKeterangan;
-        
-        finalKerusakanLain = {
-            keterangan: combinedKeterangan,
-            foto: newReportData.kerusakanLain.foto || existingReportData.kerusakanLain?.foto
-        };
-    }
 
-    // Recalculate overall status based on the final merged list of damages.
+    const finalKerusakanLain: { keterangan: string, foto?: string } | null = (() => {
+        const newDesc = newReportData.kerusakanLain?.keterangan;
+        const newFoto = newReportData.kerusakanLain?.foto;
+        const oldDesc = existingReportData.kerusakanLain?.keterangan;
+        const oldFoto = existingReportData.kerusakanLain?.foto;
+
+        if (!newDesc && !newFoto) {
+            return existingReportData.kerusakanLain || null;
+        }
+
+        const combinedDesc = newDesc 
+            ? (oldDesc ? `${oldDesc}\n---\nLaporan Tambahan: ${newDesc}` : newDesc)
+            : (oldDesc || '');
+      
+        const finalFoto = newFoto || oldFoto;
+
+        if (!combinedDesc) return null;
+
+        const result: { keterangan: string, foto?: string } = {
+            keterangan: combinedDesc
+        };
+
+        if (finalFoto) {
+            result.foto = finalFoto;
+        }
+
+        return result;
+    })();
+    
     let finalOverallStatus: Report['overallStatus'] = 'Baik';
     const hasRusak = finalItems.some(item => item.status === 'RUSAK') || (finalKerusakanLain && finalKerusakanLain.keterangan);
     const hasPerhatian = finalItems.some(item => item.status === 'PERLU PERHATIAN');
@@ -248,10 +261,9 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         finalOverallStatus = 'Perlu Perhatian';
     }
 
-    // Prepare the final data and update the document.
     const updateData = {
         items: finalItems,
-        kerusakanLain: finalKerusakanLain || null,
+        kerusakanLain: finalKerusakanLain,
         overallStatus: finalOverallStatus,
         timestamp: serverTimestamp()
     };
