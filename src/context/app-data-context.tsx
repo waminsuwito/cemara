@@ -134,7 +134,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   if (!isDataLoaded) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
-            Memuat Data...
+            Memuat...
         </div>
     );
   }
