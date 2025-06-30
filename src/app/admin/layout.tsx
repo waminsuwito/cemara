@@ -24,7 +24,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/context/admin-auth-context";
@@ -120,13 +126,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col bg-card/95 backdrop-blur-sm">
               <nav className="grid gap-2 text-lg font-medium">
-                <Link
-                  href="#"
-                  className="flex items-center gap-2 text-lg font-semibold mb-4"
-                >
-                  <Truck className="h-6 w-6 text-primary" />
-                  <span className="sr-only">Checklist Harian Alat</span>
-                </Link>
+                <SheetHeader className="p-0 text-left mb-4">
+                  <SheetTitle>
+                    <Link
+                      href="#"
+                      className="flex items-center gap-2 text-lg font-semibold"
+                    >
+                      <Truck className="h-6 w-6 text-primary" />
+                      <span>Checklist Harian Alat</span>
+                    </Link>
+                  </SheetTitle>
+                </SheetHeader>
                 {accessibleNavItems.map((item) => (
                   <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
                 ))}
