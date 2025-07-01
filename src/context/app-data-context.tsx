@@ -46,21 +46,36 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   // Effect for public data (loaded for everyone)
   useEffect(() => {
     const unsubscribes: (() => void)[] = [];
-    let loadedCount = 0;
-    const totalPublicCollections = 3; // users, vehicles, locations
-
     const collectionsToWatch = [
       { name: 'users', setter: setUsers },
       { name: 'vehicles', setter: setVehicles },
       { name: 'locations', setter: setLocations },
     ];
-    
+    const totalCollections = collectionsToWatch.length;
+    let loadedCount = 0;
+
+    // This function is called for each collection, whether it loads successfully or fails.
+    const onCollectionHandled = (collectionName: string, success: boolean) => {
+      loadedCount++;
+      if (!success) {
+        toast({
+            variant: "destructive",
+            title: `Gagal Memuat Data`,
+            description: `Tidak dapat mengambil data untuk "${collectionName}". Periksa aturan keamanan Firestore Anda.`,
+            duration: 9000
+        });
+      }
+      // Once all collections have been handled (success or fail), mark the app as "loaded".
+      if (loadedCount === totalCollections) {
+        setIsDataLoaded(true);
+      }
+    };
+
     collectionsToWatch.forEach(({ name, setter }) => {
       const q = query(collection(db, name));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const data = querySnapshot.docs.map(doc => {
             const docData = doc.data();
-            // Firestore timestamps need to be converted to JS milliseconds
             Object.keys(docData).forEach(key => {
                 if (docData[key] instanceof Timestamp) {
                     docData[key] = docData[key].toMillis();
@@ -69,20 +84,11 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             return { id: doc.id, ...docData };
         });
         setter(data as any);
-        
-        loadedCount++;
-        if(loadedCount >= totalPublicCollections && !isDataLoaded) {
-            setIsDataLoaded(true);
-        }
+        onCollectionHandled(name, true);
 
       }, (error) => {
         console.error(`Error fetching ${name}: `, error);
-        toast({
-            variant: "destructive",
-            title: `Gagal Memuat Data ${name}`,
-            description: "Pastikan aturan keamanan Firestore memperbolehkan akses baca (read).",
-            duration: 9000
-        });
+        onCollectionHandled(name, false);
       });
       unsubscribes.push(unsubscribe);
     });
@@ -111,7 +117,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         toast({
             variant: "destructive",
             title: `Gagal Memuat Data Laporan`,
-            description: "Terjadi masalah saat mengambil data laporan. Silakan coba muat ulang halaman.",
+            description: "Terjadi masalah saat mengambil data laporan. Pastikan aturan keamanan memperbolehkan admin membaca laporan.",
         });
       });
       

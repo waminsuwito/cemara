@@ -2,10 +2,18 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: These rules are insecure and allow public access.
-    // They are intended for initial development and debugging.
-    // You MUST secure your database before production.
-    match /{document=**} {
+    // These collections need to be public for the login screen and admin panel to work.
+    // The app's custom authentication model requires these to be openly readable.
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    match /vehicles/{vehicleId} {
+      allow read, write: if true;
+    }
+    match /locations/{locationId} {
+      allow read, write: if true;
+    }
+    match /reports/{reportId} {
       allow read, write: if true;
     }
   }
