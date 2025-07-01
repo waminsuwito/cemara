@@ -60,15 +60,18 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const data = querySnapshot.docs.map(doc => {
             const docData = doc.data();
-            if (docData.timestamp && docData.timestamp instanceof Timestamp) {
-                docData.timestamp = docData.timestamp.toMillis();
-            }
+            // Firestore timestamps need to be converted to JS milliseconds
+            Object.keys(docData).forEach(key => {
+                if (docData[key] instanceof Timestamp) {
+                    docData[key] = docData[key].toMillis();
+                }
+            });
             return { id: doc.id, ...docData };
         });
         setter(data as any);
         
         loadedCount++;
-        if(loadedCount === totalPublicCollections && !isDataLoaded) {
+        if(loadedCount >= totalPublicCollections && !isDataLoaded) {
             setIsDataLoaded(true);
         }
 
@@ -88,7 +91,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       unsubscribes.forEach(unsub => unsub());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, []);
 
   // Effect for protected data (loaded only for logged-in admins)
   useEffect(() => {
@@ -114,6 +117,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       
       return () => unsubscribe();
     } else {
+      // If admin logs out, clear the sensitive reports data
       setReports([]);
     }
   }, [adminUser, toast]);
@@ -265,7 +269,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const combinedDesc = newDesc 
-            ? (oldDesc ? `${oldDesc}\n---\nLaporan Tambahan: ${newDesc}` : newDesc)
+            ? (oldDesc ? `${oldDesc}\\n---\\nLaporan Tambahan: ${newDesc}` : newDesc)
             : (oldDesc || '');
       
         const finalFoto = newFoto || oldFoto;

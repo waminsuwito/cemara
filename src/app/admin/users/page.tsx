@@ -390,7 +390,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                          <Select name="location" defaultValue={editingUser?.location || locationNames[0]} required>
                             <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Pilih Lokasi" />
-                            </SelectTrigger>
+                            </Trigger>
                             <SelectContent>
                                 {locationNames.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
                             </SelectContent>

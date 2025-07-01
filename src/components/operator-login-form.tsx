@@ -91,7 +91,7 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Step 5: Match the vehicle with robust logic
+    // Step 5: Match the vehicle with robust logic (case and space insensitive)
     const cleanBatangan = foundUser.batangan.replace(/\s/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
       v.licensePlate?.replace(/\s/g, '').toLowerCase() === cleanBatangan

@@ -51,7 +51,7 @@ export function AdminLoginForm() {
       (u) =>
         (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
         u.username?.toLowerCase().trim() === inputUsername &&
-        u.password === values.password
+        u.password === values.password.trim()
     );
 
     if (foundUser && foundUser.username) {
