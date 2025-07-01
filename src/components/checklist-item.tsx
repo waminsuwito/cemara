@@ -86,7 +86,7 @@ export function ChecklistItem({ label, index }: ChecklistItemProps) {
               )}
             />
             <div className="relative">
-              <Input type="file" id={`file-${label}`} className="pr-10" accept="image/*" onChange={handleFileChange} />
+              <Input type="file" id={`file-${label}`} className="pr-10" accept="image/*" capture="environment" onChange={handleFileChange} />
                <Label htmlFor={`file-${label}`} className="absolute right-2 top-1/2 -translate-y-1/2">
                 <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                   <div>
@@ -136,7 +136,7 @@ export function OtherDamageItem() {
           )}
         />
         <div className="relative">
-          <Input type="file" id="file-other" className="pr-10" accept="image/*" onChange={handleFileChange} />
+          <Input type="file" id="file-other" className="pr-10" accept="image/*" capture="environment" onChange={handleFileChange} />
           <Label htmlFor="file-other" className="absolute right-2 top-1/2 -translate-y-1/2">
             <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
               <div>
