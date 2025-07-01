@@ -131,7 +131,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
                   return { id: doc.id, ...docData };
               });
               // Sort descending by timestamp locally
-              data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+              data.sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
               setter(data as any);
           }, (error) => {
               console.error(`Error fetching ${name}: `, error);
