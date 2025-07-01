@@ -44,17 +44,24 @@ export function AdminLoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    console.log("--- Admin Login Attempt ---");
+    console.log("Attempting login for:", values.username);
     
     const inputUsername = values.username.toLowerCase().trim();
+    const inputPassword = values.password.trim();
 
     const foundUser = users.find(
       (u) =>
         (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
         u.username?.toLowerCase().trim() === inputUsername &&
-        u.password === values.password.trim()
+        u.password === inputPassword
     );
+    
+    console.log("All available users:", users);
+    console.log("Found matching admin user:", foundUser);
 
     if (foundUser && foundUser.username) {
+      console.log("Admin login success! Redirecting to dashboard.");
       login({
         username: foundUser.username,
         role: foundUser.role,
@@ -66,6 +73,7 @@ export function AdminLoginForm() {
       });
       router.push("/admin/dashboard");
     } else {
+      console.error("Admin Login Error: Username or password did not match.");
       toast({
         variant: "destructive",
         title: "Login Gagal",

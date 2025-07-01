@@ -44,6 +44,8 @@ export function OperatorLoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    console.log("--- Operator Login Attempt ---");
+    console.log("Attempting login for:", values.username);
 
     const inputUsername = values.username.toLowerCase().trim();
     const inputPassword = values.password.trim();
@@ -58,8 +60,12 @@ export function OperatorLoginForm() {
       return userNik === inputUsername || userName === inputUsername;
     });
 
+    console.log("All available users:", users);
+    console.log("Found matching user:", foundUser);
+
     // Step 2: Handle "User not found" case.
     if (!foundUser) {
+      console.error("Login Error: User not found in database.");
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -71,6 +77,7 @@ export function OperatorLoginForm() {
 
     // Step 3: Handle "Password incorrect" case.
     if (foundUser.password !== inputPassword) {
+      console.error("Login Error: Incorrect password.");
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -82,6 +89,7 @@ export function OperatorLoginForm() {
 
     // Step 4: Handle "No vehicle assigned" case.
     if (!foundUser.batangan) {
+      console.error(`Login Error: User '${foundUser.name}' has no assigned vehicle (batangan).`);
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -91,13 +99,20 @@ export function OperatorLoginForm() {
       return;
     }
 
+    console.log(`User ${foundUser.name} is assigned to 'batangan': ${foundUser.batangan}`);
+    console.log("All available vehicles:", vehicles);
+
     // Step 5: Match the vehicle with robust logic (case and space insensitive)
     const cleanBatangan = foundUser.batangan.replace(/\s/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
       v.licensePlate?.replace(/\s/g, '').toLowerCase() === cleanBatangan
     );
+    
+    console.log("Searching for vehicle with cleaned license plate:", cleanBatangan);
+    console.log("Found matching vehicle:", vehicle);
 
     if (vehicle) {
+        console.log("Login success! Redirecting to checklist.");
         login(foundUser, vehicle.hullNumber);
         toast({
           title: "Login Berhasil",
@@ -105,6 +120,7 @@ export function OperatorLoginForm() {
         });
         router.push("/checklist");
     } else {
+         console.error("Login Error: Assigned vehicle's license plate not found in vehicle list.");
          toast({
             variant: "destructive",
             title: "Login Gagal",
