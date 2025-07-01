@@ -45,13 +45,13 @@ export function OperatorLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
-    const inputUsername = values.username.toLowerCase();
+    const inputUsername = values.username.toLowerCase().trim();
     
     const foundUser = users.find((user) => {
       if (user.role !== 'OPERATOR') return false;
 
-      const userNik = user.nik?.toString().toLowerCase();
-      const userName = user.name?.toLowerCase();
+      const userNik = user.nik?.toString().toLowerCase().trim();
+      const userName = user.name?.toLowerCase().trim();
 
       return userNik === inputUsername || userName === inputUsername;
     });
@@ -86,8 +86,9 @@ export function OperatorLoginForm() {
       return;
     }
 
+    // More robust matching: remove all whitespace and convert to lowercase
     const vehicle = vehicles.find(v => 
-      v.licensePlate?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
+      v.licensePlate?.replace(/\s/g, '').toLowerCase() === foundUser.batangan?.replace(/\s/g, '').toLowerCase()
     );
 
     if (vehicle) {
