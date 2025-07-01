@@ -86,10 +86,11 @@ function PrintPageContent() {
                         <div className="space-y-6">
                             {filteredReports.length > 0 ? filteredReports.map(report => (
                                 <div key={report.id} className="border border-gray-400 p-4 rounded-md break-inside-avoid">
-                                    <div className="grid grid-cols-4 gap-4 mb-3 border-b border-gray-300 pb-3">
+                                    <div className="grid grid-cols-5 gap-4 mb-3 border-b border-gray-300 pb-3">
                                         <div><strong className="block text-xs text-gray-500">Tanggal</strong>{format(new Date(report.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</div>
                                         <div><strong className="block text-xs text-gray-500">Kendaraan</strong>{report.vehicleId}</div>
                                         <div><strong className="block text-xs text-gray-500">Operator</strong>{report.operatorName}</div>
+                                        <div><strong className="block text-xs text-gray-500">Lokasi</strong>{report.location}</div>
                                         <div><strong className="block text-xs text-gray-500">Status</strong>{report.overallStatus}</div>
                                     </div>
                                     
