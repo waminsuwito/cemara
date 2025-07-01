@@ -24,7 +24,7 @@ import { useAppData } from "@/context/app-data-context";
 
 const formSchema = z.object({
   username: z.string().trim().min(1, { message: "Username (NIK/Nama) harus diisi." }),
-  password: z.string().min(1, { message: "Password harus diisi." }),
+  password: z.string().trim().min(1, { message: "Password harus diisi." }),
 });
 
 export function OperatorLoginForm() {
@@ -46,14 +46,22 @@ export function OperatorLoginForm() {
     setIsLoading(true);
     
     const foundUser = users.find((user) => {
-      if (user.role !== 'OPERATOR' || user.password !== values.password) {
+      // Lewati jika pengguna ini bukan seorang Operator
+      if (user.role !== 'OPERATOR') {
           return false;
       }
+
+      // Siapkan nilai untuk perbandingan (mengabaikan huruf besar/kecil)
       const inputUsername = values.username.toLowerCase();
       const userNik = user.nik?.toString().toLowerCase();
       const userName = user.name?.toLowerCase();
+
+      // Lakukan pencocokan
+      const isUsernameMatch = (userNik === inputUsername) || (userName === inputUsername);
+      const isPasswordMatch = user.password === values.password;
       
-      return userNik === inputUsername || userName === inputUsername;
+      // Pengguna ditemukan jika kedua username DAN password cocok
+      return isUsernameMatch && isPasswordMatch;
     });
 
     if (foundUser) {
