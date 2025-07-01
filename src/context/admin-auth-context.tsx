@@ -38,14 +38,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: AdminUser) => {
-    setIsLoading(true);
     setUser(userData);
     try {
         sessionStorage.setItem('adminUser', JSON.stringify(userData));
     } catch(e) {
         console.error("Failed to save user to session storage", e);
     }
-    setIsLoading(false);
   };
 
   const logout = () => {

@@ -39,7 +39,6 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: User, vehicleData: string) => {
-    setIsLoading(true);
     setUser(userData);
     setVehicle(vehicleData);
     try {
@@ -48,7 +47,6 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
     } catch(e) {
         console.error("Failed to save operator to session storage", e);
     }
-    setIsLoading(false);
   };
 
   const logout = () => {
