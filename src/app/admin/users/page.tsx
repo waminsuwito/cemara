@@ -99,6 +99,7 @@ export default function UserManagementPage() {
     const nik = formData.get("nik") as string;
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
+    const name = formData.get("name") as string;
 
     // Validation for OPERATOR NIK uniqueness
     if (role === "OPERATOR" && nik) {
@@ -136,19 +137,11 @@ export default function UserManagementPage() {
       }
     }
 
-    const baseData: Partial<User> = {
-      name: formData.get("name") as string,
-      role,
-    };
-    if (password) {
-        baseData.password = password;
-    }
-
     let userData: Omit<User, 'id'>;
 
     if (role === 'OPERATOR') {
       userData = {
-        ...baseData,
+        name,
         role: 'OPERATOR',
         nik: nik,
         batangan: formData.get("batangan") as string,
@@ -156,7 +149,7 @@ export default function UserManagementPage() {
       };
     } else { // LOCATION_ADMIN or SUPER_ADMIN
       userData = {
-        ...baseData,
+        name,
         role: role,
         username: username,
         location: role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined,
@@ -166,7 +159,9 @@ export default function UserManagementPage() {
     if (editingUser) {
       // Create a new object for update to avoid passing undefined password if not changed
       const updateData = {...editingUser, ...userData};
-      if(!password) {
+      if(password) {
+        updateData.password = password;
+      } else {
         delete updateData.password;
       }
       updateUser(updateData);
@@ -180,7 +175,7 @@ export default function UserManagementPage() {
         });
         return;
       }
-      addUser(userData as Omit<User, 'id'>);
+      addUser({ ...userData, password });
     }
 
     setIsDialogOpen(false);
@@ -399,3 +394,5 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
         </Dialog>
     );
 }
+
+    
