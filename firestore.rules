@@ -1,19 +1,10 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // These collections need to be public for the login screen and admin panel to work.
-    // The app's custom authentication model requires these to be openly readable.
-    match /users/{userId} {
-      allow read, write: if true;
-    }
-    match /vehicles/{vehicleId} {
-      allow read, write: if true;
-    }
-    match /locations/{locationId} {
-      allow read, write: if true;
-    }
-    match /reports/{reportId} {
+    // This rule allows anyone to read and write to your database.
+    // It's set up this way to ensure the custom authentication flow works.
+    // For a production app, you would want more granular security.
+    match /{document=**} {
       allow read, write: if true;
     }
   }
