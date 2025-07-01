@@ -45,37 +45,33 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect for public data (loaded for everyone)
   useEffect(() => {
-    const unsubscribes: (() => void)[] = [];
     const collectionsToWatch = [
       { name: 'users', setter: setUsers },
       { name: 'vehicles', setter: setVehicles },
       { name: 'locations', setter: setLocations },
     ];
-    const totalCollections = collectionsToWatch.length;
+    
     let loadedCount = 0;
+    const unsubscribes: (() => void)[] = [];
 
-    // This function is called for each collection, whether it loads successfully or fails.
-    const onCollectionHandled = (collectionName: string, success: boolean) => {
-      loadedCount++;
-      if (!success) {
-        toast({
-            variant: "destructive",
-            title: `Gagal Memuat Data`,
-            description: `Tidak dapat mengambil data untuk "${collectionName}". Periksa aturan keamanan Firestore Anda.`,
-            duration: 9000
-        });
-      }
-      // Once all collections have been handled (success or fail), mark the app as "loaded".
-      if (loadedCount === totalCollections) {
+    if (collectionsToWatch.length === 0) {
         setIsDataLoaded(true);
-      }
-    };
+        return;
+    }
 
+    const onCollectionLoaded = () => {
+        loadedCount++;
+        if (loadedCount === collectionsToWatch.length) {
+            setIsDataLoaded(true);
+        }
+    };
+    
     collectionsToWatch.forEach(({ name, setter }) => {
       const q = query(collection(db, name));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const data = querySnapshot.docs.map(doc => {
             const docData = doc.data();
+            // Convert any Timestamps to milliseconds
             Object.keys(docData).forEach(key => {
                 if (docData[key] instanceof Timestamp) {
                     docData[key] = docData[key].toMillis();
@@ -84,11 +80,16 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             return { id: doc.id, ...docData };
         });
         setter(data as any);
-        onCollectionHandled(name, true);
-
+        onCollectionLoaded();
       }, (error) => {
         console.error(`Error fetching ${name}: `, error);
-        onCollectionHandled(name, false);
+        toast({
+            variant: "destructive",
+            title: `Gagal Memuat Data`,
+            description: `Tidak dapat mengambil data untuk "${name}". Periksa aturan keamanan Firestore Anda.`,
+            duration: 9000
+        });
+        onCollectionLoaded(); // Still count as "loaded" to not block the UI forever
       });
       unsubscribes.push(unsubscribe);
     });
@@ -141,8 +142,18 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUser = async (user: User) => {
     const { id, ...userData } = user;
+    
+    // Create a clean object to send to Firestore, filtering out any 'undefined' values.
+    const cleanUserData: { [key: string]: any } = {};
+    Object.keys(userData).forEach((key) => {
+      const typedKey = key as keyof typeof userData;
+      if (userData[typedKey] !== undefined) {
+        cleanUserData[key] = userData[typedKey];
+      }
+    });
+    
     try {
-      await updateDoc(doc(db, 'users', id), userData);
+      await updateDoc(doc(db, 'users', id), cleanUserData);
       toast({ title: "Sukses", description: "Data pengguna berhasil diperbarui." });
     } catch (e) {
       console.error("Error updating user: ", e);
