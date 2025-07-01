@@ -3,30 +3,33 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users, Vehicles, and Locations need to be publicly readable for login and setup.
+
+    // Allow public read for collections needed for login/general app function
     match /users/{userId} {
       allow read: if true;
-      // Writing/deleting users should be restricted to authenticated admins.
-      allow write, delete: if request.auth != null;
+      allow write: if request.auth != null; // Only authenticated can write
     }
-    
+
     match /vehicles/{vehicleId} {
       allow read: if true;
-      allow write, delete: if request.auth != null;
+      allow write: if request.auth != null;
     }
 
     match /locations/{locationId} {
-       allow read: if true;
-       allow write, delete: if request.auth != null;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // Reports are sensitive.
+    // Secure reports collection, only authenticated users can read/write.
+    // Further rules can be added here (e.g., check for admin role)
     match /reports/{reportId} {
-      // Allow report creation by anyone (operators are not authenticated with Firebase Auth).
-      allow create: if true;
-      // Only authenticated admins can read, update, or delete reports.
-      allow read, update, delete: if request.auth != null;
+      allow read, write: if request.auth != null;
+    }
+
+    // A fallback rule is not strictly necessary with the above, but good practice.
+    // This will match any collection not explicitly defined above.
+    match /{path=**} {
+       allow read, write: if request.auth != null;
     }
   }
 }

@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { useAdminAuth } from './admin-auth-context';
 
 type AppDataContextType = {
   users: User[];
@@ -40,16 +41,17 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
+  const { user: adminUser } = useAdminAuth();
 
+  // Effect for public data (loaded for everyone)
   useEffect(() => {
     const unsubscribes: (() => void)[] = [];
     let loadedCount = 0;
-    const totalCollections = 4;
+    const totalPublicCollections = 3; // users, vehicles, locations
 
     const collectionsToWatch = [
       { name: 'users', setter: setUsers },
       { name: 'vehicles', setter: setVehicles },
-      { name: 'reports', setter: setReports },
       { name: 'locations', setter: setLocations },
     ];
     
@@ -58,7 +60,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const data = querySnapshot.docs.map(doc => {
             const docData = doc.data();
-            // Convert Firestore Timestamps to JS numbers for client-side usage
             if (docData.timestamp && docData.timestamp instanceof Timestamp) {
                 docData.timestamp = docData.timestamp.toMillis();
             }
@@ -67,7 +68,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         setter(data as any);
         
         loadedCount++;
-        if(loadedCount === totalCollections) {
+        if(loadedCount === totalPublicCollections && !isDataLoaded) {
             setIsDataLoaded(true);
         }
 
@@ -76,7 +77,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         toast({
             variant: "destructive",
             title: `Gagal Memuat Data ${name}`,
-            description: "Terjadi masalah saat mengambil data. Silakan coba muat ulang halaman.",
+            description: "Pastikan aturan keamanan Firestore memperbolehkan akses baca (read).",
+            duration: 9000
         });
       });
       unsubscribes.push(unsubscribe);
@@ -85,7 +87,37 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       unsubscribes.forEach(unsub => unsub());
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
+
+  // Effect for protected data (loaded only for logged-in admins)
+  useEffect(() => {
+    if (adminUser) {
+      const q = query(collection(db, "reports"));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const data = querySnapshot.docs.map((doc) => {
+          const docData = doc.data();
+          if (docData.timestamp && docData.timestamp instanceof Timestamp) {
+            docData.timestamp = docData.timestamp.toMillis();
+          }
+          return { id: doc.id, ...docData };
+        }) as Report[];
+        setReports(data);
+      }, (error) => {
+        console.error(`Error fetching reports: `, error);
+        toast({
+            variant: "destructive",
+            title: `Gagal Memuat Data Laporan`,
+            description: "Terjadi masalah saat mengambil data laporan. Silakan coba muat ulang halaman.",
+        });
+      });
+      
+      return () => unsubscribe();
+    } else {
+      setReports([]);
+    }
+  }, [adminUser, toast]);
+
 
   const addUser = async (userData: Omit<User, 'id'>) => {
     try {

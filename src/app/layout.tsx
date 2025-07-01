@@ -26,13 +26,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#42A5F5" />
       </head>
       <body className="font-body antialiased bg-background">
-        <AppDataProvider>
-          <AdminAuthProvider>
-            <OperatorAuthProvider>
+        <AdminAuthProvider>
+          <OperatorAuthProvider>
+            <AppDataProvider>
               {children}
-            </OperatorAuthProvider>
-          </AdminAuthProvider>
-        </AppDataProvider>
+            </AppDataProvider>
+          </OperatorAuthProvider>
+        </AdminAuthProvider>
         <Toaster />
       </body>
     </html>
