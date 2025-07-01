@@ -137,32 +137,38 @@ export default function UserManagementPage() {
       }
     }
 
-    let baseData: Partial<User> = {};
-    if (role === 'OPERATOR') {
-        baseData = {
-            role: 'OPERATOR',
-            nik: nik,
-            batangan: formData.get("batangan") as string,
-            location: formData.get("location") as string,
-            username: undefined,
-        };
-    } else {
-        baseData = {
-            role: role,
-            username: username,
-            location: role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined,
-            nik: undefined,
-            batangan: undefined,
-        };
-    }
-
     if (editingUser) {
-        const updateData: User = { ...editingUser, ...baseData, name };
-        if (password) {
-            updateData.password = password;
+        // Build the update object from the editing user
+        const updatedUser: User = { ...editingUser };
+        
+        // Update common fields
+        updatedUser.name = name;
+        updatedUser.role = role;
+        
+        // Update role-specific fields
+        if (role === 'OPERATOR') {
+            updatedUser.nik = nik;
+            updatedUser.batangan = formData.get("batangan") as string;
+            updatedUser.location = formData.get("location") as string;
+            // Clear admin fields
+            updatedUser.username = undefined;
+        } else { // SUPER_ADMIN or LOCATION_ADMIN
+            updatedUser.username = username;
+            updatedUser.location = role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined;
+            // Clear operator fields
+            updatedUser.nik = undefined;
+            updatedUser.batangan = undefined;
         }
-        updateUser(updateData);
+        
+        // **CRITICAL FIX**: Only update the password if a new one was entered.
+        // If the password field is empty, the existing password remains unchanged.
+        if (password) {
+            updatedUser.password = password;
+        }
+        
+        updateUser(updatedUser);
     } else {
+        // Creating a new user
         if (!password) {
             toast({
                 variant: "destructive",
@@ -171,11 +177,23 @@ export default function UserManagementPage() {
             });
             return;
         }
-        const newUser: Omit<User, 'id'> = {
+        
+        let newUser: Omit<User, 'id'> = {
             name,
             password,
-            ...baseData
-        } as Omit<User, 'id'>;
+            role,
+        };
+
+        if (role === 'OPERATOR') {
+            newUser.nik = nik;
+            newUser.batangan = formData.get("batangan") as string;
+            newUser.location = formData.get("location") as string;
+        } else {
+            newUser.username = username;
+            if (role === 'LOCATION_ADMIN') {
+                newUser.location = formData.get("location") as string;
+            }
+        }
         addUser(newUser);
     }
 
