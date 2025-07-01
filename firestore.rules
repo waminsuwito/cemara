@@ -2,22 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read for login, but secure writes for admins.
-    match /users/{userId} {
-      allow read: if true;
-      allow write: if true; // In a real app, this should be secured.
-    }
-    match /vehicles/{vehicleId} {
-      allow read: if true;
-      allow write: if true; // In a real app, this should be secured.
-    }
-    match /locations/{locationId} {
-      allow read: if true;
-      allow write: if true; // In a real app, this should be secured.
-    }
-
-    // Allow read/write to reports. The app's own logic gatekeeps this.
-    match /reports/{reportId} {
+    // WARNING: These rules are insecure and allow public access.
+    // They are intended for initial development and debugging.
+    // You MUST secure your database before production.
+    match /{document=**} {
       allow read, write: if true;
     }
   }

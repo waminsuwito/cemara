@@ -129,9 +129,9 @@ export default function VehicleManagementPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Manajemen Laporan & Alat</CardTitle>
+            <CardTitle>Manajemen Alat</CardTitle>
             <CardDescription>
-              Tambah, edit, atau hapus data alat berat. Laporan dapat dilihat di Dashboard.
+              Tambah, edit, atau hapus data alat berat yang terdaftar dalam sistem.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

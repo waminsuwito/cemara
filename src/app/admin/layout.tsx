@@ -36,7 +36,7 @@ import { useAdminAuth } from "@/context/admin-auth-context";
 
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
-  { href: "/admin/reports", icon: Wrench, label: "Manajemen Laporan", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
   { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN'] },
 ];
