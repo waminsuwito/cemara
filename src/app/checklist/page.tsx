@@ -24,7 +24,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format } from 'date-fns';
+import { format, subDays, eachDayOfInterval, isSameDay, startOfDay } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 
 const checklistFormSchema = z.object({
@@ -51,6 +51,8 @@ const getStatusBadge = (status: string) => {
       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Perlu Perhatian</Badge>;
     case "Rusak":
       return <Badge variant="destructive">Rusak</Badge>;
+    case "Tidak Ada Checklist":
+       return <Badge variant="outline">Tidak Ada Checklist</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
@@ -348,44 +350,68 @@ const SuggestionForm = () => {
 };
 
 const MyHistoryTab = () => {
-    const { user: operator } = useOperatorAuth();
+    const { user: operator, vehicle: vehicleHullNumber } = useOperatorAuth();
     const { reports } = useAppData();
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-    const myReports = useMemo(() => {
+    const myHistory = useMemo(() => {
         if (!operator) return [];
-        return reports
-            .filter(r => r.operatorName === operator.name)
-            .sort((a, b) => b.timestamp - a.timestamp);
-    }, [reports, operator]);
+
+        const operatorReports = reports.filter(r => r.operatorName === operator.name);
+
+        const end = startOfDay(new Date());
+        const start = subDays(end, 29); // Last 30 days including today
+        const dateInterval = eachDayOfInterval({ start, end }).reverse();
+
+        return dateInterval.map(date => {
+            const reportForDay = operatorReports.find(r => isSameDay(new Date(r.timestamp), date));
+            
+            if (reportForDay) {
+                return reportForDay;
+            } else {
+                return {
+                    id: date.toISOString(),
+                    timestamp: date.getTime(),
+                    vehicleId: vehicleHullNumber || 'N/A',
+                    overallStatus: 'Tidak Ada Checklist',
+                    isPlaceholder: true,
+                };
+            }
+        });
+    }, [reports, operator, vehicleHullNumber]);
 
     return (
         <>
             <Card>
                 <CardHeader>
                     <CardTitle>Riwayat Checklist Saya</CardTitle>
-                    <CardDescription>Daftar semua laporan checklist yang pernah Anda kirim.</CardDescription>
+                    <CardDescription>Menampilkan riwayat checklist Anda selama 30 hari terakhir.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="border rounded-md">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Tanggal & Waktu</TableHead>
+                                    <TableHead>Tanggal</TableHead>
                                     <TableHead>Kendaraan</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {myReports.length > 0 ? (
-                                    myReports.map((report) => (
-                                        <TableRow key={report.id}>
-                                            <TableCell>{format(new Date(report.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
-                                            <TableCell>{report.vehicleId}</TableCell>
-                                            <TableCell>{getStatusBadge(report.overallStatus)}</TableCell>
+                                {myHistory.length > 0 ? (
+                                    myHistory.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>{format(new Date(item.timestamp), (item as any).isPlaceholder ? 'dd MMM yyyy' : 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
+                                            <TableCell>{item.vehicleId}</TableCell>
+                                            <TableCell>{getStatusBadge(item.overallStatus)}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" onClick={() => setSelectedReport(report)}>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => setSelectedReport(item as Report)}
+                                                    disabled={(item as any).isPlaceholder}
+                                                >
                                                     Detail
                                                 </Button>
                                             </TableCell>
@@ -394,7 +420,7 @@ const MyHistoryTab = () => {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={4} className="h-24 text-center">
-                                            Anda belum pernah mengirim laporan.
+                                            Memuat riwayat...
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -519,5 +545,3 @@ export default function ChecklistPage() {
     </div>
   );
 }
-
-    
