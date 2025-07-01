@@ -33,6 +33,7 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -136,7 +137,7 @@ export default function UserManagementPage() {
       }
     }
 
-    let userData: Omit<User, 'id' | 'password'> & { password?: string };
+    let userData: Partial<User> = {};
 
     if (role === 'OPERATOR') {
       userData = {
@@ -145,6 +146,7 @@ export default function UserManagementPage() {
         nik: nik,
         batangan: formData.get("batangan") as string,
         location: formData.get("location") as string,
+        username: undefined, // ensure username is not set for operator
       };
     } else { // LOCATION_ADMIN or SUPER_ADMIN
       userData = {
@@ -152,11 +154,13 @@ export default function UserManagementPage() {
         role: role,
         username: username,
         location: role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined,
+        nik: undefined,
+        batangan: undefined,
       };
     }
 
     if (editingUser) {
-      const updateData = {...editingUser, ...userData};
+      const updateData: User = { ...editingUser, ...userData, name }; // Ensure name is always there
       if(password) {
         updateData.password = password;
       } else {
@@ -173,7 +177,7 @@ export default function UserManagementPage() {
         return;
       }
        // Explicitly define the complete User object for addUser
-      const newUser: Omit<User, 'id'> = { ...userData, password };
+      const newUser: Omit<User, 'id'> = { ...userData, name, password } as Omit<User, 'id'>;
       addUser(newUser);
     }
 
