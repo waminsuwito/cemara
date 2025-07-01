@@ -23,8 +23,8 @@ import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
 
 const formSchema = z.object({
-  username: z.string().trim().min(1, { message: "Username (NIK/Nama) harus diisi." }),
-  password: z.string().trim().min(1, { message: "Password harus diisi." }),
+  username: z.string().min(1, { message: "Username (NIK/Nama) harus diisi." }),
+  password: z.string().min(1, { message: "Password harus diisi." }),
 });
 
 export function OperatorLoginForm() {
@@ -44,16 +44,21 @@ export function OperatorLoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
+
     const inputUsername = values.username.toLowerCase().trim();
-    
+    const inputPassword = values.password.trim();
+
+    // Step 1: Find the user by NIK or Name.
     const foundUser = users.find((user) => {
       if (user.role !== 'OPERATOR') return false;
+      
       const userNik = user.nik?.toString().toLowerCase().trim();
       const userName = user.name?.toLowerCase().trim();
+      
       return userNik === inputUsername || userName === inputUsername;
     });
 
+    // Step 2: Handle "User not found" case.
     if (!foundUser) {
       toast({
         variant: "destructive",
@@ -64,7 +69,8 @@ export function OperatorLoginForm() {
       return;
     }
 
-    if (foundUser.password !== values.password) {
+    // Step 3: Handle "Password incorrect" case.
+    if (foundUser.password !== inputPassword) {
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -74,6 +80,7 @@ export function OperatorLoginForm() {
       return;
     }
 
+    // Step 4: Handle "No vehicle assigned" case.
     if (!foundUser.batangan) {
       toast({
         variant: "destructive",
@@ -84,7 +91,7 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Robust matching: remove all whitespace and convert to lowercase
+    // Step 5: Match the vehicle with robust logic
     const cleanBatangan = foundUser.batangan.replace(/\s/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
       v.licensePlate?.replace(/\s/g, '').toLowerCase() === cleanBatangan
