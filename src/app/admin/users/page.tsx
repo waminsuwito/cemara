@@ -150,9 +150,6 @@ export default function UserManagementPage() {
     if (editingUser) {
         const userToUpdate: User = { ...editingUser, name, role };
         
-        // ** CRITICAL FIX **
-        // Only update the password field if a new password was actually typed.
-        // If the password form field is empty, DO NOT change the existing password.
         if (password.trim() !== '') {
             userToUpdate.password = password;
         }
@@ -172,7 +169,6 @@ export default function UserManagementPage() {
         updateUser(userToUpdate);
 
     } else {
-        // --- Logic for CREATING a new user ---
         if (!password.trim()) {
             toast({
                 variant: "destructive",
@@ -344,59 +340,59 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                 
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="role" className="text-right">Role</Label>
-                    <Select name="role" value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                        <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Pilih Role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">Nama</Label>
-                    <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
-                </div>
-                
-                {role === 'OPERATOR' ? (
-                    <>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="nik" className="text-right">NIK</Label>
-                            <Input id="nik" name="nik" defaultValue={editingUser?.nik} className="col-span-3" required />
-                        </div>
-                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="batangan" className="text-right">Batangan</Label>
-                            <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" required />
-                        </div>
-                    </>
-                ) : (
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="username" className="text-right">Username</Label>
-                        <Input id="username" name="username" defaultValue={editingUser?.username} className="col-span-3" required disabled={editingUser?.username === 'superadmin'} />
-                    </div>
-                )}
-                
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password" className="text-right">Password</Label>
-                    <Input id="password" name="password" type="password" className="col-span-3" required={!editingUser} placeholder={editingUser ? "Isi untuk mengubah" : ""} />
-                </div>
-
-                {role !== 'SUPER_ADMIN' && (
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="location" className="text-right">Lokasi</Label>
-                         <Select name="location" defaultValue={editingUser?.location || locationNames[0]} required>
+                        <Label htmlFor="role" className="text-right">Role</Label>
+                        <Select name="role" value={role} onValueChange={(v) => setRole(v as UserRole)}>
                             <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Pilih Lokasi" />
-                            </Trigger>
+                                <SelectValue placeholder="Pilih Role" />
+                            </SelectTrigger>
                             <SelectContent>
-                                {locationNames.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                                {roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
-                )}
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">Nama</Label>
+                        <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
+                    </div>
+                    
+                    {role === 'OPERATOR' ? (
+                        <>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="nik" className="text-right">NIK</Label>
+                                <Input id="nik" name="nik" defaultValue={editingUser?.nik} className="col-span-3" required />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="batangan" className="text-right">Batangan</Label>
+                                <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" required />
+                            </div>
+                        </>
+                    ) : (
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="username" className="text-right">Username</Label>
+                            <Input id="username" name="username" defaultValue={editingUser?.username} className="col-span-3" required disabled={editingUser?.username === 'superadmin'} />
+                        </div>
+                    )}
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password" className="text-right">Password</Label>
+                        <Input id="password" name="password" type="password" className="col-span-3" required={!editingUser} placeholder={editingUser ? "Isi untuk mengubah" : ""} />
+                    </div>
+
+                    {role !== 'SUPER_ADMIN' && (
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="location" className="text-right">Lokasi</Label>
+                             <Select name="location" defaultValue={editingUser?.location || locationNames[0]} required>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Pilih Lokasi" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {locationNames.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
                 <DialogFooter>
                 <DialogClose asChild>
