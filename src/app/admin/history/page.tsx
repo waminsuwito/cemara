@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -40,7 +41,7 @@ import { useAdminAuth } from "@/context/admin-auth-context";
 import { type Report, type ReportItem } from "@/lib/data";
 import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
@@ -131,6 +132,15 @@ export default function HistoryPage() {
       })
       .sort((a, b) => b.timestamp - a.timestamp); // Sort by most recent first
   }, [reports, selectedVehicleId, date, user]);
+  
+  const canPrint = filteredReports.length > 0;
+  const printUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('vehicleId', selectedVehicleId);
+    if (date?.from) params.set('from', date.from.toISOString());
+    if (date?.to) params.set('to', date.to.toISOString());
+    return params.toString();
+  }, [selectedVehicleId, date]);
 
   return (
     <>
@@ -142,7 +152,7 @@ export default function HistoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex flex-col md:flex-row gap-2 items-start md:items-center flex-wrap">
             <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
               <SelectTrigger className="md:w-[250px]">
                 <SelectValue placeholder="Pilih Alat" />
@@ -209,6 +219,12 @@ export default function HistoryPage() {
                     </PopoverContent>
                 </Popover>
             )}
+            <Button asChild disabled={!canPrint}>
+              <Link href={`/admin/history/print?${printUrl}`}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Cetak Riwayat
+              </Link>
+            </Button>
           </div>
           <div className="border rounded-md">
             <Table>

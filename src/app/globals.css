@@ -121,4 +121,7 @@ body {
   .print-page-report h3 {
     font-size: 12pt;
   }
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
 }
