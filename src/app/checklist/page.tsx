@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChecklistItem, OtherDamageItem } from "@/components/checklist-item";
 import { Header } from "@/components/ui/header";
@@ -21,7 +21,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from 'date-fns';
+import { id as localeID } from 'date-fns/locale';
 
 const checklistFormSchema = z.object({
   items: z.array(z.object({
@@ -38,6 +42,19 @@ const checklistFormSchema = z.object({
 });
 
 type ChecklistFormData = z.infer<typeof checklistFormSchema>;
+
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "Baik":
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Baik</Badge>;
+    case "Perlu Perhatian":
+      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Perlu Perhatian</Badge>;
+    case "Rusak":
+      return <Badge variant="destructive">Rusak</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
+}
 
 function ChecklistForm() {
   const { user: operator, vehicle: vehicleHullNumber, logout } = useOperatorAuth();
@@ -330,6 +347,127 @@ const SuggestionForm = () => {
     );
 };
 
+const MyHistoryTab = () => {
+    const { user: operator } = useOperatorAuth();
+    const { reports } = useAppData();
+    const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+    const myReports = useMemo(() => {
+        if (!operator) return [];
+        return reports
+            .filter(r => r.operatorName === operator.name)
+            .sort((a, b) => b.timestamp - a.timestamp);
+    }, [reports, operator]);
+
+    return (
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Riwayat Checklist Saya</CardTitle>
+                    <CardDescription>Daftar semua laporan checklist yang pernah Anda kirim.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="border rounded-md">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Tanggal & Waktu</TableHead>
+                                    <TableHead>Kendaraan</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {myReports.length > 0 ? (
+                                    myReports.map((report) => (
+                                        <TableRow key={report.id}>
+                                            <TableCell>{format(new Date(report.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
+                                            <TableCell>{report.vehicleId}</TableCell>
+                                            <TableCell>{getStatusBadge(report.overallStatus)}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="outline" size="sm" onClick={() => setSelectedReport(report)}>
+                                                    Detail
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center">
+                                            Anda belum pernah mengirim laporan.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+            
+            <Dialog open={!!selectedReport} onOpenChange={(open) => !open && setSelectedReport(null)}>
+                <DialogContent className="sm:max-w-lg">
+                  {selectedReport && (
+                    <>
+                    <DialogHeader>
+                        <DialogTitle>Detail Laporan: {selectedReport.vehicleId}</DialogTitle>
+                        <DialogDescription>
+                            Laporan oleh Anda pada {format(new Date(selectedReport.timestamp), 'dd MMMM yyyy, HH:mm', { locale: localeID })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto p-1 pr-4 space-y-4">
+                        <Card>
+                            <CardHeader><CardTitle className="text-lg">Item Checklist</CardTitle></CardHeader>
+                            <CardContent className="space-y-4">
+                                {selectedReport.items && selectedReport.items.length > 0 ? selectedReport.items.map((item: ReportItem, index: number) => (
+                                    <div key={index} className="border-b pb-2 last:border-b-0 last:pb-0">
+                                        <div className="flex justify-between items-center">
+                                            <p className="font-semibold">{item.label}</p>
+                                            {getStatusBadge(item.status === 'BAIK' ? 'Baik' : item.status === 'RUSAK' ? 'Rusak' : 'Perlu Perhatian')}
+                                        </div>
+                                        {item.status !== 'BAIK' && (
+                                          <>
+                                            <p className="text-sm mt-1">{item.keterangan || "Tidak ada keterangan."}</p>
+                                            {item.foto && (
+                                                <div className="mt-2">
+                                                    <p className="text-sm text-muted-foreground mb-1">Foto:</p>
+                                                    <a href={item.foto} target="_blank" rel="noopener noreferrer">
+                                                        <img src={item.foto} alt={`Foto ${item.label}`} className="rounded-md w-full max-w-xs cursor-pointer" data-ai-hint="machine damage" />
+                                                    </a>
+                                                </div>
+                                            )}
+                                          </>
+                                        )}
+                                    </div>
+                                )) : <p className="text-muted-foreground">Semua item checklist dalam kondisi baik.</p>}
+                            </CardContent>
+                        </Card>
+
+                        {selectedReport.kerusakanLain && selectedReport.kerusakanLain.keterangan && (
+                            <Card>
+                                <CardHeader><CardTitle className="text-lg">Kerusakan Lainnya</CardTitle></CardHeader>
+                                <CardContent>
+                                    <p>{selectedReport.kerusakanLain.keterangan}</p>
+                                    {selectedReport.kerusakanLain.foto && (
+                                        <div className="mt-2">
+                                            <p className="text-sm text-muted-foreground mb-1">Foto:</p>
+                                            <a href={selectedReport.kerusakanLain.foto} target="_blank" rel="noopener noreferrer">
+                                                <img src={selectedReport.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" className="rounded-md w-full max-w-xs cursor-pointer" data-ai-hint="machine part" />
+                                            </a>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                    </>
+                  )}
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+};
+
+
 export default function ChecklistPage() {
   const { user, isLoading } = useOperatorAuth();
   const router = useRouter();
@@ -353,10 +491,11 @@ export default function ChecklistPage() {
       <Header />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <Tabs defaultValue="checklist" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="checklist">Checklist Harian</TabsTrigger>
               <TabsTrigger value="complaint">Komplain ke Kantor</TabsTrigger>
               <TabsTrigger value="suggestion">Usulan Saya</TabsTrigger>
+              <TabsTrigger value="history">Riwayat Saya</TabsTrigger>
             </TabsList>
             <TabsContent value="checklist" className="mt-6">
                 <div className="flex items-center mb-6">
@@ -372,8 +511,13 @@ export default function ChecklistPage() {
             <TabsContent value="suggestion" className="mt-6">
                 <SuggestionForm />
             </TabsContent>
+            <TabsContent value="history" className="mt-6">
+                <MyHistoryTab />
+            </TabsContent>
         </Tabs>
       </main>
     </div>
   );
 }
+
+    
