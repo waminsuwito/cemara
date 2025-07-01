@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -142,6 +141,14 @@ export default function HistoryPage() {
     return params.toString();
   }, [selectedVehicleId, date]);
 
+  const printButtonText = useMemo(() => {
+    if (selectedVehicleId === "all") {
+      return "Cetak Riwayat";
+    }
+    const vehicle = vehiclesForUser.find(v => v.hullNumber === selectedVehicleId);
+    return vehicle ? `Cetak untuk ${vehicle.hullNumber}` : "Cetak Riwayat";
+  }, [selectedVehicleId, vehiclesForUser]);
+
   return (
     <>
       <Card>
@@ -222,7 +229,7 @@ export default function HistoryPage() {
             <Button asChild disabled={!canPrint}>
               <Link href={`/admin/history/print?${printUrl}`}>
                   <Printer className="mr-2 h-4 w-4" />
-                  Cetak Riwayat
+                  {printButtonText}
               </Link>
             </Button>
           </div>
