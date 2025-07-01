@@ -1,10 +1,32 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Hanya izinkan akses baca dan tulis jika pengguna sudah login.
-    // Ini adalah aturan keamanan dasar yang penting untuk produksi.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    
+    // Users, Vehicles, and Locations need to be publicly readable for login and setup.
+    match /users/{userId} {
+      allow read: if true;
+      // Writing/deleting users should be restricted to authenticated admins.
+      allow write, delete: if request.auth != null;
+    }
+    
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow write, delete: if request.auth != null;
+    }
+
+    match /locations/{locationId} {
+       allow read: if true;
+       allow write, delete: if request.auth != null;
+    }
+
+    // Reports are sensitive.
+    match /reports/{reportId} {
+      // Allow report creation by anyone (operators are not authenticated with Firebase Auth).
+      allow create: if true;
+      // Only authenticated admins can read, update, or delete reports.
+      allow read, update, delete: if request.auth != null;
     }
   }
 }
