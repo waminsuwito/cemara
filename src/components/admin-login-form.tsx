@@ -54,9 +54,9 @@ export function AdminLoginForm() {
         u.password === values.password
     );
 
-    if (foundUser) {
+    if (foundUser && foundUser.username) {
       login({
-        username: foundUser.username!,
+        username: foundUser.username,
         role: foundUser.role,
         location: foundUser.location,
       });

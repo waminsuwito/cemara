@@ -89,7 +89,6 @@ export default function UserManagementPage() {
   };
 
   const handleDelete = (userId: string) => {
-    // Prevent deleting the currently logged-in user
     if (currentUser?.username && users.find(u => u.id === userId)?.username === currentUser.username) {
         toast({
             variant: "destructive",
@@ -109,6 +108,8 @@ export default function UserManagementPage() {
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
+    const location = formData.get("location") as string;
+    const batangan = formData.get("batangan") as string;
 
     // --- Start Validation ---
     if (role === "OPERATOR" && nik) {
@@ -147,36 +148,32 @@ export default function UserManagementPage() {
     // --- End Validation ---
 
     if (editingUser) {
-        // --- Logic for UPDATING an existing user ---
-        const userToUpdate: User = { ...editingUser }; // Start with existing data
+        const userToUpdate: User = { ...editingUser, name, role };
         
-        userToUpdate.name = name;
-        userToUpdate.role = role;
-        
-        // Securely update password only if a new one is entered
-        if (password) {
+        // ** CRITICAL FIX **
+        // Only update the password field if a new password was actually typed.
+        // If the password form field is empty, DO NOT change the existing password.
+        if (password.trim() !== '') {
             userToUpdate.password = password;
         }
         
         if (role === 'OPERATOR') {
             userToUpdate.nik = nik;
-            userToUpdate.batangan = formData.get("batangan") as string;
-            userToUpdate.location = formData.get("location") as string;
-            // Clean up admin-specific fields
-            delete userToUpdate.username;
+            userToUpdate.batangan = batangan;
+            userToUpdate.location = location;
+            userToUpdate.username = undefined; // Clean up admin-specific fields
         } else { // SUPER_ADMIN or LOCATION_ADMIN
             userToUpdate.username = username;
-            userToUpdate.location = role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined;
-            // Clean up operator-specific fields
-            delete userToUpdate.nik;
-            delete userToUpdate.batangan;
+            userToUpdate.location = role === 'LOCATION_ADMIN' ? location : undefined;
+            userToUpdate.nik = undefined; // Clean up operator-specific fields
+            userToUpdate.batangan = undefined;
         }
         
         updateUser(userToUpdate);
 
     } else {
         // --- Logic for CREATING a new user ---
-        if (!password) {
+        if (!password.trim()) {
             toast({
                 variant: "destructive",
                 title: "Gagal Menyimpan",
@@ -185,20 +182,14 @@ export default function UserManagementPage() {
             return;
         }
         
-        let newUser: Omit<User, 'id'> = {
-            name,
-            password,
-            role,
-        };
+        let newUser: Omit<User, 'id'> = { name, password, role };
 
         if (role === 'OPERATOR') {
-            newUser.nik = nik;
-            newUser.batangan = formData.get("batangan") as string;
-            newUser.location = formData.get("location") as string;
+            newUser = { ...newUser, nik, batangan, location };
         } else { // SUPER_ADMIN or LOCATION_ADMIN
-            newUser.username = username;
+             newUser = { ...newUser, username };
             if (role === 'LOCATION_ADMIN') {
-                newUser.location = formData.get("location") as string;
+                newUser.location = location;
             }
         }
         addUser(newUser);

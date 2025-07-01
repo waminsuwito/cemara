@@ -49,10 +49,8 @@ export function OperatorLoginForm() {
     
     const foundUser = users.find((user) => {
       if (user.role !== 'OPERATOR') return false;
-
       const userNik = user.nik?.toString().toLowerCase().trim();
       const userName = user.name?.toLowerCase().trim();
-
       return userNik === inputUsername || userName === inputUsername;
     });
 
