@@ -45,10 +45,12 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
+    const inputUsername = values.username.toLowerCase().trim();
+
     const foundUser = users.find(
       (u) =>
         (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
-        u.username?.toLowerCase() === values.username.toLowerCase() &&
+        u.username?.toLowerCase().trim() === inputUsername &&
         u.password === values.password
     );
 

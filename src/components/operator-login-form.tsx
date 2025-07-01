@@ -86,9 +86,10 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // More robust matching: remove all whitespace and convert to lowercase
+    // Robust matching: remove all whitespace and convert to lowercase
+    const cleanBatangan = foundUser.batangan.replace(/\s/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
-      v.licensePlate?.replace(/\s/g, '').toLowerCase() === foundUser.batangan?.replace(/\s/g, '').toLowerCase()
+      v.licensePlate?.replace(/\s/g, '').toLowerCase() === cleanBatangan
     );
 
     if (vehicle) {
@@ -102,7 +103,8 @@ export function OperatorLoginForm() {
          toast({
             variant: "destructive",
             title: "Login Gagal",
-            description: `Kendaraan dengan nomor polisi "${foundUser.batangan}" tidak ditemukan di daftar alat.`,
+            description: `Kendaraan dengan nomor polisi "${foundUser.batangan}" yang ditugaskan untuk Anda tidak dapat ditemukan di daftar alat.`,
+            duration: 9000
         });
         setIsLoading(false);
     }

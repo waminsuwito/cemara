@@ -89,6 +89,15 @@ export default function UserManagementPage() {
   };
 
   const handleDelete = (userId: string) => {
+    // Prevent deleting the currently logged-in user
+    if (currentUser?.username && users.find(u => u.id === userId)?.username === currentUser.username) {
+        toast({
+            variant: "destructive",
+            title: "Aksi Ditolak",
+            description: "Anda tidak dapat menghapus akun Anda sendiri.",
+        });
+        return;
+    }
     deleteUser(userId);
   };
 
@@ -101,11 +110,12 @@ export default function UserManagementPage() {
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
 
+    // --- Start Validation ---
     if (role === "OPERATOR" && nik) {
       const isNikTaken = users.some(
         (u) =>
           u.role === "OPERATOR" &&
-          u.nik?.toLowerCase() === nik.toLowerCase() &&
+          u.nik?.toLowerCase().trim() === nik.toLowerCase().trim() &&
           u.id !== editingUser?.id
       );
       if (isNikTaken) {
@@ -122,7 +132,7 @@ export default function UserManagementPage() {
       const isAdminUsernameTaken = users.some(
         (u) =>
           (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN") &&
-          u.username?.toLowerCase() === username.toLowerCase() &&
+          u.username?.toLowerCase().trim() === username.toLowerCase().trim() &&
           u.id !== editingUser?.id
       );
       if (isAdminUsernameTaken) {
@@ -134,32 +144,38 @@ export default function UserManagementPage() {
         return;
       }
     }
+    // --- End Validation ---
 
     if (editingUser) {
-        const updatedUser: Omit<User, 'id'> = {
-            name: name,
-            role: role,
-            password: editingUser.password, // Start with the old password
-        };
+        // --- Logic for UPDATING an existing user ---
+        const userToUpdate: User = { ...editingUser }; // Start with existing data
         
+        userToUpdate.name = name;
+        userToUpdate.role = role;
+        
+        // Securely update password only if a new one is entered
         if (password) {
-            updatedUser.password = password;
+            userToUpdate.password = password;
         }
         
         if (role === 'OPERATOR') {
-            updatedUser.nik = nik;
-            updatedUser.batangan = formData.get("batangan") as string;
-            updatedUser.location = formData.get("location") as string;
-            updatedUser.username = undefined;
+            userToUpdate.nik = nik;
+            userToUpdate.batangan = formData.get("batangan") as string;
+            userToUpdate.location = formData.get("location") as string;
+            // Clean up admin-specific fields
+            delete userToUpdate.username;
         } else { // SUPER_ADMIN or LOCATION_ADMIN
-            updatedUser.username = username;
-            updatedUser.location = role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined;
-            updatedUser.nik = undefined;
-            updatedUser.batangan = undefined;
+            userToUpdate.username = username;
+            userToUpdate.location = role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined;
+            // Clean up operator-specific fields
+            delete userToUpdate.nik;
+            delete userToUpdate.batangan;
         }
         
-        updateUser({ id: editingUser.id, ...updatedUser });
+        updateUser(userToUpdate);
+
     } else {
+        // --- Logic for CREATING a new user ---
         if (!password) {
             toast({
                 variant: "destructive",
@@ -179,7 +195,7 @@ export default function UserManagementPage() {
             newUser.nik = nik;
             newUser.batangan = formData.get("batangan") as string;
             newUser.location = formData.get("location") as string;
-        } else {
+        } else { // SUPER_ADMIN or LOCATION_ADMIN
             newUser.username = username;
             if (role === 'LOCATION_ADMIN') {
                 newUser.location = formData.get("location") as string;
@@ -368,7 +384,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                 ) : (
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="username" className="text-right">Username</Label>
-                        <Input id="username" name="username" defaultValue={editingUser?.username} className="col-span-3" required />
+                        <Input id="username" name="username" defaultValue={editingUser?.username} className="col-span-3" required disabled={editingUser?.username === 'superadmin'} />
                     </div>
                 )}
                 
