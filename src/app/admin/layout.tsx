@@ -13,6 +13,8 @@ import {
   Wrench,
   LogOut,
   History,
+  MessageSquareWarning,
+  Lightbulb,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,8 @@ const navItems = [
   { href: "/admin/history", icon: History, label: "Riwayat Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
   { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN'] },
+  { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
