@@ -1,8 +1,9 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +23,13 @@ type AppDataContextType = {
   
   reports: Report[];
   submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<'created' | 'updated'>;
+
+  complaints: Complaint[];
+  addComplaint: (complaint: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => Promise<void>;
+  updateComplaintStatus: (complaintId: string, status: Complaint['status']) => Promise<void>;
+  
+  suggestions: Suggestion[];
+  addSuggestion: (suggestion: Omit<Suggestion, 'id' | 'timestamp'>) => Promise<void>;
   
   locations: Location[];
   locationNames: string[];
@@ -38,6 +46,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
@@ -102,29 +112,41 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   // Effect for protected data (loaded only for logged-in admins)
   useEffect(() => {
     if (adminUser) {
-      const q = query(collection(db, "reports"));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const data = querySnapshot.docs.map((doc) => {
-          const docData = doc.data();
-          if (docData.timestamp && docData.timestamp instanceof Timestamp) {
-            docData.timestamp = docData.timestamp.toMillis();
-          }
-          return { id: doc.id, ...docData };
-        }) as Report[];
-        setReports(data);
-      }, (error) => {
-        console.error(`Error fetching reports: `, error);
-        toast({
-            variant: "destructive",
-            title: `Gagal Memuat Data Laporan`,
-            description: "Terjadi masalah saat mengambil data laporan. Pastikan aturan keamanan memperbolehkan admin membaca laporan.",
-        });
+      const protectedCollections = [
+          { name: 'reports', setter: setReports, orderByField: 'timestamp' },
+          { name: 'complaints', setter: setComplaints, orderByField: 'timestamp' },
+          { name: 'suggestions', setter: setSuggestions, orderByField: 'timestamp' },
+      ];
+
+      const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
+          const q = query(collection(db, name));
+          return onSnapshot(q, (querySnapshot) => {
+              const data = querySnapshot.docs.map((doc) => {
+                  const docData = doc.data();
+                  if (docData.timestamp && docData.timestamp instanceof Timestamp) {
+                      docData.timestamp = docData.timestamp.toMillis();
+                  }
+                  return { id: doc.id, ...docData };
+              });
+              // Sort descending by timestamp locally
+              data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+              setter(data as any);
+          }, (error) => {
+              console.error(`Error fetching ${name}: `, error);
+              toast({
+                  variant: "destructive",
+                  title: `Gagal Memuat Data ${name.charAt(0).toUpperCase() + name.slice(1)}`,
+                  description: `Terjadi masalah saat mengambil data.`,
+              });
+          });
       });
-      
-      return () => unsubscribe();
+    
+      return () => unsubscribes.forEach(unsub => unsub());
     } else {
-      // If admin logs out, clear the sensitive reports data
+      // If admin logs out, clear the sensitive data
       setReports([]);
+      setComplaints([]);
+      setSuggestions([]);
     }
   }, [adminUser, toast]);
 
@@ -327,6 +349,45 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     await updateDoc(existingReportDoc.ref, updateData);
     return 'updated';
   };
+  
+  const addComplaint = async (complaintData: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => {
+    try {
+      await addDoc(collection(db, 'complaints'), {
+        ...complaintData,
+        status: 'OPEN',
+        timestamp: serverTimestamp(),
+      });
+      toast({ title: "Sukses", description: "Komplain Anda berhasil dikirim." });
+    } catch (e) {
+      console.error("Error adding complaint: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal mengirim komplain." });
+      throw e;
+    }
+  };
+
+  const updateComplaintStatus = async (complaintId: string, status: Complaint['status']) => {
+    try {
+      await updateDoc(doc(db, 'complaints', complaintId), { status });
+      toast({ title: "Sukses", description: `Status komplain berhasil diperbarui.` });
+    } catch (e) {
+      console.error("Error updating complaint status: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui status komplain." });
+    }
+  };
+
+  const addSuggestion = async (suggestionData: Omit<Suggestion, 'id' | 'timestamp'>) => {
+    try {
+      await addDoc(collection(db, 'suggestions'), {
+        ...suggestionData,
+        timestamp: serverTimestamp(),
+      });
+      toast({ title: "Sukses", description: "Usulan Anda berhasil dikirim. Terima kasih atas masukannya." });
+    } catch (e) {
+      console.error("Error adding suggestion: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal mengirim usulan." });
+      throw e;
+    }
+  };
 
   const locationNames = locations.map(l => l.namaBP).sort();
 
@@ -334,6 +395,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     users, addUser, updateUser, deleteUser,
     vehicles, addVehicle, updateVehicle, deleteVehicle,
     reports, submitReport,
+    complaints, addComplaint, updateComplaintStatus,
+    suggestions, addSuggestion,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

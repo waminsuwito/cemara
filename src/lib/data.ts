@@ -55,6 +55,26 @@ export type Location = {
   lokasiBP: string;
 };
 
+export type Complaint = {
+  id: string;
+  timestamp: number;
+  operatorName: string;
+  vehicleId: string;
+  location: string;
+  complaint: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+};
+
+export type Suggestion = {
+  id: string;
+  timestamp: number;
+  operatorName: string;
+  vehicleId: string;
+  location: string;
+  suggestion: string;
+};
+
+
 export const roles: UserRole[] = ["OPERATOR", "LOCATION_ADMIN", "SUPER_ADMIN"];
 
 export const checklistItems = [

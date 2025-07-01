@@ -17,20 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-// This is placeholder data. In a future step, this will come from the AppDataContext.
-const suggestions:any[] = [
-  // {
-  //   id: '1',
-  //   date: '2024-07-27 15:30',
-  //   operator: 'Budi Hartono',
-  //   vehicle: 'EX-05',
-  //   location: 'Lokasi BP C',
-  //   suggestion: 'Mohon disediakan APAR (alat pemadam api ringan) yang baru di setiap kabin alat berat untuk meningkatkan keselamatan.'
-  // },
-];
+import { useAppData } from "@/context/app-data-context";
+import { format } from "date-fns";
+import { id as localeID } from 'date-fns/locale';
 
 export default function SuggestionsPage() {
+  const { suggestions } = useAppData();
+
   return (
     <Card>
       <CardHeader>
@@ -55,9 +48,9 @@ export default function SuggestionsPage() {
               {suggestions.length > 0 ? (
                 suggestions.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>{item.operator}</TableCell>
-                    <TableCell>{item.vehicle}</TableCell>
+                    <TableCell>{format(new Date(item.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
+                    <TableCell>{item.operatorName}</TableCell>
+                    <TableCell>{item.vehicleId}</TableCell>
                     <TableCell>{item.location}</TableCell>
                     <TableCell>{item.suggestion}</TableCell>
                   </TableRow>

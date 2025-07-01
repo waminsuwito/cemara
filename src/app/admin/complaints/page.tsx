@@ -17,36 +17,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-// This is placeholder data. In a future step, this will come from the AppDataContext.
-const complaints:any[] = [
-  // {
-  //   id: '1',
-  //   date: '2024-07-28 10:00',
-  //   operator: 'Umar Santoso',
-  //   vehicle: 'DT-01',
-  //   location: 'Lokasi BP A',
-  //   complaint: 'Rem terasa kurang pakem saat turunan, mohon diperiksa segera.',
-  //   status: 'OPEN'
-  // },
-];
+import { useAppData } from "@/context/app-data-context";
+import { format } from "date-fns";
+import { id as localeID } from 'date-fns/locale';
+import { MoreHorizontal } from "lucide-react";
+import { type Complaint } from "@/lib/data";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "OPEN":
       return <Badge variant="destructive">Baru</Badge>;
     case "IN_PROGRESS":
-      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Ditangani</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-400 text-yellow-900">Ditangani</Badge>;
     case "RESOLVED":
-      return <Badge variant="secondary" className="bg-green-100 text-green-800">Selesai</Badge>;
+      return <Badge variant="secondary" className="bg-green-400 text-green-900">Selesai</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
 };
 
 export default function ComplaintsPage() {
+  const { complaints, updateComplaintStatus } = useAppData();
+
+  const handleStatusChange = (id: string, status: Complaint['status']) => {
+    updateComplaintStatus(id, status);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -73,16 +77,32 @@ export default function ComplaintsPage() {
               {complaints.length > 0 ? (
                 complaints.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>{item.operator}</TableCell>
-                    <TableCell>{item.vehicle}</TableCell>
+                    <TableCell>{format(new Date(item.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
+                    <TableCell>{item.operatorName}</TableCell>
+                    <TableCell>{item.vehicleId}</TableCell>
                     <TableCell>{item.location}</TableCell>
                     <TableCell>{item.complaint}</TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">
-                        Tandai Selesai
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Buka menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'IN_PROGRESS')}>
+                            Tandai "Ditangani"
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'RESOLVED')}>
+                            Tandai "Selesai"
+                          </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'OPEN')}>
+                            Set Kembali ke "Baru"
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
