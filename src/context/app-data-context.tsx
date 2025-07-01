@@ -9,6 +9,7 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
+import { useOperatorAuth } from './operator-auth-context';
 
 type AppDataContextType = {
   users: User[];
@@ -51,6 +52,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
+  const { user: operatorUser } = useOperatorAuth();
 
   // Effect for public data (loaded for everyone)
   useEffect(() => {
@@ -109,9 +111,9 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Effect for protected data (loaded only for logged-in admins)
+  // Effect for protected data (loaded only for logged-in users)
   useEffect(() => {
-    if (adminUser) {
+    if (adminUser || operatorUser) {
       const protectedCollections = [
           { name: 'reports', setter: setReports, orderByField: 'timestamp' },
           { name: 'complaints', setter: setComplaints, orderByField: 'timestamp' },
@@ -143,12 +145,12 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     
       return () => unsubscribes.forEach(unsub => unsub());
     } else {
-      // If admin logs out, clear the sensitive data
+      // If user logs out, clear the sensitive data
       setReports([]);
       setComplaints([]);
       setSuggestions([]);
     }
-  }, [adminUser, toast]);
+  }, [adminUser, operatorUser, toast]);
 
 
   const addUser = async (userData: Omit<User, 'id'>) => {
