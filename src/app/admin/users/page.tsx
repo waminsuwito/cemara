@@ -137,48 +137,46 @@ export default function UserManagementPage() {
       }
     }
 
-    let userData: Partial<User> = {};
-
+    let baseData: Partial<User> = {};
     if (role === 'OPERATOR') {
-      userData = {
-        name,
-        role: 'OPERATOR',
-        nik: nik,
-        batangan: formData.get("batangan") as string,
-        location: formData.get("location") as string,
-        username: undefined, // ensure username is not set for operator
-      };
-    } else { // LOCATION_ADMIN or SUPER_ADMIN
-      userData = {
-        name,
-        role: role,
-        username: username,
-        location: role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined,
-        nik: undefined,
-        batangan: undefined,
-      };
+        baseData = {
+            role: 'OPERATOR',
+            nik: nik,
+            batangan: formData.get("batangan") as string,
+            location: formData.get("location") as string,
+            username: undefined,
+        };
+    } else {
+        baseData = {
+            role: role,
+            username: username,
+            location: role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined,
+            nik: undefined,
+            batangan: undefined,
+        };
     }
 
     if (editingUser) {
-      const updateData: User = { ...editingUser, ...userData, name }; // Ensure name is always there
-      if(password) {
-        updateData.password = password;
-      } else {
-        delete updateData.password;
-      }
-      updateUser(updateData);
+        const updateData: User = { ...editingUser, ...baseData, name };
+        if (password) {
+            updateData.password = password;
+        }
+        updateUser(updateData);
     } else {
-      if (!password) {
-        toast({
-          variant: "destructive",
-          title: "Gagal Menyimpan",
-          description: "Password wajib diisi untuk pengguna baru.",
-        });
-        return;
-      }
-       // Explicitly define the complete User object for addUser
-      const newUser: Omit<User, 'id'> = { ...userData, name, password } as Omit<User, 'id'>;
-      addUser(newUser);
+        if (!password) {
+            toast({
+                variant: "destructive",
+                title: "Gagal Menyimpan",
+                description: "Password wajib diisi untuk pengguna baru.",
+            });
+            return;
+        }
+        const newUser: Omit<User, 'id'> = {
+            name,
+            password,
+            ...baseData
+        } as Omit<User, 'id'>;
+        addUser(newUser);
     }
 
     setIsDialogOpen(false);
@@ -397,5 +395,3 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
         </Dialog>
     );
 }
-
-    
