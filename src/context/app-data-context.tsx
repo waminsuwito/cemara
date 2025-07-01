@@ -1,11 +1,10 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Vehicle, Report, Location, ReportItem } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
@@ -143,17 +142,21 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = async (user: User) => {
     const { id, ...userData } = user;
     
-    // Create a clean object to send to Firestore, filtering out any 'undefined' values.
-    const cleanUserData: { [key: string]: any } = {};
+    const updatePayload: { [key: string]: any } = {};
+
     Object.keys(userData).forEach((key) => {
       const typedKey = key as keyof typeof userData;
-      if (userData[typedKey] !== undefined) {
-        cleanUserData[key] = userData[typedKey];
+      const value = userData[typedKey];
+      
+      if (value === undefined) {
+        updatePayload[key] = deleteField();
+      } else {
+        updatePayload[key] = value;
       }
     });
     
     try {
-      await updateDoc(doc(db, 'users', id), cleanUserData);
+      await updateDoc(doc(db, 'users', id), updatePayload);
       toast({ title: "Sukses", description: "Data pengguna berhasil diperbarui." });
     } catch (e) {
       console.error("Error updating user: ", e);
