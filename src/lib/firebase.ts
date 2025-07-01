@@ -13,12 +13,12 @@ import { getStorage } from "firebase/storage";
 // 5. Salin objek "firebaseConfig" dan tempel seluruhnya di sini.
 // ===================================================================
 const firebaseConfig = {
-    apiKey: "AIzaSyAI3rvfMGSPkfHpmtMAOgFFU9Bv64su7T0",
-    authDomain: "heavy-duty-checklist.firebaseapp.com",
-    projectId: "heavy-duty-checklist",
-    storageBucket: "heavy-duty-checklist.firebasestorage.app",
-    messagingSenderId: "62662575935",
-    appId: "1:62662575935:web:164bbc4630e4ba5bfb358a"
+    apiKey: "GANTI_DENGAN_API_KEY_BARU_ANDA",
+    authDomain: "GANTI_DENGAN_AUTH_DOMAIN_BARU_ANDA",
+    projectId: "GANTI_DENGAN_PROJECT_ID_BARU_ANDA",
+    storageBucket: "GANTI_DENGAN_STORAGE_BUCKET_BARU_ANDA",
+    messagingSenderId: "GANTI_DENGAN_MESSAGING_SENDER_ID_BARU_ANDA",
+    appId: "GANTI_DENGAN_APP_ID_BARU_ANDA"
   };
 
 
