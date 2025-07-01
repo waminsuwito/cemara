@@ -45,61 +45,65 @@ export function OperatorLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
+    const inputUsername = values.username.toLowerCase();
+    
     const foundUser = users.find((user) => {
-      // Lewati jika pengguna ini bukan seorang Operator
-      if (user.role !== 'OPERATOR') {
-          return false;
-      }
+      if (user.role !== 'OPERATOR') return false;
 
-      // Siapkan nilai untuk perbandingan (mengabaikan huruf besar/kecil)
-      const inputUsername = values.username.toLowerCase();
       const userNik = user.nik?.toString().toLowerCase();
       const userName = user.name?.toLowerCase();
 
-      // Lakukan pencocokan
-      const isUsernameMatch = (userNik === inputUsername) || (userName === inputUsername);
-      const isPasswordMatch = user.password === values.password;
-      
-      // Pengguna ditemukan jika kedua username DAN password cocok
-      return isUsernameMatch && isPasswordMatch;
+      return userNik === inputUsername || userName === inputUsername;
     });
 
-    if (foundUser) {
-      if (foundUser.batangan) {
-          const vehicle = vehicles.find(v => 
-              v.licensePlate?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
-          );
-          
-          if (vehicle) {
-              login(foundUser, vehicle.hullNumber);
-              toast({
-                title: "Login Berhasil",
-                description: `Selamat datang, ${foundUser.name}.`,
-              });
-              router.push("/checklist");
-          } else {
-               toast({
-                  variant: "destructive",
-                  title: "Login Gagal",
-                  description: `Kendaraan dengan nomor polisi "${foundUser.batangan}" tidak ditemukan. Pastikan data "Batangan" di profil Operator cocok dengan "Nomor Polisi" di data Alat.`,
-              });
-              setIsLoading(false);
-          }
-      } else {
-           toast({
-              variant: "destructive",
-              title: "Login Gagal",
-              description: `Operator "${foundUser.name}" tidak memiliki kendaraan (batangan) yang ditugaskan.`,
-          });
-          setIsLoading(false);
-      }
-    } else {
+    if (!foundUser) {
       toast({
         variant: "destructive",
         title: "Login Gagal",
-        description: "NIK/Nama atau password salah.",
+        description: "Pengguna dengan NIK atau Nama tersebut tidak ditemukan.",
       });
       setIsLoading(false);
+      return;
+    }
+
+    if (foundUser.password !== values.password) {
+      toast({
+        variant: "destructive",
+        title: "Login Gagal",
+        description: "Password yang Anda masukkan salah.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (!foundUser.batangan) {
+      toast({
+        variant: "destructive",
+        title: "Login Gagal",
+        description: `Operator "${foundUser.name}" tidak memiliki kendaraan (batangan) yang ditugaskan.`,
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const vehicle = vehicles.find(v => 
+      v.licensePlate?.trim().toLowerCase() === foundUser.batangan?.trim().toLowerCase()
+    );
+
+    if (vehicle) {
+        login(foundUser, vehicle.hullNumber);
+        toast({
+          title: "Login Berhasil",
+          description: `Selamat datang, ${foundUser.name}.`,
+        });
+        router.push("/checklist");
+    } else {
+         toast({
+            variant: "destructive",
+            title: "Login Gagal",
+            description: `Kendaraan dengan nomor polisi "${foundUser.batangan}" tidak ditemukan di daftar alat.`,
+        });
+        setIsLoading(false);
     }
   }
 

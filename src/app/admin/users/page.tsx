@@ -101,7 +101,6 @@ export default function UserManagementPage() {
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
 
-    // Validation for OPERATOR NIK uniqueness
     if (role === "OPERATOR" && nik) {
       const isNikTaken = users.some(
         (u) =>
@@ -119,7 +118,6 @@ export default function UserManagementPage() {
       }
     }
 
-    // Validation for ADMIN USERNAME uniqueness
     if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN") && username) {
       const isAdminUsernameTaken = users.some(
         (u) =>
@@ -138,37 +136,30 @@ export default function UserManagementPage() {
     }
 
     if (editingUser) {
-        // Build the update object from the editing user
-        const updatedUser: User = { ...editingUser };
+        const updatedUser: Omit<User, 'id'> = {
+            name: name,
+            role: role,
+            password: editingUser.password, // Start with the old password
+        };
         
-        // Update common fields
-        updatedUser.name = name;
-        updatedUser.role = role;
-        
-        // Update role-specific fields
-        if (role === 'OPERATOR') {
-            updatedUser.nik = nik;
-            updatedUser.batangan = formData.get("batangan") as string;
-            updatedUser.location = formData.get("location") as string;
-            // Clear admin fields
-            updatedUser.username = undefined;
-        } else { // SUPER_ADMIN or LOCATION_ADMIN
-            updatedUser.username = username;
-            updatedUser.location = role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined;
-            // Clear operator fields
-            updatedUser.nik = undefined;
-            updatedUser.batangan = undefined;
-        }
-        
-        // **CRITICAL FIX**: Only update the password if a new one was entered.
-        // If the password field is empty, the existing password remains unchanged.
         if (password) {
             updatedUser.password = password;
         }
         
-        updateUser(updatedUser);
+        if (role === 'OPERATOR') {
+            updatedUser.nik = nik;
+            updatedUser.batangan = formData.get("batangan") as string;
+            updatedUser.location = formData.get("location") as string;
+            updatedUser.username = undefined;
+        } else { // SUPER_ADMIN or LOCATION_ADMIN
+            updatedUser.username = username;
+            updatedUser.location = role === 'LOCATION_ADMIN' ? formData.get("location") as string : undefined;
+            updatedUser.nik = undefined;
+            updatedUser.batangan = undefined;
+        }
+        
+        updateUser({ id: editingUser.id, ...updatedUser });
     } else {
-        // Creating a new user
         if (!password) {
             toast({
                 variant: "destructive",
