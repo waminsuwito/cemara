@@ -33,7 +33,6 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -137,7 +136,7 @@ export default function UserManagementPage() {
       }
     }
 
-    let userData: Omit<User, 'id'>;
+    let userData: Omit<User, 'id' | 'password'> & { password?: string };
 
     if (role === 'OPERATOR') {
       userData = {
@@ -157,7 +156,6 @@ export default function UserManagementPage() {
     }
 
     if (editingUser) {
-      // Create a new object for update to avoid passing undefined password if not changed
       const updateData = {...editingUser, ...userData};
       if(password) {
         updateData.password = password;
@@ -167,7 +165,6 @@ export default function UserManagementPage() {
       updateUser(updateData);
     } else {
       if (!password) {
-        // Handle error: password is required for new users
         toast({
           variant: "destructive",
           title: "Gagal Menyimpan",
@@ -175,7 +172,9 @@ export default function UserManagementPage() {
         });
         return;
       }
-      addUser({ ...userData, password });
+       // Explicitly define the complete User object for addUser
+      const newUser: Omit<User, 'id'> = { ...userData, password };
+      addUser(newUser);
     }
 
     setIsDialogOpen(false);
