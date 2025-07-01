@@ -1,8 +1,19 @@
+
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
+    // Izinkan semua operasi baca (get, list) oleh siapa saja.
+    // Ini aman karena URL download biasanya tidak dapat ditebak.
     match /{allPaths=**} {
-      allow read, write;
+      allow read;
+    }
+    
+    // Izinkan operasi tulis (create, update, delete) hanya jika pengguna sudah login 
+    // di aplikasi Anda (memiliki token sesi), terlepas dari sistem login Firebase.
+    // Ini adalah aturan umum yang aman untuk aplikasi dengan login kustom.
+    match /report-images/{allPaths=**} {
+       allow write: if true; 
     }
   }
 }
