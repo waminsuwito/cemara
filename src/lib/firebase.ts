@@ -4,16 +4,24 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// ===================================================================
+// GANTI DENGAN KONFIGURASI DARI PROYEK FIREBASE BARU ANDA
+// 1. Buka konsol Firebase proyek baru Anda.
+// 2. Masuk ke Project Settings (ikon gerigi ⚙️).
+// 3. Di tab "General", scroll ke bawah ke "Your apps".
+// 4. Pilih aplikasi web Anda, lalu pilih "Config" pada bagian SDK.
+// 5. Salin objek "firebaseConfig" dan tempel seluruhnya di sini.
+// ===================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCqlLDtfD8i0SgfIb9mZEcwb8o9EnpQxug",
-  authDomain: "frp-ceklist-armada.firebaseapp.com",
-  projectId: "frp-ceklist-armada",
-  storageBucket: "frp-ceklist-armada.appspot.com",
-  messagingSenderId: "428879600526",
-  appId: "1:428879600526:web:0437c1c03b11914a3ba2df",
-  measurementId: "G-PHZC8ZV670"
+  apiKey: "GANTI_DENGAN_API_KEY_BARU_ANDA",
+  authDomain: "GANTI_DENGAN_AUTH_DOMAIN_BARU_ANDA",
+  projectId: "GANTI_DENGAN_PROJECT_ID_BARU_ANDA",
+  storageBucket: "GANTI_DENGAN_STORAGE_BUCKET_BARU_ANDA", // <- Paling penting untuk Storage
+  messagingSenderId: "GANTI_DENGAN_MESSAGING_SENDER_ID_BARU_ANDA",
+  appId: "GANTI_DENGAN_APP_ID_BARU_ANDA",
+  measurementId: "GANTI_DENGAN_MEASUREMENT_ID_BARU_ANDA" // Opsional
 };
+
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
