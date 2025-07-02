@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -10,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
-import { checklistItems, checklistItemsBP, bpUsernames, Report, ReportItem } from "@/lib/data";
+import { checklistItems, Report, ReportItem } from "@/lib/data";
 import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,13 +64,6 @@ function ChecklistForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const activeChecklist = useMemo(() => {
-    if (operator && bpUsernames.includes(operator.name)) {
-      return checklistItemsBP;
-    }
-    return checklistItems;
-  }, [operator]);
-
   const methods = useForm<ChecklistFormData>({
     resolver: zodResolver(checklistFormSchema),
     defaultValues: {
@@ -86,9 +78,9 @@ function ChecklistForm() {
   const { reset } = methods;
 
   useEffect(() => {
-    if (activeChecklist.length > 0) {
+    if (checklistItems.length > 0) {
       reset({
-        items: activeChecklist.map((item) => ({
+        items: checklistItems.map((item) => ({
           ...item,
           status: "BAIK",
           keterangan: "",
@@ -100,7 +92,7 @@ function ChecklistForm() {
         },
       });
     }
-  }, [activeChecklist, reset]);
+  }, [reset, checklistItems]);
 
   const onSubmit = async (data: ChecklistFormData) => {
     setIsLoading(true);
@@ -219,7 +211,7 @@ function ChecklistForm() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="grid gap-6">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activeChecklist.map((item, index) => (
+          {checklistItems.map((item, index) => (
             <ChecklistItem key={item.id} index={index} label={item.label} />
           ))}
           <OtherDamageItem />
