@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -48,7 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminAuth } from "@/context/admin-auth-context";
+import { useAdminAuth, type AdminUser } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import { roles, type User, type UserRole } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
@@ -58,20 +58,23 @@ export default function UserManagementPage() {
   const { users, addUser, updateUser, deleteUser, locationNames } = useAppData();
   const { toast } = useToast();
 
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const isLocationAdmin = currentUser?.role === 'LOCATION_ADMIN';
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [locationFilter, setLocationFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState(
+    isSuperAdmin ? "all" : currentUser?.location || "all"
+  );
   
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-
-  if (!isSuperAdmin) {
+  if (!isSuperAdmin && !isLocationAdmin) {
     return (
        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
         <div className="flex flex-col items-center gap-1 text-center">
             <ShieldAlert className="h-16 w-16 text-muted-foreground" />
             <h3 className="text-2xl font-bold tracking-tight">Akses Ditolak</h3>
             <p className="text-sm text-muted-foreground">
-                Hanya Super Admin yang dapat mengakses halaman ini.
+                Anda tidak memiliki izin untuk mengakses halaman ini.
             </p>
         </div>
       </div>
@@ -195,10 +198,20 @@ export default function UserManagementPage() {
     setEditingUser(null);
   };
 
-  const filteredUsers =
-    locationFilter === "all"
-      ? users
-      : users.filter((u) => u.location === locationFilter);
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      if (isSuperAdmin) {
+        if (locationFilter === 'all') return true;
+        // Also show users without a location (super admins)
+        return user.location === locationFilter || !user.location;
+      }
+      if (isLocationAdmin) {
+        // Location admin can only see users from their own location and not super admins.
+        return user.location === currentUser.location && user.role !== 'SUPER_ADMIN';
+      }
+      return false;
+    });
+  }, [users, isSuperAdmin, isLocationAdmin, locationFilter, currentUser]);
 
   return (
     <>
@@ -211,7 +224,7 @@ export default function UserManagementPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <Select value={locationFilter} onValueChange={setLocationFilter} disabled={!isSuperAdmin}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter Lokasi" />
               </SelectTrigger>
@@ -265,7 +278,7 @@ export default function UserManagementPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          disabled={user.username === 'superadmin'}
+                          disabled={user.role === 'SUPER_ADMIN'}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Hapus</span>
@@ -304,17 +317,20 @@ export default function UserManagementPage() {
         setIsOpen={setIsDialogOpen}
         editingUser={editingUser}
         onSave={handleSave}
+        currentUser={currentUser}
       />
     </>
   );
 }
 
-function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
+function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, currentUser }: {
     isOpen: boolean,
     setIsOpen: (open: boolean) => void,
     editingUser: User | null,
-    onSave: (e: React.FormEvent<HTMLFormElement>) => void
+    onSave: (e: React.FormEvent<HTMLFormElement>) => void,
+    currentUser: AdminUser | null
 }) {
+    const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
     const [role, setRole] = useState<UserRole>(editingUser?.role || 'OPERATOR');
     const { locationNames } = useAppData();
 
@@ -323,6 +339,8 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
             setRole(editingUser?.role || 'OPERATOR');
         }
     }, [isOpen, editingUser]);
+
+    const availableRoles = isSuperAdmin ? roles : roles.filter(r => r !== 'SUPER_ADMIN');
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -347,7 +365,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                                 <SelectValue placeholder="Pilih Role" />
                             </SelectTrigger>
                             <SelectContent>
-                                {roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                {availableRoles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -383,7 +401,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave }: {
                     {role !== 'SUPER_ADMIN' && (
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="location" className="text-right">Lokasi</Label>
-                             <Select name="location" defaultValue={editingUser?.location || locationNames[0]} required>
+                             <Select name="location" defaultValue={editingUser?.location || currentUser?.location} required disabled={!isSuperAdmin}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Pilih Lokasi" />
                                 </SelectTrigger>
