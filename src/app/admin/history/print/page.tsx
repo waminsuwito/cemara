@@ -4,6 +4,7 @@
 import React, { useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppData } from '@/context/app-data-context';
+import { useAdminAuth } from '@/context/admin-auth-context';
 import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { type Report } from '@/lib/data';
@@ -14,6 +15,7 @@ function PrintPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { reports, vehicles } = useAppData();
+    const { user } = useAdminAuth();
 
     const selectedVehicleId = searchParams.get('vehicleId') || 'all';
     const fromDateStr = searchParams.get('from');
@@ -25,9 +27,17 @@ function PrintPageContent() {
 
         return reports
           .filter((report) => {
+            // Filter by vehicle
             if (selectedVehicleId !== "all" && report.vehicleId !== selectedVehicleId) {
               return false;
             }
+
+            // Filter by user's location if location admin
+            if (user?.role === 'LOCATION_ADMIN' && user.location && report.location !== user.location) {
+                return false;
+            }
+
+            // Filter by date range
             if (fromDate && toDate) {
               const reportDate = new Date(report.timestamp);
               if (isBefore(reportDate, fromDate) || isAfter(reportDate, toDate)) {
@@ -37,7 +47,7 @@ function PrintPageContent() {
             return true;
           })
           .sort((a, b) => a.timestamp - b.timestamp); // Sort oldest to newest for history
-    }, [reports, selectedVehicleId, fromDateStr, toDateStr]);
+    }, [reports, selectedVehicleId, fromDateStr, toDateStr, user]);
 
     const vehicle = selectedVehicleId !== 'all' ? vehicles.find(v => v.hullNumber === selectedVehicleId) : null;
     const vehicleDisplay = vehicle ? `${vehicle.hullNumber} (${vehicle.type})` : 'Semua Alat';
