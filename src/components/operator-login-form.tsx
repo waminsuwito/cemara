@@ -94,7 +94,7 @@ export function OperatorLoginForm() {
     // Step 5: Match the vehicle with robust logic (case and space insensitive)
     const cleanBatangan = foundUser.batangan.replace(/\s/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
-      v.licensePlate?.replace(/\s/g, '').toLowerCase() === cleanBatangan
+      v.hullNumber?.replace(/\s/g, '').toLowerCase() === cleanBatangan
     );
     
     if (vehicle) {
@@ -108,7 +108,7 @@ export function OperatorLoginForm() {
          toast({
             variant: "destructive",
             title: "Login Gagal",
-            description: `Kendaraan dengan nomor polisi "${foundUser.batangan}" yang ditugaskan untuk Anda tidak dapat ditemukan di daftar alat.`,
+            description: `Kendaraan dengan Nomor Lambung "${foundUser.batangan}" yang ditugaskan untuk Anda tidak dapat ditemukan di daftar alat.`,
             duration: 9000
         });
         setIsLoading(false);
