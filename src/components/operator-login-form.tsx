@@ -91,10 +91,10 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Step 5: Match the vehicle with robust logic (case and space insensitive)
-    const cleanBatangan = foundUser.batangan.replace(/\s/g, '').toLowerCase();
+    // Step 5: Match the vehicle with robust logic (case, space, and hyphen insensitive)
+    const cleanBatangan = foundUser.batangan.replace(/[-\s]/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
-      v.hullNumber?.replace(/\s/g, '').toLowerCase() === cleanBatangan
+      v.hullNumber?.replace(/[-\s]/g, '').toLowerCase() === cleanBatangan
     );
     
     if (vehicle) {
