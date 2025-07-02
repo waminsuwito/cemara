@@ -76,6 +76,7 @@ export type Suggestion = {
 
 export const roles: UserRole[] = ["OPERATOR", "LOCATION_ADMIN", "SUPER_ADMIN"];
 
+// Checklist for standard vehicles
 export const checklistItems = [
   { id: "engine_oil", label: "Level oli mesin" },
   { id: "hydraulic_oil", label: "Level oli hidrolik" },
@@ -90,4 +91,31 @@ export const checklistItems = [
   { id: "bucket_cleanliness", label: "Kebersihan gentong/bak" },
   { id: "rearview_mirror", label: "Kaca spion" },
   { id: "backup_alarm", label: "Alarm mundur" },
+];
+
+// List of "Batangan" codes for Batching Plant equipment
+export const batchingPlantBatangan = [
+    "BP-KUBANG",
+    "BP#1-BAUNG",
+    "BP#2-BAUNG",
+    "BP#3-BAUNG",
+    "BP-DUMAI",
+    "BP#1-IKN",
+    "BP#2-IKN"
+];
+
+// Checklist for Batching Plant equipment
+export const batchingPlantChecklistItems = [
+    { id: "gearbox_skru_oil", label: "Level oli gearbox skru" },
+    { id: "gearbox_konveyor_oil", label: "Level oli gearbox konveyor" },
+    { id: "gearbox_mixer_oil", label: "Level oli gearbox mixer" },
+    { id: "compressor_oil", label: "Level oli compressor" },
+    { id: "hydraulic_mixer_door_oil", label: "Level oli hidraulik pintu mixer" },
+    { id: "bearing_condition", label: "Kondisi semua bearing" },
+    { id: "roller_condition", label: "Kondisi semua roler" },
+    { id: "conveyor_belt_condition", label: "Kondisi semua belt konveyor" },
+    { id: "air_cylinder_condition", label: "Kondisi semua silinder angin" },
+    { id: "mixer_door", label: "Pintu mixer" },
+    { id: "material_bucket_door", label: "Pintu baket material" },
+    { id: "other_condition", label: "Kondisi alat lainnya" }
 ];
