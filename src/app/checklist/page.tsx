@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
-import { checklistItems, Report, ReportItem } from "@/lib/data";
+import { checklistItems, checklistItemsBP, bpUsernames, Report, ReportItem } from "@/lib/data";
 import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,21 +65,42 @@ function ChecklistForm() {
   const { toast } = useToast();
   const router = useRouter();
 
+  const activeChecklist = useMemo(() => {
+    if (operator && bpUsernames.includes(operator.name)) {
+      return checklistItemsBP;
+    }
+    return checklistItems;
+  }, [operator]);
+
   const methods = useForm<ChecklistFormData>({
     resolver: zodResolver(checklistFormSchema),
     defaultValues: {
-      items: checklistItems.map((item) => ({
-        ...item,
-        status: "BAIK",
-        keterangan: "",
-        foto: undefined,
-      })),
+      items: [],
       kerusakanLain: {
         keterangan: "",
         foto: undefined,
       },
     },
   });
+
+  const { reset } = methods;
+
+  useEffect(() => {
+    if (activeChecklist.length > 0) {
+      reset({
+        items: activeChecklist.map((item) => ({
+          ...item,
+          status: "BAIK",
+          keterangan: "",
+          foto: undefined,
+        })),
+        kerusakanLain: {
+          keterangan: "",
+          foto: undefined,
+        },
+      });
+    }
+  }, [activeChecklist, reset]);
 
   const onSubmit = async (data: ChecklistFormData) => {
     setIsLoading(true);
@@ -198,7 +219,7 @@ function ChecklistForm() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="grid gap-6">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {checklistItems.map((item, index) => (
+          {activeChecklist.map((item, index) => (
             <ChecklistItem key={item.id} index={index} label={item.label} />
           ))}
           <OtherDamageItem />
