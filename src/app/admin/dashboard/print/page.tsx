@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, Suspense } from "react";
@@ -132,14 +133,14 @@ function PrintPageContent() {
                                 <table className="w-full text-sm border-collapse border border-gray-600">
                                     <thead>
                                         <tr className="bg-gray-200">
-                                            <th className="border border-gray-600 p-2 text-left">Nomor Lambung</th>
+                                            <th className="border border-gray-600 p-2 text-left">Nomor Polisi</th>
                                             <th className="border border-gray-600 p-2 text-left">Detail Kerusakan</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {damagedVehicles.map((vehicle) => (
                                             <tr key={`damage-${vehicle.id}`} className="even:bg-gray-50 align-top">
-                                                <td className="border border-gray-600 p-2 font-semibold">{vehicle.hullNumber}</td>
+                                                <td className="border border-gray-600 p-2 font-semibold">{vehicle.licensePlate}</td>
                                                 <td className="border border-gray-600 p-2">
                                                     <ul className="list-disc pl-5 space-y-1">
                                                         {vehicle.latestReport?.items?.filter(item => item.status !== 'BAIK').map((item, index) => (
