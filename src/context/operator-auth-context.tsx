@@ -6,9 +6,10 @@ import type { User } from '@/lib/data';
 
 type OperatorAuthContextType = {
   user: User | null;
-  vehicle: string | null;
-  login: (user: User, vehicle: string) => void;
+  vehicle: string | null; // This will store the selected vehicle's hullNumber
+  login: (user: User, vehicle: string | null) => void;
   logout: () => void;
+  selectVehicle: (vehicle: string) => void;
   isLoading: boolean;
 };
 
@@ -38,12 +39,16 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const login = (userData: User, vehicleData: string) => {
+  const login = (userData: User, vehicleData: string | null) => {
     setUser(userData);
     setVehicle(vehicleData);
     try {
         sessionStorage.setItem('operatorUser', JSON.stringify(userData));
-        sessionStorage.setItem('operatorVehicle', vehicleData);
+        if (vehicleData) {
+          sessionStorage.setItem('operatorVehicle', vehicleData);
+        } else {
+          sessionStorage.removeItem('operatorVehicle');
+        }
     } catch(e) {
         console.error("Failed to save operator to session storage", e);
     }
@@ -56,8 +61,17 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('operatorVehicle');
   };
 
+  const selectVehicle = (vehicleData: string) => {
+    setVehicle(vehicleData);
+    try {
+      sessionStorage.setItem('operatorVehicle', vehicleData);
+    } catch (e) {
+      console.error("Failed to save selected vehicle to session storage", e);
+    }
+  };
+
   return (
-    <OperatorAuthContext.Provider value={{ user, vehicle, login, logout, isLoading }}>
+    <OperatorAuthContext.Provider value={{ user, vehicle, login, logout, selectVehicle, isLoading }}>
       {children}
     </OperatorAuthContext.Provider>
   );

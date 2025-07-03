@@ -130,6 +130,25 @@ export default function UserManagementPage() {
         });
         return;
       }
+
+      const newBatanganList = batangan.split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
+      for (const b of newBatanganList) {
+        const isBatanganInOtherLocation = users.some(u => 
+          u.id !== editingUser?.id &&
+          u.role === 'OPERATOR' &&
+          u.location !== location &&
+          u.batangan?.split(',').map(bt => bt.trim().toLowerCase()).includes(b)
+        );
+        if (isBatanganInOtherLocation) {
+          toast({
+            variant: "destructive",
+            title: "Gagal Menyimpan",
+            description: `Nomor Polisi "${b.toUpperCase()}" sudah ditugaskan untuk operator di lokasi lain.`,
+            duration: 7000,
+          });
+          return;
+        }
+      }
     }
 
     if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN") && username) {
@@ -383,7 +402,7 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, currentUser }:
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="batangan" className="text-right">Batangan</Label>
-                                <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" required />
+                                <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" placeholder="Pisahkan dengan koma" required />
                             </div>
                         </>
                     ) : (

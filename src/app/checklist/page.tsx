@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -64,12 +65,17 @@ function ChecklistForm() {
   const { toast } = useToast();
   const router = useRouter();
 
+  const selectedVehicle = useMemo(() => {
+    if (!vehicleHullNumber) return null;
+    return vehicles.find(v => v.hullNumber === vehicleHullNumber);
+  }, [vehicleHullNumber, vehicles]);
+
   const itemsToRender = useMemo(() => {
-    if (operator?.batangan && batchingPlantBatangan.includes(operator.batangan)) {
+    if (selectedVehicle && batchingPlantBatangan.includes(selectedVehicle.licensePlate)) {
       return batchingPlantChecklistItems;
     }
     return checklistItems;
-  }, [operator]);
+  }, [selectedVehicle]);
 
   const methods = useForm<ChecklistFormData>({
     resolver: zodResolver(checklistFormSchema),
@@ -392,13 +398,13 @@ const MyHistoryTab = () => {
                 return {
                     id: date.toISOString(),
                     timestamp: date.getTime(),
-                    vehicleId: vehicleHullNumber || 'N/A',
+                    vehicleId: 'N/A',
                     overallStatus: 'Tidak Ada Checklist',
                     isPlaceholder: true,
                 };
             }
         });
-    }, [reports, operator, vehicleHullNumber]);
+    }, [reports, operator]);
 
     return (
         <>
@@ -515,16 +521,21 @@ const MyHistoryTab = () => {
 
 
 export default function ChecklistPage() {
-  const { user, isLoading } = useOperatorAuth();
+  const { user, vehicle, isLoading } = useOperatorAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace("/");
     }
-  }, [user, isLoading, router]);
+    // If user is logged in but hasn't selected a vehicle (e.g., has multiple),
+    // redirect them to the selection page.
+    if (!isLoading && user && !vehicle) {
+      router.replace("/select-vehicle");
+    }
+  }, [user, vehicle, isLoading, router]);
 
-  if (isLoading || !user) {
+  if (isLoading || !user || !vehicle) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         Memuat...

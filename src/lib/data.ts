@@ -1,3 +1,4 @@
+
 import type { z } from "zod";
 
 export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR';
@@ -9,7 +10,7 @@ export type User = {
   role: UserRole;
   // Operator specific
   nik?: string;
-  batangan?: string;
+  batangan?: string; // Can be a comma-separated list of license plates
   location?: string;
   // Admin specific
   username?: string;
@@ -93,7 +94,7 @@ export const checklistItems = [
   { id: "backup_alarm", label: "Alarm mundur" },
 ];
 
-// List of "Batangan" codes for Batching Plant equipment
+// List of "Batangan" (Nomor Polisi) codes for Batching Plant equipment
 export const batchingPlantBatangan = [
     "BP-KUBANG",
     "BP#1-BAUNG",

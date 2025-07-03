@@ -48,17 +48,13 @@ export function OperatorLoginForm() {
     const inputUsername = values.username.toLowerCase().trim();
     const inputPassword = values.password.trim();
 
-    // Step 1: Find the user by NIK or Name.
     const foundUser = users.find((user) => {
       if (user.role !== 'OPERATOR') return false;
-      
       const userNik = user.nik?.toString().toLowerCase().trim();
       const userName = user.name?.toLowerCase().trim();
-      
       return userNik === inputUsername || userName === inputUsername;
     });
 
-    // Step 2: Handle "User not found" case.
     if (!foundUser) {
       toast({
         variant: "destructive",
@@ -69,7 +65,6 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Step 3: Handle "Password incorrect" case.
     if (foundUser.password !== inputPassword) {
       toast({
         variant: "destructive",
@@ -80,8 +75,9 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Step 4: Handle "No vehicle assigned" case.
-    if (!foundUser.batangan) {
+    const batanganList = foundUser.batangan?.split(',').map(b => b.trim()).filter(Boolean) || [];
+
+    if (batanganList.length === 0) {
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -91,28 +87,34 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Step 5: Match the vehicle using License Plate with robust logic (case, space, and hyphen insensitive)
-    const cleanBatangan = foundUser.batangan.replace(/[-\s]/g, '').toLowerCase();
-    const vehicle = vehicles.find(v => 
-      v.licensePlate?.replace(/[-\s]/g, '').toLowerCase() === cleanBatangan
-    );
-    
-    if (vehicle) {
-        // Pass the hullNumber as the main ID, as it's used throughout the app
+    toast({
+      title: "Login Berhasil",
+      description: `Selamat datang, ${foundUser.name}.`,
+    });
+
+    if (batanganList.length === 1) {
+      const singleBatangan = batanganList[0];
+      const cleanBatangan = singleBatangan.replace(/[-\s]/g, '').toLowerCase();
+      const vehicle = vehicles.find(v => 
+        v.licensePlate?.replace(/[-\s]/g, '').toLowerCase() === cleanBatangan
+      );
+
+      if (vehicle) {
         login(foundUser, vehicle.hullNumber);
-        toast({
-          title: "Login Berhasil",
-          description: `Selamat datang, ${foundUser.name}.`,
-        });
         router.push("/checklist");
-    } else {
-         toast({
-            variant: "destructive",
-            title: "Login Gagal",
-            description: `Kendaraan dengan Nomor Polisi "${foundUser.batangan}" yang ditugaskan untuk Anda tidak dapat ditemukan di daftar alat.`,
-            duration: 9000
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: `Kendaraan dengan Nomor Polisi "${singleBatangan}" yang ditugaskan untuk Anda tidak dapat ditemukan.`,
+          duration: 9000
         });
         setIsLoading(false);
+      }
+    } else {
+      // More than one vehicle, let the user choose
+      login(foundUser, null);
+      router.push("/select-vehicle");
     }
   }
 

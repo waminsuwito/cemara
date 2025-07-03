@@ -28,8 +28,13 @@ type ChecklistItemProps = {
 export function ChecklistItem({ label, index }: ChecklistItemProps) {
   const { control, watch, setValue } = useFormContext();
   const status: Status = watch(`items.${index}.status`);
-  const [isOpen, setIsOpen] = useState(status !== "BAIK");
+  const [isOpen, setIsOpen] = useState(false);
   const [imageName, setImageName] = useState("");
+
+  // Sync collapsible state with field status
+  useState(() => {
+    setIsOpen(status !== "BAIK");
+  });
 
   const handleStatusChange = (newStatus: Status) => {
     setValue(`items.${index}.status`, newStatus, { shouldValidate: true });
