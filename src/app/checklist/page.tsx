@@ -192,15 +192,11 @@ function ChecklistForm() {
           }
       }
       
-      const result = await submitReport(reportData);
+      await submitReport(reportData);
       
-      const toastDescription = result === 'updated'
-        ? "Laporan Anda untuk hari ini telah berhasil diperbarui."
-        : "Checklist harian Anda telah berhasil dikirim.";
-
       toast({
         title: "Laporan Terkirim",
-        description: toastDescription,
+        description: "Checklist harian Anda telah berhasil dikirim.",
       });
 
       logout();

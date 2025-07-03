@@ -23,7 +23,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<'created' | 'updated'>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
 
   complaints: Complaint[];
   addComplaint: (complaint: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => Promise<void>;
@@ -260,7 +260,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<'created' | 'updated'> => {
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
     
@@ -269,87 +269,13 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`Kendaraan dengan nomor lambung ${newReportData.vehicleId} tidak ditemukan.`);
     }
 
-    const reportsRef = collection(db, 'reports');
-    const q = query(reportsRef, where("vehicleId", "==", newReportData.vehicleId), where("reportDate", "==", reportDateStr));
-    
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-        const reportWithTimestamp = {
-          ...newReportData,
-          timestamp: serverTimestamp(),
-          reportDate: reportDateStr,
-        };
-        await addDoc(collection(db, 'reports'), reportWithTimestamp);
-        return 'created';
-    }
-
-    const existingReportDoc = querySnapshot.docs[0];
-    const existingReportData = existingReportDoc.data() as Report;
-
-    if (newReportData.overallStatus === 'Baik') {
-        await updateDoc(existingReportDoc.ref, {
-            overallStatus: 'Baik',
-            items: [],
-            kerusakanLain: null,
-            timestamp: serverTimestamp()
-        });
-        return 'updated';
-    }
-
-    const combinedItemsMap = new Map<string, ReportItem>();
-    (existingReportData.items || []).forEach(item => combinedItemsMap.set(item.id, item));
-    (newReportData.items || []).forEach(item => combinedItemsMap.set(item.id, item));
-    const finalItems = Array.from(combinedItemsMap.values());
-
-    const finalKerusakanLain: { keterangan: string, foto?: string } | null = (() => {
-        const newDesc = newReportData.kerusakanLain?.keterangan;
-        const newFoto = newReportData.kerusakanLain?.foto;
-        const oldDesc = existingReportData.kerusakanLain?.keterangan;
-        const oldFoto = existingReportData.kerusakanLain?.foto;
-
-        if (!newDesc && !newFoto) {
-            return existingReportData.kerusakanLain || null;
-        }
-
-        const combinedDesc = newDesc 
-            ? (oldDesc ? `${oldDesc}\\n---\\nLaporan Tambahan: ${newDesc}` : newDesc)
-            : (oldDesc || '');
-      
-        const finalFoto = newFoto || oldFoto;
-
-        if (!combinedDesc) return null;
-
-        const result: { keterangan: string, foto?: string } = {
-            keterangan: combinedDesc
-        };
-
-        if (finalFoto) {
-            result.foto = finalFoto;
-        }
-
-        return result;
-    })();
-    
-    let finalOverallStatus: Report['overallStatus'] = 'Baik';
-    const hasRusak = finalItems.some(item => item.status === 'RUSAK') || (finalKerusakanLain && finalKerusakanLain.keterangan);
-    const hasPerhatian = finalItems.some(item => item.status === 'PERLU PERHATIAN');
-    
-    if (hasRusak) {
-        finalOverallStatus = 'Rusak';
-    } else if (hasPerhatian) {
-        finalOverallStatus = 'Perlu Perhatian';
-    }
-
-    const updateData = {
-        items: finalItems,
-        kerusakanLain: finalKerusakanLain,
-        overallStatus: finalOverallStatus,
-        timestamp: serverTimestamp()
+    // Always create a new report document for each submission
+    const reportWithTimestamp = {
+      ...newReportData,
+      timestamp: serverTimestamp(),
+      reportDate: reportDateStr,
     };
-    
-    await updateDoc(existingReportDoc.ref, updateData);
-    return 'updated';
+    await addDoc(collection(db, 'reports'), reportWithTimestamp);
   };
   
   const addComplaint = async (complaintData: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => {
