@@ -91,13 +91,14 @@ export function OperatorLoginForm() {
       return;
     }
 
-    // Step 5: Match the vehicle with robust logic (case, space, and hyphen insensitive)
+    // Step 5: Match the vehicle using License Plate with robust logic (case, space, and hyphen insensitive)
     const cleanBatangan = foundUser.batangan.replace(/[-\s]/g, '').toLowerCase();
     const vehicle = vehicles.find(v => 
-      v.hullNumber?.replace(/[-\s]/g, '').toLowerCase() === cleanBatangan
+      v.licensePlate?.replace(/[-\s]/g, '').toLowerCase() === cleanBatangan
     );
     
     if (vehicle) {
+        // Pass the hullNumber as the main ID, as it's used throughout the app
         login(foundUser, vehicle.hullNumber);
         toast({
           title: "Login Berhasil",
@@ -108,7 +109,7 @@ export function OperatorLoginForm() {
          toast({
             variant: "destructive",
             title: "Login Gagal",
-            description: `Kendaraan dengan Nomor Lambung "${foundUser.batangan}" yang ditugaskan untuk Anda tidak dapat ditemukan di daftar alat.`,
+            description: `Kendaraan dengan Nomor Polisi "${foundUser.batangan}" yang ditugaskan untuk Anda tidak dapat ditemukan di daftar alat.`,
             duration: 9000
         });
         setIsLoading(false);
