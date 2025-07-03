@@ -104,6 +104,7 @@ function PrintPageContent() {
                             <thead>
                                 <tr className="bg-gray-200">
                                     <th className="border border-gray-600 p-2 text-left">No.</th>
+                                    <th className="border border-gray-600 p-2 text-left">Nomor Polisi</th>
                                     <th className="border border-gray-600 p-2 text-left">Nomor Lambung</th>
                                     <th className="border border-gray-600 p-2 text-left">Jenis Alat</th>
                                     <th className="border border-gray-600 p-2 text-left">Sopir/Operator</th>
@@ -114,6 +115,7 @@ function PrintPageContent() {
                                 {vehiclesForPrint.map((vehicle, index) => (
                                     <tr key={vehicle.id} className="even:bg-gray-50">
                                         <td className="border border-gray-600 p-2">{index + 1}</td>
+                                        <td className="border border-gray-600 p-2">{vehicle.licensePlate}</td>
                                         <td className="border border-gray-600 p-2">{vehicle.hullNumber}</td>
                                         <td className="border border-gray-600 p-2">{vehicle.type}</td>
                                         <td className="border border-gray-600 p-2">{vehicle.operator}</td>
