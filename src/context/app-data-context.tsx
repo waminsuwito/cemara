@@ -345,43 +345,41 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   
   const updateMechanicTask = async (taskId: string, updates: Partial<MechanicTask>) => {
     try {
-      const taskToUpdate = mechanicTasks.find(t => t.id === taskId);
-      if (!taskToUpdate) {
+      const taskBeingUpdated = mechanicTasks.find(t => t.id === taskId);
+      if (!taskBeingUpdated) {
         throw new Error("Tugas tidak ditemukan.");
       }
       
-      const payload: { [key: string]: any } = { ...updates };
+      const updatePayload: { [key: string]: any } = { ...updates };
 
-      if (updates.status === 'IN_PROGRESS' && !taskToUpdate.startedAt) {
-        payload.startedAt = serverTimestamp();
+      if (updates.status === 'IN_PROGRESS' && !taskBeingUpdated.startedAt) {
+        updatePayload.startedAt = serverTimestamp();
       }
-      if (updates.status === 'COMPLETED' && !taskToUpdate.completedAt) {
-        payload.completedAt = serverTimestamp();
+      if (updates.status === 'COMPLETED' && !taskBeingUpdated.completedAt) {
+        updatePayload.completedAt = serverTimestamp();
       }
 
-      await updateDoc(doc(db, 'mechanicTasks', taskId), payload);
+      await updateDoc(doc(db, 'mechanicTasks', taskId), updatePayload);
       toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
 
       // If the task is completed, create a new "Baik" report for each vehicle.
       // This will automatically update the vehicle's status to "Baik" across the app.
       if (updates.status === 'COMPLETED') {
-        const completedTask = { ...taskToUpdate, ...payload };
-        
-        for (const repairedVehicle of completedTask.vehicles) {
-          const vehicleDetails = vehicles.find(v => v.hullNumber === repairedVehicle.hullNumber);
+        for (const vehicleInTask of taskBeingUpdated.vehicles) {
+          const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
           if (vehicleDetails) {
-            const newReport = {
+            const goodConditionReport = {
               vehicleId: vehicleDetails.hullNumber,
               vehicleType: vehicleDetails.type,
               operatorName: `Diperbaiki oleh Tim Mekanik`,
               location: vehicleDetails.location,
-              overallStatus: 'Baik',
+              overallStatus: 'Baik' as const,
               items: [],
-              kerusakanLain: { keterangan: `Perbaikan selesai: ${repairedVehicle.repairDescription}` },
+              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}` },
               timestamp: serverTimestamp(),
               reportDate: format(new Date(), 'yyyy-MM-dd'),
             };
-            await addDoc(collection(db, 'reports'), newReport);
+            await addDoc(collection(db, 'reports'), goodConditionReport);
           }
         }
         toast({ title: "Status Kendaraan Diperbarui", description: "Kendaraan yang diperbaiki telah ditandai sebagai 'Baik'." });
