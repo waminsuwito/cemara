@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from 'date-fns';
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import type { MechanicTask, User, Vehicle } from "@/lib/data";
+import type { MechanicTask } from "@/lib/data";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,8 +33,8 @@ const taskFormSchema = z.object({
   vehicles: z.array(z.object({
     hullNumber: z.string(),
     licensePlate: z.string(),
+    repairDescription: z.string().min(5, "Deskripsi perbaikan harus diisi."),
   })).min(1, "Pilih minimal satu kendaraan."),
-  repairDescription: z.string().min(5, "Deskripsi perbaikan harus diisi (minimal 5 karakter)."),
   targetDate: z.date({ required_error: "Tanggal target harus diisi." }),
   targetTime: z.string().min(1, "Waktu target harus diisi."),
   mechanics: z.array(z.object({ id: z.string(), name: z.string() })).min(1, "Pilih minimal satu mekanik."),
@@ -69,37 +69,37 @@ export default function MechanicTasksPage() {
         task.vehicles?.some(taskVehicle => 
             vehiclesForUser.some(userVehicle => userVehicle.hullNumber === taskVehicle.hullNumber)
         )
-    );
+    ).sort((a,b) => b.createdAt - a.createdAt);
   }, [mechanicTasks, vehiclesForUser]);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       vehicles: [],
-      repairDescription: "",
       targetDate: new Date(),
       targetTime: "",
       mechanics: [],
     },
   });
 
-  const watchedVehicles = form.watch("vehicles");
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "vehicles",
+  });
 
   const handleAddVehicle = () => {
     if (!selectedVehicleToAdd) return;
     const vehicle = vehiclesForUser.find(v => v.hullNumber === selectedVehicleToAdd);
     if (vehicle) {
-      const currentVehicles = form.getValues("vehicles");
-      if (!currentVehicles.some(v => v.hullNumber === vehicle.hullNumber)) {
-        form.setValue("vehicles", [...currentVehicles, { hullNumber: vehicle.hullNumber, licensePlate: vehicle.licensePlate }], { shouldValidate: true });
+      if (!fields.some(v => v.hullNumber === vehicle.hullNumber)) {
+        append({ 
+          hullNumber: vehicle.hullNumber, 
+          licensePlate: vehicle.licensePlate,
+          repairDescription: ""
+        });
       }
     }
     setSelectedVehicleToAdd(""); // Reset select
-  };
-
-  const handleRemoveVehicle = (hullNumber: string) => {
-    const currentVehicles = form.getValues("vehicles");
-    form.setValue("vehicles", currentVehicles.filter(v => v.hullNumber !== hullNumber), { shouldValidate: true });
   };
 
 
@@ -107,7 +107,6 @@ export default function MechanicTasksPage() {
     setIsLoading(true);
     const taskPayload = {
       vehicles: data.vehicles,
-      repairDescription: data.repairDescription,
       targetDate: format(data.targetDate, 'yyyy-MM-dd'),
       targetTime: data.targetTime,
       manpowerCount: data.mechanics.length,
@@ -116,7 +115,6 @@ export default function MechanicTasksPage() {
     await addMechanicTask(taskPayload);
     form.reset({
       vehicles: [],
-      repairDescription: "",
       targetDate: new Date(),
       targetTime: "",
       mechanics: [],
@@ -139,55 +137,65 @@ export default function MechanicTasksPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 
-                <FormField
-                  control={form.control}
-                  name="vehicles"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Kendaraan yang Dikerjakan</FormLabel>
-                      <div className="flex items-center gap-2">
-                          <Select onValueChange={setSelectedVehicleToAdd} value={selectedVehicleToAdd}>
-                              <SelectTrigger><SelectValue placeholder="Pilih Kendaraan" /></SelectTrigger>
-                              <SelectContent>
-                              {vehiclesForUser.map((v) => (
-                                  <SelectItem key={v.id} value={v.hullNumber} disabled={watchedVehicles.some(sv => sv.hullNumber === v.hullNumber)}>
-                                      {v.licensePlate} ({v.hullNumber})
-                                  </SelectItem>
-                              ))}
-                              </SelectContent>
-                          </Select>
-                          <Button type="button" onClick={handleAddVehicle} variant="outline">Pilih</Button>
-                      </div>
-                      <div className="space-y-2 pt-2 min-h-[40px]">
-                          {watchedVehicles.map((vehicle) => (
-                              <Badge key={vehicle.hullNumber} variant="secondary" className="mr-2 mb-2 text-base py-1">
-                              {vehicle.licensePlate}
-                              <button type="button" onClick={() => handleRemoveVehicle(vehicle.hullNumber)} className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                                  <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                              </button>
-                              </Badge>
-                          ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="md:col-span-2 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="vehicles"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel>Kendaraan & Perbaikan yang Dikerjakan</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <Select onValueChange={setSelectedVehicleToAdd} value={selectedVehicleToAdd}>
+                                <SelectTrigger><SelectValue placeholder="Pilih Kendaraan" /></SelectTrigger>
+                                <SelectContent>
+                                {vehiclesForUser.map((v) => (
+                                    <SelectItem key={v.id} value={v.hullNumber} disabled={fields.some(sv => sv.hullNumber === v.hullNumber)}>
+                                        {v.licensePlate} ({v.hullNumber})
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <Button type="button" onClick={handleAddVehicle} variant="outline" size="sm">Pilih</Button>
+                        </div>
+                        <FormMessage />
 
-                <FormField
-                  control={form.control}
-                  name="repairDescription"
-                  render={({ field }) => (
-                    <FormItem className="lg:col-span-2">
-                      <FormLabel>Perbaikan yang Dikerjakan</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Contoh: Ganti oli mesin dan periksa rem..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <div className="space-y-4 pt-2">
+                          {fields.map((field, index) => (
+                            <div key={field.id} className="grid grid-cols-[1fr,2fr,auto] items-start gap-x-4 gap-y-2 p-3 border rounded-lg bg-muted/20">
+                              <div className="font-medium col-span-3 sm:col-span-1">
+                                <p>{field.licensePlate}</p>
+                                <p className="text-xs text-muted-foreground">{field.hullNumber}</p>
+                              </div>
+                              
+                              <div className="col-span-3 sm:col-span-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`vehicles.${index}.repairDescription`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className="sr-only">Perbaikan</FormLabel>
+                                      <FormControl>
+                                        <Textarea placeholder="Deskripsi perbaikan untuk kendaraan ini..." {...field} rows={2} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:bg-destructive/10 sm:col-start-3 sm:row-start-1 sm:ml-auto">
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Hapus Kendaraan</span>
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -231,12 +239,12 @@ export default function MechanicTasksPage() {
                   control={form.control}
                   name="mechanics"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem className="flex flex-col md:col-span-2">
                       <FormLabel>Man Power (Nama)</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
-                            <Button variant="outline" role="combobox" className={cn("justify-between", field.value.length === 0 && "text-muted-foreground")}>
+                            <Button variant="outline" role="combobox" className={cn("justify-between w-full", field.value.length === 0 && "text-muted-foreground")}>
                               <span className="truncate">
                                 {field.value.length > 0
                                   ? field.value.map((m) => m.name).join(", ")
@@ -315,7 +323,19 @@ export default function MechanicTasksPage() {
                         {tasksForUser.length > 0 ? tasksForUser.map(task => (
                             <TableRow key={task.id}>
                                 <TableCell className="font-medium">{task.vehicles?.map(v => v.licensePlate).join(', ') || 'N/A'}</TableCell>
-                                <TableCell>{task.repairDescription}</TableCell>
+                                <TableCell>
+                                  {task.vehicles?.length > 0 ? (
+                                    <ul className="list-disc space-y-1.5 pl-4">
+                                      {task.vehicles.map((v, i) => (
+                                        <li key={i}>
+                                          <span className="font-semibold">{v.licensePlate}:</span> {v.repairDescription}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    'N/A'
+                                  )}
+                                </TableCell>
                                 <TableCell>{format(new Date(`${task.targetDate}T${task.targetTime}`), 'dd MMM yyyy, HH:mm')}</TableCell>
                                 <TableCell>{task.mechanics.map(m => m.name).join(', ')} ({task.manpowerCount})</TableCell>
                                 <TableCell>{getStatusBadge(task.status)}</TableCell>
