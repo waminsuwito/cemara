@@ -16,7 +16,7 @@ export default function Home() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center justify-center mb-8">
           <img 
-            src="https://placehold.co/128x128.png" 
+            src="https://drive.google.com/uc?export=view&id=1Vt_3f7jZh_6C-YAoHISkAxxqOUXoeiaa" 
             alt="Logo PT Farika Riau Perkasa" 
             className="h-32 w-32 object-contain"
             data-ai-hint="company logo"
