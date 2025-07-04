@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Wrench,
   ClipboardList,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import { useAdminAuth } from "@/context/admin-auth-context";
 const navItems = [
   { href: "/mechanic/dashboard", icon: LayoutDashboard, label: "Dashboard Kerusakan" },
   { href: "/mechanic/tasks", icon: ClipboardList, label: "Target Pekerjaan" },
+  { href: "/mechanic/members", icon: Users, label: "Anggota Mekanik" },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
