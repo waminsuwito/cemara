@@ -100,14 +100,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <span className="font-headline">Checklist Harian Alat</span>
             </Link>
           </div>
-          <div className="flex-1">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          <div className="flex-1 overflow-y-auto">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
               {accessibleNavItems.map((item) => (
                 <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
               ))}
             </nav>
           </div>
-          <div className="mt-auto p-4">
+          <div className="p-4 border-t">
             <div className="pb-4 text-center">
               <img
                 src="https://i.ibb.co/V0NgdX7z/images.jpg"
@@ -136,23 +136,25 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col bg-card/95 backdrop-blur-sm">
-              <nav className="grid gap-2 text-lg font-medium">
-                <SheetHeader className="p-0 text-left mb-4">
-                  <SheetTitle>
-                    <Link
-                      href="#"
-                      className="flex items-center gap-2 text-lg font-semibold"
-                    >
-                      <Truck className="h-6 w-6 text-primary" />
-                      <span>Checklist Harian Alat</span>
-                    </Link>
-                  </SheetTitle>
-                </SheetHeader>
-                {accessibleNavItems.map((item) => (
-                  <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-                ))}
-              </nav>
-              <div className="mt-auto">
+              <div className="flex-1 overflow-y-auto">
+                <nav className="grid gap-2 text-lg font-medium">
+                  <SheetHeader className="p-0 text-left mb-4">
+                    <SheetTitle>
+                      <Link
+                        href="#"
+                        className="flex items-center gap-2 text-lg font-semibold"
+                      >
+                        <Truck className="h-6 w-6 text-primary" />
+                        <span>Checklist Harian Alat</span>
+                      </Link>
+                    </SheetTitle>
+                  </SheetHeader>
+                  {accessibleNavItems.map((item) => (
+                    <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                  ))}
+                </nav>
+              </div>
+              <div className="p-4 border-t">
                  <div className="pb-4 text-center">
                    <img
                      src="https://i.ibb.co/V0NgdX7z/images.jpg"
