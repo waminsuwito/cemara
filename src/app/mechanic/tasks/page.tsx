@@ -5,14 +5,14 @@ import React, { useMemo, useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from 'date-fns';
+import { format, isSameDay, isBefore, startOfToday } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { CalendarIcon, Check, ChevronsUpDown, Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import type { MechanicTask } from "@/lib/data";
+import type { MechanicTask, Vehicle } from "@/lib/data";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,14 +55,50 @@ const getStatusBadge = (status: MechanicTask['status']) => {
   }
 };
 
+type VehicleWithStatus = Vehicle & { status: string };
+
 export default function MechanicTasksPage() {
   const { user } = useAdminAuth();
-  const { vehicles, users, mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask } = useAppData();
+  const { vehicles, users, mechanicTasks, reports, addMechanicTask, updateMechanicTask, deleteMechanicTask } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVehicleToAdd, setSelectedVehicleToAdd] = useState("");
 
   const mechanics = useMemo(() => users.filter((u) => u.role === "MEKANIK" && (!user?.location || u.location === user.location)), [users, user]);
+  
+  const vehiclesWithStatus = useMemo(() => {
+    const today = startOfToday();
+    return vehicles.map((vehicle): VehicleWithStatus => {
+      const reportsForVehicle = reports
+        .filter(r => r.vehicleId === vehicle.hullNumber)
+        .sort((a, b) => b.timestamp - a.timestamp);
+      
+      const latestReport = reportsForVehicle[0];
+      let status = 'Belum Checklist';
+
+      if (latestReport) {
+        const reportDate = new Date(latestReport.timestamp);
+        if (isSameDay(reportDate, today)) {
+          status = latestReport.overallStatus;
+        } else if (isBefore(reportDate, today)) {
+          if (latestReport.overallStatus === 'Rusak' || latestReport.overallStatus === 'Perlu Perhatian') {
+            status = latestReport.overallStatus;
+          }
+        }
+      }
+      
+      return { ...vehicle, status };
+    });
+  }, [vehicles, reports]);
+
   const vehiclesForUser = useMemo(() => vehicles.filter(v => !user?.location || v.location === user.location), [vehicles, user]);
+  
+  const damagedOrAttentionVehicles = useMemo(() => {
+    // Filter by user location first
+    const vehiclesInLocation = vehiclesWithStatus.filter(v => !user?.location || v.location === user.location);
+    // Then filter by status
+    return vehiclesInLocation.filter(v => v.status === 'Rusak' || v.status === 'Perlu Perhatian');
+  }, [vehiclesWithStatus, user]);
+
 
   const tasksForUser = useMemo(() => {
     return mechanicTasks.filter(task => 
@@ -87,7 +123,7 @@ export default function MechanicTasksPage() {
 
   const handleAddVehicle = () => {
     if (!selectedVehicleToAdd) return;
-    const vehicle = vehiclesForUser.find(v => v.hullNumber === selectedVehicleToAdd);
+    const vehicle = damagedOrAttentionVehicles.find(v => v.hullNumber === selectedVehicleToAdd);
     if (vehicle) {
       if (!fields.some(v => v.hullNumber === vehicle.hullNumber)) {
         append({ 
@@ -146,16 +182,20 @@ export default function MechanicTasksPage() {
                         <FormLabel>Kendaraan & Perbaikan yang Dikerjakan</FormLabel>
                         <div className="flex items-center gap-2">
                             <Select onValueChange={setSelectedVehicleToAdd} value={selectedVehicleToAdd}>
-                                <SelectTrigger><SelectValue placeholder="Pilih Kendaraan" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Pilih Kendaraan Bermasalah" /></SelectTrigger>
                                 <SelectContent>
-                                {vehiclesForUser.map((v) => (
-                                    <SelectItem key={v.id} value={v.hullNumber} disabled={fields.some(sv => sv.hullNumber === v.hullNumber)}>
-                                        {v.licensePlate} ({v.hullNumber})
-                                    </SelectItem>
-                                ))}
+                                {damagedOrAttentionVehicles.length > 0 ? (
+                                  damagedOrAttentionVehicles.map((v) => (
+                                      <SelectItem key={v.id} value={v.hullNumber} disabled={fields.some(sv => sv.hullNumber === v.hullNumber)}>
+                                          {v.licensePlate} ({v.hullNumber}) - {v.status}
+                                      </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-center text-sm text-muted-foreground">Tidak ada alat yang perlu perbaikan.</div>
+                                )}
                                 </SelectContent>
                             </Select>
-                            <Button type="button" onClick={handleAddVehicle} variant="outline" size="sm">Pilih</Button>
+                            <Button type="button" onClick={handleAddVehicle} variant="outline" size="sm" disabled={!selectedVehicleToAdd}>Pilih</Button>
                         </div>
                         <FormMessage />
 
