@@ -346,17 +346,47 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const updateMechanicTask = async (taskId: string, updates: Partial<MechanicTask>) => {
     try {
       const taskToUpdate = mechanicTasks.find(t => t.id === taskId);
+      if (!taskToUpdate) {
+        throw new Error("Tugas tidak ditemukan.");
+      }
+      
       const payload: { [key: string]: any } = { ...updates };
 
-      if (updates.status === 'IN_PROGRESS' && !taskToUpdate?.startedAt) {
+      if (updates.status === 'IN_PROGRESS' && !taskToUpdate.startedAt) {
         payload.startedAt = serverTimestamp();
       }
-      if (updates.status === 'COMPLETED' && !taskToUpdate?.completedAt) {
+      if (updates.status === 'COMPLETED' && !taskToUpdate.completedAt) {
         payload.completedAt = serverTimestamp();
       }
 
       await updateDoc(doc(db, 'mechanicTasks', taskId), payload);
       toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
+
+      // If the task is completed, create a new "Baik" report for each vehicle.
+      // This will automatically update the vehicle's status to "Baik" across the app.
+      if (updates.status === 'COMPLETED') {
+        const completedTask = { ...taskToUpdate, ...payload };
+        
+        for (const repairedVehicle of completedTask.vehicles) {
+          const vehicleDetails = vehicles.find(v => v.hullNumber === repairedVehicle.hullNumber);
+          if (vehicleDetails) {
+            const newReport = {
+              vehicleId: vehicleDetails.hullNumber,
+              vehicleType: vehicleDetails.type,
+              operatorName: `Diperbaiki oleh Tim Mekanik`,
+              location: vehicleDetails.location,
+              overallStatus: 'Baik',
+              items: [],
+              kerusakanLain: { keterangan: `Perbaikan selesai: ${repairedVehicle.repairDescription}` },
+              timestamp: serverTimestamp(),
+              reportDate: format(new Date(), 'yyyy-MM-dd'),
+            };
+            await addDoc(collection(db, 'reports'), newReport);
+          }
+        }
+        toast({ title: "Status Kendaraan Diperbarui", description: "Kendaraan yang diperbaiki telah ditandai sebagai 'Baik'." });
+      }
+
     } catch (e) {
       console.error("Error updating mechanic task: ", e);
       toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui status pekerjaan." });
