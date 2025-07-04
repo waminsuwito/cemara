@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,14 +14,14 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center text-center mb-8">
-          {/* Simplified image tag to ensure maximum compatibility */}
+        <div className="flex flex-col items-center justify-center mb-8">
           <img 
             src="/logo-frp.png" 
             alt="Logo PT Farika Riau Perkasa" 
-            style={{ height: '128px', width: '128px', objectFit: 'contain', marginBottom: '1rem' }} 
+            className="h-32 w-32 object-contain"
+            data-ai-hint="company logo"
           />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mt-4">
             <Truck className="h-10 w-10 text-primary" />
             <h1 className="text-3xl font-bold text-foreground font-headline">
               Checklist Harian Alat
