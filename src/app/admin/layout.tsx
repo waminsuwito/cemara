@@ -15,6 +15,7 @@ import {
   History,
   MessageSquareWarning,
   Lightbulb,
+  Activity,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/history", icon: History, label: "Riwayat Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/mechanic-activity", icon: Activity, label: "Kegiatan Mekanik", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
   { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
@@ -107,7 +109,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
           </div>
-          <div className="p-4 border-t">
+          <div className="mt-auto p-4 border-t">
             <div className="pb-4 text-center">
               <img
                 src="https://i.ibb.co/V0NgdX7z/images.jpg"
@@ -154,7 +156,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   ))}
                 </nav>
               </div>
-              <div className="p-4 border-t">
+              <div className="mt-auto p-4 border-t">
                  <div className="pb-4 text-center">
                    <img
                      src="https://i.ibb.co/V0NgdX7z/images.jpg"

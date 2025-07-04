@@ -1,0 +1,138 @@
+
+"use client";
+
+import React, { useMemo, useState } from "react";
+import { format } from 'date-fns';
+import { id as localeID } from 'date-fns/locale';
+
+import { useAppData } from "@/context/app-data-context";
+import { useAdminAuth } from "@/context/admin-auth-context";
+import type { MechanicTask } from "@/lib/data";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+
+const getStatusBadge = (status: MechanicTask['status']) => {
+  switch (status) {
+    case "PENDING":
+      return <Badge variant="secondary" className="bg-gray-400 text-gray-900">Menunggu</Badge>;
+    case "IN_PROGRESS":
+      return <Badge variant="secondary" className="bg-yellow-400 text-yellow-900">Dikerjakan</Badge>;
+    case "COMPLETED":
+      return <Badge variant="secondary" className="bg-green-400 text-green-900">Selesai</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
+};
+
+export default function MechanicActivityPage() {
+  const { user } = useAdminAuth();
+  const { mechanicTasks, vehicles, locationNames } = useAppData();
+  
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const [locationFilter, setLocationFilter] = useState(
+    isSuperAdmin ? "all" : user?.location || "all"
+  );
+  
+  const vehiclesInFilter = useMemo(() => {
+    if (locationFilter === 'all') {
+        return vehicles;
+    }
+    return vehicles.filter(v => v.location === locationFilter);
+  }, [vehicles, locationFilter]);
+  
+  const vehiclesHullNumbersInFilter = useMemo(() => new Set(vehiclesInFilter.map(v => v.hullNumber)), [vehiclesInFilter]);
+
+  const filteredTasks = useMemo(() => {
+    return mechanicTasks.filter(task => {
+        if (!isSuperAdmin && !user?.location) return false;
+
+        const taskLocation = vehicles.find(v => v.hullNumber === task.vehicles?.[0]?.hullNumber)?.location;
+
+        if(isSuperAdmin) {
+            if (locationFilter === 'all') return true;
+            return taskLocation === locationFilter;
+        }
+
+        // For location admin
+        return taskLocation === user?.location;
+
+    }).sort((a,b) => b.createdAt - a.createdAt);
+  }, [mechanicTasks, locationFilter, isSuperAdmin, user, vehicles]);
+
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <CardTitle>Monitoring Kegiatan Mekanik</CardTitle>
+            <CardDescription>Lihat semua target pekerjaan yang ditugaskan kepada tim mekanik.</CardDescription>
+        </div>
+        {isSuperAdmin && (
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter Lokasi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Lokasi</SelectItem>
+                {locationNames.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+        )}
+      </CardHeader>
+      <CardContent>
+          <div className="border rounded-md">
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead className="w-[40%]">Detail Pekerjaan</TableHead>
+                          <TableHead className="w-[25%]">Mekanik Bertugas</TableHead>
+                          <TableHead>Dibuat Pada</TableHead>
+                          <TableHead>Status</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {filteredTasks.length > 0 ? filteredTasks.map(task => (
+                          <TableRow key={task.id}>
+                              <TableCell>
+                                  {task.vehicles?.length > 0 ? (
+                                  <ul className="space-y-3">
+                                      {task.vehicles.map((v, i) => (
+                                          <li key={i} className="border-l-2 border-primary pl-3">
+                                              <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
+                                              <p className="text-sm text-muted-foreground">&bull; {v.repairDescription}</p>
+                                              <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH:mm', { locale: localeID })}</p>
+                                          </li>
+                                      ))}
+                                  </ul>
+                                  ) : ( 'N/A' )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                    {task.mechanics.map(m => <span key={m.id}>{m.name}</span>)}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                  {format(new Date(task.createdAt), 'dd MMM yyyy, HH:mm', { locale: localeID })}
+                              </TableCell>
+                              <TableCell>{getStatusBadge(task.status)}</TableCell>
+                          </TableRow>
+                      )) : (
+                          <TableRow>
+                              <TableCell colSpan={4} className="h-24 text-center">Tidak ada kegiatan yang ditemukan untuk filter yang dipilih.</TableCell>
+                          </TableRow>
+                      )}
+                  </TableBody>
+              </Table>
+          </div>
+      </CardContent>
+    </Card>
+  );
+}
