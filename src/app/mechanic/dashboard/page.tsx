@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -54,10 +53,20 @@ export default function MechanicDashboardPage() {
   const damagedReports = useMemo(() => {
     return reports
       .filter((report) => {
+        // Must be a damaged report
         const isDamaged = report.overallStatus === 'Rusak' || report.overallStatus === 'Perlu Perhatian';
-        // If mechanic has a location, filter by it. If not, they see all locations (unless they are super_admin).
-        const matchesLocation = user?.role === 'SUPER_ADMIN' || !user?.location || report.location === user.location;
-        return isDamaged && matchesLocation;
+        if (!isDamaged) return false;
+
+        // Super Admins can see all locations
+        if (user?.role === 'SUPER_ADMIN') return true;
+
+        // Mechanics should only see reports from their assigned location
+        if (user?.role === 'MEKANIK' && user.location) {
+            return report.location === user.location;
+        }
+
+        // Default: don't show if no conditions are met
+        return false;
       })
       .sort((a, b) => b.timestamp - a.timestamp); // Sort by most recent first
   }, [reports, user]);
@@ -69,7 +78,7 @@ export default function MechanicDashboardPage() {
           <CardTitle>Laporan Kerusakan Alat</CardTitle>
           <CardDescription>
             Daftar semua alat yang dilaporkan rusak atau perlu perhatian oleh operator.
-            {user?.location && ` Menampilkan laporan untuk lokasi: ${user.location}.`}
+            {user?.location && user.role !== 'SUPER_ADMIN' && ` Menampilkan laporan untuk lokasi: ${user.location}.`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -108,7 +117,7 @@ export default function MechanicDashboardPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                      Tidak ada laporan kerusakan yang aktif saat ini.
+                      Tidak ada laporan kerusakan yang aktif untuk lokasi Anda saat ini.
                     </TableCell>
                   </TableRow>
                 )}
