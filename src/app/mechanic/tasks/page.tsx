@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -254,7 +253,7 @@ export default function MechanicTasksPage() {
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <Command>
-                            <CommandInput placeholder="Cari mekanik..." />
+                            <CommandInput placeholder="Ketik nama untuk mencari..." />
                             <CommandList>
                               <CommandEmpty>Mekanik tidak ditemukan.</CommandEmpty>
                               <CommandGroup>
