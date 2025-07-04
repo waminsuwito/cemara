@@ -278,7 +278,7 @@ export default function DashboardPage() {
           <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard Admin</h2>
           <div className="flex items-center space-x-2">
             <Button asChild>
-                <Link href={`/admin/dashboard/print?location=${selectedLocation}`}>
+                <Link href={`/admin/dashboard/print?location=${selectedLocation}&cb=${new Date().getTime()}`}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print Laporan
                 </Link>
