@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,14 +17,9 @@ export default function Home() {
           <img
             src="/logo-frp.png"
             alt="Logo PT Farika Riau Perkasa"
-            width="128"
-            height="128"
-            className="mb-4"
+            className="mb-4 h-32 w-32 object-contain"
           />
-          <p className="text-lg font-semibold text-primary tracking-wider mb-4">
-            PT FARIKA RIAU PERKASA
-          </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mt-4">
             <Truck className="h-10 w-10 text-primary" />
             <h1 className="text-3xl font-bold text-foreground font-headline">
               Checklist Harian Alat
