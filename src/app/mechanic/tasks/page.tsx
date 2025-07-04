@@ -365,7 +365,7 @@ export default function MechanicTasksPage() {
                                             <li key={i} className="border-l-2 border-primary pl-3">
                                                 <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
                                                 <p className="text-sm text-muted-foreground">&bull; {v.repairDescription}</p>
-                                                <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH:mm', { locale: localeID })}</p>
+                                                <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>
                                             </li>
                                         ))}
                                     </ul>
