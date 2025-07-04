@@ -34,9 +34,9 @@ const taskFormSchema = z.object({
     hullNumber: z.string(),
     licensePlate: z.string(),
     repairDescription: z.string().min(5, "Deskripsi perbaikan harus diisi."),
+    targetDate: z.date({ required_error: "Tanggal target harus diisi." }),
+    targetTime: z.string().min(1, "Waktu target harus diisi."),
   })).min(1, "Pilih minimal satu kendaraan."),
-  targetDate: z.date({ required_error: "Tanggal target harus diisi." }),
-  targetTime: z.string().min(1, "Waktu target harus diisi."),
   mechanics: z.array(z.object({ id: z.string(), name: z.string() })).min(1, "Pilih minimal satu mekanik."),
 });
 
@@ -76,8 +76,6 @@ export default function MechanicTasksPage() {
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       vehicles: [],
-      targetDate: new Date(),
-      targetTime: "",
       mechanics: [],
     },
   });
@@ -95,7 +93,9 @@ export default function MechanicTasksPage() {
         append({ 
           hullNumber: vehicle.hullNumber, 
           licensePlate: vehicle.licensePlate,
-          repairDescription: ""
+          repairDescription: "",
+          targetDate: new Date(),
+          targetTime: ""
         });
       }
     }
@@ -106,17 +106,16 @@ export default function MechanicTasksPage() {
   const onSubmit = async (data: TaskFormData) => {
     setIsLoading(true);
     const taskPayload = {
-      vehicles: data.vehicles,
-      targetDate: format(data.targetDate, 'yyyy-MM-dd'),
-      targetTime: data.targetTime,
+      vehicles: data.vehicles.map(v => ({
+        ...v,
+        targetDate: format(v.targetDate, 'yyyy-MM-dd'),
+      })),
       manpowerCount: data.mechanics.length,
       mechanics: data.mechanics,
     };
     await addMechanicTask(taskPayload);
     form.reset({
       vehicles: [],
-      targetDate: new Date(),
-      targetTime: "",
       mechanics: [],
     });
     setIsLoading(false);
@@ -137,9 +136,8 @@ export default function MechanicTasksPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 
-                <div className="md:col-span-2 space-y-4">
+              <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="vehicles"
@@ -163,32 +161,70 @@ export default function MechanicTasksPage() {
 
                         <div className="space-y-4 pt-2">
                           {fields.map((field, index) => (
-                            <div key={field.id} className="grid grid-cols-[1fr,2fr,auto] items-start gap-x-4 gap-y-2 p-3 border rounded-lg bg-muted/20">
-                              <div className="font-medium col-span-3 sm:col-span-1">
-                                <p>{field.licensePlate}</p>
-                                <p className="text-xs text-muted-foreground">{field.hullNumber}</p>
+                            <div key={field.id} className="p-4 border rounded-lg bg-muted/20 space-y-4">
+                              <div className="flex justify-between items-start">
+                                <div className="font-medium">
+                                  <p>{field.licensePlate}</p>
+                                  <p className="text-xs text-muted-foreground">{field.hullNumber}</p>
+                                </div>
+                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Hapus Kendaraan</span>
+                                </Button>
                               </div>
                               
-                              <div className="col-span-3 sm:col-span-2">
-                                <FormField
+                              <FormField
                                   control={form.control}
                                   name={`vehicles.${index}.repairDescription`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel className="sr-only">Perbaikan</FormLabel>
+                                      <FormLabel>Deskripsi Perbaikan</FormLabel>
                                       <FormControl>
-                                        <Textarea placeholder="Deskripsi perbaikan untuk kendaraan ini..." {...field} rows={2} />
+                                        <Textarea placeholder="Contoh: Ganti oli mesin, periksa rem..." {...field} rows={2} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                  control={form.control}
+                                  name={`vehicles.${index}.targetDate`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                      <FormLabel>Target Selesai (Tanggal)</FormLabel>
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <FormControl>
+                                            <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                              {field.value ? format(field.value, "PPP", { locale: localeID }) : <span>Pilih tanggal</span>}
+                                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                          </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                        </PopoverContent>
+                                      </Popover>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                 <FormField
+                                  control={form.control}
+                                  name={`vehicles.${index}.targetTime`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Target Selesai (Waktu)</FormLabel>
+                                      <FormControl>
+                                        <Input type="time" {...field} />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
                               </div>
-
-                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:bg-destructive/10 sm:col-start-3 sm:row-start-1 sm:ml-auto">
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Hapus Kendaraan</span>
-                              </Button>
                             </div>
                           ))}
                         </div>
@@ -197,50 +233,12 @@ export default function MechanicTasksPage() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="targetDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Target Selesai (Tanggal)</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                              {field.value ? format(field.value, "PPP", { locale: localeID }) : <span>Pilih tanggal</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="targetTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Selesai (Waktu)</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <Controller
                   control={form.control}
                   name="mechanics"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col md:col-span-2">
-                      <FormLabel>Man Power (Nama)</FormLabel>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Man Power (Nama Mekanik)</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -289,7 +287,7 @@ export default function MechanicTasksPage() {
                     </FormItem>
                   )}
                 />
-              </div>
+              
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={isLoading}>
@@ -311,9 +309,7 @@ export default function MechanicTasksPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Kendaraan</TableHead>
-                            <TableHead className="w-[35%]">Perbaikan</TableHead>
-                            <TableHead>Target Selesai</TableHead>
+                            <TableHead className="w-[60%]">Detail Target Pekerjaan</TableHead>
                             <TableHead>Man Power</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Aksi</TableHead>
@@ -322,21 +318,19 @@ export default function MechanicTasksPage() {
                     <TableBody>
                         {tasksForUser.length > 0 ? tasksForUser.map(task => (
                             <TableRow key={task.id}>
-                                <TableCell className="font-medium">{task.vehicles?.map(v => v.licensePlate).join(', ') || 'N/A'}</TableCell>
                                 <TableCell>
-                                  {task.vehicles?.length > 0 ? (
-                                    <ul className="list-disc space-y-1.5 pl-4">
-                                      {task.vehicles.map((v, i) => (
-                                        <li key={i}>
-                                          <span className="font-semibold">{v.licensePlate}:</span> {v.repairDescription}
-                                        </li>
-                                      ))}
+                                    {task.vehicles?.length > 0 ? (
+                                    <ul className="space-y-3">
+                                        {task.vehicles.map((v, i) => (
+                                            <li key={i} className="border-l-2 border-primary pl-3">
+                                                <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
+                                                <p className="text-sm text-muted-foreground">&bull; {v.repairDescription}</p>
+                                                <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH:mm', { locale: localeID })}</p>
+                                            </li>
+                                        ))}
                                     </ul>
-                                  ) : (
-                                    'N/A'
-                                  )}
+                                    ) : ( 'N/A' )}
                                 </TableCell>
-                                <TableCell>{format(new Date(`${task.targetDate}T${task.targetTime}`), 'dd MMM yyyy, HH:mm')}</TableCell>
                                 <TableCell>{task.mechanics.map(m => m.name).join(', ')} ({task.manpowerCount})</TableCell>
                                 <TableCell>{getStatusBadge(task.status)}</TableCell>
                                 <TableCell className="text-right">
@@ -375,7 +369,7 @@ export default function MechanicTasksPage() {
                             </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">Belum ada target pekerjaan yang dibuat.</TableCell>
+                                <TableCell colSpan={4} className="h-24 text-center">Belum ada target pekerjaan yang dibuat.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
