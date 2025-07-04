@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import { type Report, type ReportItem } from "@/lib/data";
+import { type Report, type ReportItem, type Vehicle } from "@/lib/data";
 import { format } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
 
@@ -45,31 +46,48 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function MechanicDashboardPage() {
-  const { reports } = useAppData();
+  const { reports, vehicles } = useAppData();
   const { user } = useAdminAuth();
 
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-  const damagedReports = useMemo(() => {
-    return reports
-      .filter((report) => {
-        // Must be a damaged report
-        const isDamaged = report.overallStatus === 'Rusak' || report.overallStatus === 'Perlu Perhatian';
-        if (!isDamaged) return false;
+  const damagedVehicleReports = useMemo(() => {
+    // For each vehicle, find its latest report and thus its current status.
+    const vehicleStatuses = vehicles.map(vehicle => {
+      const latestReport = reports
+        .filter(r => r.vehicleId === vehicle.hullNumber)
+        .sort((a, b) => b.timestamp - a.timestamp)[0];
+      
+      return {
+        vehicle,
+        latestReport,
+        status: latestReport ? latestReport.overallStatus : 'Belum Checklist'
+      };
+    });
 
-        // Super Admins can see all locations
-        if (user?.role === 'SUPER_ADMIN') return true;
-
-        // Mechanics should only see reports from their assigned location
-        if (user?.role === 'MEKANIK' && user.location) {
-            return report.location === user.location;
+    // Now filter this list to get only the reports for damaged vehicles in the correct location.
+    return vehicleStatuses
+      .filter(item => {
+        // Must have a report and be damaged
+        if (!item.latestReport || (item.status !== 'Rusak' && item.status !== 'Perlu Perhatian')) {
+          return false;
         }
 
-        // Default: don't show if no conditions are met
+        // Filter by location for mechanics
+        if (user?.role === 'MEKANIK' && user.location) {
+          return item.vehicle.location === user.location;
+        }
+        
+        // Super admin sees all
+        if (user?.role === 'SUPER_ADMIN') {
+          return true;
+        }
+
         return false;
       })
-      .sort((a, b) => b.timestamp - a.timestamp); // Sort by most recent first
-  }, [reports, user]);
+      .map(item => item.latestReport!) // We know latestReport exists from the filter above
+      .sort((a, b) => b.timestamp - a.timestamp);
+  }, [reports, vehicles, user]);
 
   return (
     <>
@@ -95,8 +113,8 @@ export default function MechanicDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {damagedReports.length > 0 ? (
-                  damagedReports.map((report) => (
+                {damagedVehicleReports.length > 0 ? (
+                  damagedVehicleReports.map((report) => (
                     <TableRow key={report.id}>
                       <TableCell>{format(new Date(report.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
                       <TableCell className="font-medium">{report.vehicleId}</TableCell>
