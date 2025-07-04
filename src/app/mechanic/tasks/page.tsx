@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon, Check, ChevronsUpDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown, Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useAppData } from "@/context/app-data-context";
@@ -30,7 +30,10 @@ import { MoreHorizontal } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const taskFormSchema = z.object({
-  vehicleHullNumber: z.string().min(1, "Kendaraan harus dipilih."),
+  vehicles: z.array(z.object({
+    hullNumber: z.string(),
+    licensePlate: z.string(),
+  })).min(1, "Pilih minimal satu kendaraan."),
   repairDescription: z.string().min(5, "Deskripsi perbaikan harus diisi (minimal 5 karakter)."),
   targetDate: z.date({ required_error: "Tanggal target harus diisi." }),
   targetTime: z.string().min(1, "Waktu target harus diisi."),
@@ -56,15 +59,23 @@ export default function MechanicTasksPage() {
   const { user } = useAdminAuth();
   const { vehicles, users, mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedVehicleToAdd, setSelectedVehicleToAdd] = useState("");
 
   const mechanics = useMemo(() => users.filter((u) => u.role === "MEKANIK" && (!user?.location || u.location === user.location)), [users, user]);
   const vehiclesForUser = useMemo(() => vehicles.filter(v => !user?.location || v.location === user.location), [vehicles, user]);
-  const tasksForUser = useMemo(() => mechanicTasks.filter(t => vehiclesForUser.some(v => v.hullNumber === t.vehicleHullNumber)), [mechanicTasks, vehiclesForUser]);
+
+  const tasksForUser = useMemo(() => {
+    return mechanicTasks.filter(task => 
+        task.vehicles?.some(taskVehicle => 
+            vehiclesForUser.some(userVehicle => userVehicle.hullNumber === taskVehicle.hullNumber)
+        )
+    );
+  }, [mechanicTasks, vehiclesForUser]);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
-      vehicleHullNumber: "",
+      vehicles: [],
       repairDescription: "",
       targetDate: new Date(),
       targetTime: "",
@@ -72,10 +83,30 @@ export default function MechanicTasksPage() {
     },
   });
 
+  const watchedVehicles = form.watch("vehicles");
+
+  const handleAddVehicle = () => {
+    if (!selectedVehicleToAdd) return;
+    const vehicle = vehiclesForUser.find(v => v.hullNumber === selectedVehicleToAdd);
+    if (vehicle) {
+      const currentVehicles = form.getValues("vehicles");
+      if (!currentVehicles.some(v => v.hullNumber === vehicle.hullNumber)) {
+        form.setValue("vehicles", [...currentVehicles, { hullNumber: vehicle.hullNumber, licensePlate: vehicle.licensePlate }], { shouldValidate: true });
+      }
+    }
+    setSelectedVehicleToAdd(""); // Reset select
+  };
+
+  const handleRemoveVehicle = (hullNumber: string) => {
+    const currentVehicles = form.getValues("vehicles");
+    form.setValue("vehicles", currentVehicles.filter(v => v.hullNumber !== hullNumber), { shouldValidate: true });
+  };
+
+
   const onSubmit = async (data: TaskFormData) => {
     setIsLoading(true);
     const taskPayload = {
-      vehicleHullNumber: data.vehicleHullNumber,
+      vehicles: data.vehicles,
       repairDescription: data.repairDescription,
       targetDate: format(data.targetDate, 'yyyy-MM-dd'),
       targetTime: data.targetTime,
@@ -84,7 +115,7 @@ export default function MechanicTasksPage() {
     };
     await addMechanicTask(taskPayload);
     form.reset({
-      vehicleHullNumber: "",
+      vehicles: [],
       repairDescription: "",
       targetDate: new Date(),
       targetTime: "",
@@ -112,20 +143,33 @@ export default function MechanicTasksPage() {
                 
                 <FormField
                   control={form.control}
-                  name="vehicleHullNumber"
-                  render={({ field }) => (
+                  name="vehicles"
+                  render={() => (
                     <FormItem>
                       <FormLabel>Kendaraan yang Dikerjakan</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger><SelectValue placeholder="Pilih Kendaraan" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {vehiclesForUser.map((v) => (
-                            <SelectItem key={v.id} value={v.hullNumber}>{v.licensePlate} ({v.hullNumber})</SelectItem>
+                      <div className="flex items-center gap-2">
+                          <Select onValueChange={setSelectedVehicleToAdd} value={selectedVehicleToAdd}>
+                              <SelectTrigger><SelectValue placeholder="Pilih Kendaraan" /></SelectTrigger>
+                              <SelectContent>
+                              {vehiclesForUser.map((v) => (
+                                  <SelectItem key={v.id} value={v.hullNumber} disabled={watchedVehicles.some(sv => sv.hullNumber === v.hullNumber)}>
+                                      {v.licensePlate} ({v.hullNumber})
+                                  </SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
+                          <Button type="button" onClick={handleAddVehicle} variant="outline">Pilih</Button>
+                      </div>
+                      <div className="space-y-2 pt-2 min-h-[40px]">
+                          {watchedVehicles.map((vehicle) => (
+                              <Badge key={vehicle.hullNumber} variant="secondary" className="mr-2 mb-2 text-base py-1">
+                              {vehicle.licensePlate}
+                              <button type="button" onClick={() => handleRemoveVehicle(vehicle.hullNumber)} className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                                  <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                              </button>
+                              </Badge>
                           ))}
-                        </SelectContent>
-                      </Select>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -270,7 +314,7 @@ export default function MechanicTasksPage() {
                     <TableBody>
                         {tasksForUser.length > 0 ? tasksForUser.map(task => (
                             <TableRow key={task.id}>
-                                <TableCell className="font-medium">{task.vehicleHullNumber}</TableCell>
+                                <TableCell className="font-medium">{task.vehicles?.map(v => v.licensePlate).join(', ') || 'N/A'}</TableCell>
                                 <TableCell>{task.repairDescription}</TableCell>
                                 <TableCell>{format(new Date(`${task.targetDate}T${task.targetTime}`), 'dd MMM yyyy, HH:mm')}</TableCell>
                                 <TableCell>{task.mechanics.map(m => m.name).join(', ')} ({task.manpowerCount})</TableCell>

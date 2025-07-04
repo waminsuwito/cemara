@@ -77,7 +77,10 @@ export type Suggestion = {
 export type MechanicTask = {
   id: string;
   createdAt: number;
-  vehicleHullNumber: string;
+  vehicles: {
+    hullNumber: string;
+    licensePlate: string;
+  }[];
   repairDescription: string;
   targetDate: string; // YYYY-MM-DD
   targetTime: string; // HH:mm
