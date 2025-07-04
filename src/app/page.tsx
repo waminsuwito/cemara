@@ -18,10 +18,9 @@ export default function Home() {
           <Image
             src="/logo-frp.png"
             alt="Logo PT Farika Riau Perkasa"
-            width={120}
-            height={120}
+            width={128}
+            height={128}
             className="mb-4"
-            priority
           />
           <p className="text-lg font-semibold text-primary tracking-wider mb-4">
             PT FARIKA RIAU PERKASA
