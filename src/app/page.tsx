@@ -15,10 +15,10 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
-          <img 
-            src="/logo-frp.png" 
-            alt="Logo PT Farika Riau Perkasa" 
-            className="h-32 w-32 object-contain mb-4"
+          <img
+            src="https://i.ibb.co/vC6wmJWb/Logo-frp.png"
+            alt="Logo PT Farika Riau Perkasa"
+            className="h-32 w-32 object-contain"
           />
           <div className="flex items-center gap-3 mt-4">
             <Truck className="h-10 w-10 text-primary" />
