@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Users,
   ClipboardCheck,
+  History,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/mechanic/dashboard", icon: LayoutDashboard, label: "Dashboard Kerusakan" },
   { href: "/mechanic/tasks", icon: ClipboardList, label: "Target Pekerjaan Hari Ini" },
   { href: "/mechanic/completed-tasks", icon: ClipboardCheck, label: "Pekerjaan Terselesaikan Hari Ini" },
+  { href: "/mechanic/repair-history", icon: History, label: "Histori Perbaikan Alat" },
   { href: "/mechanic/members", icon: Users, label: "Anggota Mekanik" },
 ];
 
