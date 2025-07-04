@@ -132,10 +132,12 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           return onSnapshot(q, (querySnapshot) => {
               const data = querySnapshot.docs.map((doc) => {
                   const docData = doc.data();
-                  const timestampField = orderByField || 'timestamp';
-                  if (docData[timestampField] && docData[timestampField] instanceof Timestamp) {
-                      docData[timestampField] = docData[timestampField].toMillis();
-                  }
+                  // Convert all Timestamps to milliseconds for easier handling on client
+                  Object.keys(docData).forEach(key => {
+                      if (docData[key] instanceof Timestamp) {
+                          docData[key] = docData[key].toMillis();
+                      }
+                  });
                   return { id: doc.id, ...docData };
               });
               // Sort descending by timestamp locally
@@ -343,7 +345,17 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   
   const updateMechanicTask = async (taskId: string, updates: Partial<MechanicTask>) => {
     try {
-      await updateDoc(doc(db, 'mechanicTasks', taskId), updates);
+      const taskToUpdate = mechanicTasks.find(t => t.id === taskId);
+      const payload: { [key: string]: any } = { ...updates };
+
+      if (updates.status === 'IN_PROGRESS' && !taskToUpdate?.startedAt) {
+        payload.startedAt = serverTimestamp();
+      }
+      if (updates.status === 'COMPLETED' && !taskToUpdate?.completedAt) {
+        payload.completedAt = serverTimestamp();
+      }
+
+      await updateDoc(doc(db, 'mechanicTasks', taskId), payload);
       toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
     } catch (e) {
       console.error("Error updating mechanic task: ", e);

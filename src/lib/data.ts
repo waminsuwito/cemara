@@ -75,6 +75,8 @@ export type Suggestion = {
 export type MechanicTask = {
   id: string;
   createdAt: number;
+  startedAt?: number;
+  completedAt?: number;
   vehicles: {
     hullNumber: string;
     licensePlate: string;

@@ -27,6 +27,36 @@ const getStatusBadge = (status: MechanicTask['status']) => {
   }
 };
 
+const CompletionStatusBadge = ({ targetDate, targetTime, completedAt }: { targetDate: string, targetTime: string, completedAt: number }) => {
+    if (!targetDate || !targetTime || !completedAt) return null;
+
+    const targetDateTime = new Date(`${targetDate}T${targetTime}`);
+    const completedDateTime = new Date(completedAt);
+    const diffMinutes = Math.round((completedDateTime.getTime() - targetDateTime.getTime()) / (60 * 1000));
+
+    if (diffMinutes <= 5 && diffMinutes >= -5) { // Within 5 minutes buffer for on-time
+        return <Badge className="mt-1 bg-yellow-400 text-yellow-900 hover:bg-yellow-500">Tepat Waktu</Badge>;
+    }
+
+    if (diffMinutes < -5) {
+        const diffAbs = Math.abs(diffMinutes);
+        const hours = Math.floor(diffAbs / 60);
+        const minutes = diffAbs % 60;
+        let text = 'Lebih Cepat';
+        if (hours > 0) text += ` ${hours} jam`;
+        if (minutes > 0) text += ` ${minutes} menit`;
+        return <Badge className="mt-1 bg-green-400 text-green-900 hover:bg-green-500">{text}</Badge>;
+    } else { // diffMinutes > 5
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+        let text = 'Terlambat';
+        if (hours > 0) text += ` ${hours} jam`;
+        if (minutes > 0) text += ` ${minutes} menit`;
+        return <Badge variant="destructive" className="mt-1">{text}</Badge>;
+    }
+}
+
+
 export default function MechanicActivityPage() {
   const { user } = useAdminAuth();
   const { mechanicTasks, vehicles, locationNames } = useAppData();
@@ -92,7 +122,7 @@ export default function MechanicActivityPage() {
               <Table>
                   <TableHeader>
                       <TableRow>
-                          <TableHead className="w-[40%]">Detail Pekerjaan</TableHead>
+                          <TableHead className="w-[50%]">Detail Pekerjaan</TableHead>
                           <TableHead className="w-[25%]">Mekanik Bertugas</TableHead>
                           <TableHead>Dibuat Pada</TableHead>
                           <TableHead>Status</TableHead>
@@ -108,7 +138,10 @@ export default function MechanicActivityPage() {
                                           <li key={i} className="border-l-2 border-primary pl-3">
                                               <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
                                               <p className="text-sm text-muted-foreground">&bull; {v.repairDescription}</p>
-                                              <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>
+                                              <p className="text-sm text-muted-foreground">&bull; Target Selesai: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>
+                                              {task.startedAt && <p className="text-sm text-muted-foreground">&bull; Mulai: {format(new Date(task.startedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
+                                              {task.completedAt && <p className="text-sm text-muted-foreground">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
+                                              {task.status === 'COMPLETED' && task.completedAt && <div className="mt-1"><CompletionStatusBadge targetDate={v.targetDate} targetTime={v.targetTime} completedAt={task.completedAt} /></div>}
                                           </li>
                                       ))}
                                   </ul>
