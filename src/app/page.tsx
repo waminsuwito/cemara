@@ -14,12 +14,11 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center justify-center mb-8">
+        <div className="flex flex-col items-center text-center mb-8">
           <img 
-            src="https://placehold.co/128x128.png" 
+            src="/logo-frp.png" 
             alt="Logo PT Farika Riau Perkasa" 
-            className="h-32 w-32 object-contain"
-            data-ai-hint="company logo"
+            className="h-32 w-32 object-contain mb-4"
           />
           <div className="flex items-center gap-3 mt-4">
             <Truck className="h-10 w-10 text-primary" />
