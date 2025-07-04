@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OperatorLoginForm } from "@/components/operator-login-form";
 import { AdminLoginForm } from "@/components/admin-login-form";
+import { MechanicLoginForm } from "@/components/mechanic-login-form";
 import { Truck, Loader2 } from "lucide-react";
 import { useAppData } from "@/context/app-data-context";
 
@@ -35,9 +36,10 @@ export default function Home() {
           </div>
         ) : (
           <Tabs defaultValue="operator" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="operator">Operator/Driver</TabsTrigger>
               <TabsTrigger value="admin">Admin</TabsTrigger>
+              <TabsTrigger value="mekanik">Mekanik</TabsTrigger>
             </TabsList>
             <TabsContent value="operator">
               <Card className="bg-card/80 backdrop-blur-sm border-white/10">
@@ -62,6 +64,19 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <AdminLoginForm />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="mekanik">
+              <Card className="bg-card/80 backdrop-blur-sm border-white/10">
+                <CardHeader>
+                  <CardTitle>Login Mekanik</CardTitle>
+                  <CardDescription>
+                    Masukan username dan password untuk mengakses dasbor mekanik.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MechanicLoginForm />
                 </CardContent>
               </Card>
             </TabsContent>

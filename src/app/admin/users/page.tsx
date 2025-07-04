@@ -151,10 +151,10 @@ export default function UserManagementPage() {
       }
     }
 
-    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN") && username) {
+    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN" || role === "MEKANIK") && username) {
       const isAdminUsernameTaken = users.some(
         (u) =>
-          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN") &&
+          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN" || u.role === "MEKANIK") &&
           u.username?.toLowerCase().trim() === username.toLowerCase().trim() &&
           u.id !== editingUser?.id
       );
@@ -162,7 +162,7 @@ export default function UserManagementPage() {
         toast({
           variant: "destructive",
           title: "Gagal Menyimpan",
-          description: `Admin dengan username '${username}' sudah terdaftar.`,
+          description: `Pengguna dengan username '${username}' sudah terdaftar.`,
         });
         return;
       }
@@ -181,9 +181,13 @@ export default function UserManagementPage() {
             userToUpdate.batangan = batangan;
             userToUpdate.location = location;
             userToUpdate.username = undefined; // Clean up admin-specific fields
-        } else { // SUPER_ADMIN or LOCATION_ADMIN
+        } else { // SUPER_ADMIN, LOCATION_ADMIN, or MEKANIK
             userToUpdate.username = username;
-            userToUpdate.location = role === 'LOCATION_ADMIN' ? location : undefined;
+            if (role === 'LOCATION_ADMIN' || role === 'MEKANIK') {
+                userToUpdate.location = location;
+            } else { // SUPER_ADMIN
+                userToUpdate.location = undefined;
+            }
             userToUpdate.nik = undefined; // Clean up operator-specific fields
             userToUpdate.batangan = undefined;
         }
@@ -204,9 +208,9 @@ export default function UserManagementPage() {
 
         if (role === 'OPERATOR') {
             newUser = { ...newUser, nik, batangan, location };
-        } else { // SUPER_ADMIN or LOCATION_ADMIN
+        } else { // SUPER_ADMIN, LOCATION_ADMIN, or MEKANIK
              newUser = { ...newUser, username };
-            if (role === 'LOCATION_ADMIN') {
+            if (role === 'LOCATION_ADMIN' || role === 'MEKANIK') {
                 newUser.location = location;
             }
         }
@@ -239,7 +243,7 @@ export default function UserManagementPage() {
           <div>
             <CardTitle>Manajemen Pengguna</CardTitle>
             <CardDescription>
-              Tambah, edit, atau hapus data pengguna (Admin & Operator).
+              Tambah, edit, atau hapus data pengguna (Admin, Mekanik, & Operator).
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -417,10 +421,10 @@ function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, currentUser }:
                         <Input id="password" name="password" type="password" className="col-span-3" required={!editingUser} placeholder={editingUser ? "Isi untuk mengubah" : ""} />
                     </div>
 
-                    {role !== 'SUPER_ADMIN' && (
+                    {(role === 'LOCATION_ADMIN' || role === 'OPERATOR' || role === 'MEKANIK') && (
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="location" className="text-right">Lokasi</Label>
-                             <Select name="location" defaultValue={editingUser?.location || currentUser?.location} required disabled={!isSuperAdmin}>
+                             <Select name="location" defaultValue={editingUser?.location || (currentUser?.role === 'LOCATION_ADMIN' ? currentUser.location : '')} required={role !== 'MEKANIK'} disabled={!isSuperAdmin && currentUser?.role !== 'SUPER_ADMIN'}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Pilih Lokasi" />
                                 </SelectTrigger>
