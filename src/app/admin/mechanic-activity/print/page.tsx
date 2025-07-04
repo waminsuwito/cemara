@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, Suspense } from 'react';
@@ -10,28 +9,8 @@ import { type MechanicTask } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer } from 'lucide-react';
 
-function PrintHeader({ title }: { title: string }) {
-    const router = useRouter();
-    const handlePrint = () => window.print();
-
-    return (
-        <header className="bg-white shadow-md p-4 flex justify-between items-center print-hide">
-            <h1 className="text-xl font-semibold">{title}</h1>
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={() => router.back()}>
-                    <ArrowLeft className="mr-2 h-4 w-4"/>
-                    Kembali
-                </Button>
-                <Button onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Cetak Halaman Ini
-                </Button>
-            </div>
-        </header>
-    );
-}
-
 function PrintPageContent() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const { mechanicTasks, vehicles } = useAppData();
     const locationFilter = searchParams.get('location') || 'all';
@@ -48,6 +27,10 @@ function PrintPageContent() {
     const locationDisplay = locationFilter === 'all' ? 'Semua Lokasi' : locationFilter;
     const printDate = format(new Date(), 'dd MMMM yyyy, HH:mm', { locale: localeID });
     
+    const handlePrint = () => {
+        window.print();
+    };
+
     const getCompletionStatusText = (task: MechanicTask): string => {
         if (task.status !== 'COMPLETED' || !task.completedAt) {
             return task.status;
@@ -93,7 +76,19 @@ function PrintPageContent() {
 
     return (
         <div className="bg-gray-100 min-h-screen">
-            <PrintHeader title="Cetak Laporan Kegiatan Mekanik" />
+            <header className="bg-white shadow-md p-4 flex justify-between items-center print-hide">
+                <h1 className="text-xl font-semibold">Cetak Laporan Kegiatan Mekanik</h1>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => router.back()}>
+                        <ArrowLeft className="mr-2 h-4 w-4"/>
+                        Kembali
+                    </Button>
+                    <Button onClick={handlePrint}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Cetak Halaman Ini
+                    </Button>
+                </div>
+            </header>
             <main className="p-8 print-page-main">
                 <div className="max-w-4xl mx-auto bg-white shadow-lg print-page-container">
                     <div className="print-page-report p-10 text-black bg-white font-sans">
