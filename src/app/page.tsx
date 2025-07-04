@@ -44,7 +44,7 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle>Login Operator</CardTitle>
                   <CardDescription>
-                    Masukan NIK/Nama dan password untuk memulai checklist harian.
+                    Silakan login dengan NIK atau Nama Anda.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
