@@ -408,7 +408,7 @@ export default function MechanicTasksPage() {
                                 <TableCell className="text-right">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <Button variant="ghost" className="h-8 w-8 p-0" disabled={task.status === 'COMPLETED'}>
                                         <span className="sr-only">Buka menu</span>
                                         <MoreHorizontal className="h-4 w-4" />
                                       </Button>
@@ -416,11 +416,11 @@ export default function MechanicTasksPage() {
                                     <DropdownMenuContent align="end">
                                       <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'IN_PROGRESS')} disabled={task.status === 'IN_PROGRESS' || task.status === 'COMPLETED'}>Tandai "Dikerjakan"</DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'COMPLETED')} disabled={task.status === 'COMPLETED'}>Tandai "Selesai"</DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'PENDING')} disabled={task.status === 'PENDING'}>Set "Menunggu"</DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'PENDING')} disabled={task.status === 'PENDING' || task.status === 'COMPLETED'}>Set "Menunggu"</DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive" disabled={task.status === 'COMPLETED'}>
                                             Hapus
                                           </DropdownMenuItem>
                                         </AlertDialogTrigger>
