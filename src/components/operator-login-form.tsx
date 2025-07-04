@@ -114,7 +114,7 @@ export function OperatorLoginForm() {
     } else {
       // More than one vehicle, let the user choose
       login(foundUser, null);
-      router.push("/select-vehicle");
+      router.push("/checklist/select-vehicle");
     }
   }
 
