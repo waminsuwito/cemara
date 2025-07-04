@@ -47,6 +47,49 @@ function PrintPageContent() {
 
     const locationDisplay = locationFilter === 'all' ? 'Semua Lokasi' : locationFilter;
     const printDate = format(new Date(), 'dd MMMM yyyy, HH:mm', { locale: localeID });
+    
+    const getCompletionStatusText = (task: MechanicTask): string => {
+        if (task.status !== 'COMPLETED' || !task.completedAt) {
+            return task.status;
+        }
+
+        const vehicleInTask = task.vehicles?.[0];
+        if (!vehicleInTask) {
+            return 'SELESAI';
+        }
+        
+        const { targetDate, targetTime } = vehicleInTask;
+        const { completedAt } = task;
+
+        if (!targetDate || !targetTime || !completedAt) {
+            return 'SELESAI';
+        }
+
+        const targetDateTime = new Date(`${targetDate}T${targetTime}`);
+        const completedDateTime = new Date(completedAt);
+        const diffMinutes = Math.round((completedDateTime.getTime() - targetDateTime.getTime()) / (60 * 1000));
+
+        if (diffMinutes <= 5 && diffMinutes >= -5) {
+            return 'SELESAI (Tepat Waktu)';
+        }
+
+        if (diffMinutes < -5) {
+            const diffAbs = Math.abs(diffMinutes);
+            const hours = Math.floor(diffAbs / 60);
+            const minutes = diffAbs % 60;
+            let text = 'Lebih Cepat';
+            if (hours > 0) text += ` ${hours} jam`;
+            if (minutes > 0) text += ` ${minutes} menit`;
+            return `SELESAI (${text})`;
+        } else { // diffMinutes > 5
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+            let text = 'Terlambat';
+            if (hours > 0) text += ` ${hours} jam`;
+            if (minutes > 0) text += ` ${minutes} menit`;
+            return `SELESAI (${text})`;
+        }
+    }
 
     return (
         <div className="bg-gray-100 min-h-screen">
@@ -83,11 +126,12 @@ function PrintPageContent() {
                                                     <p className="font-semibold">{v.licensePlate} ({v.hullNumber})</p>
                                                     <p className="text-xs">&bull; {v.repairDescription}</p>
                                                     <p className="text-xs">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH:mm')}</p>
+                                                    {task.completedAt && <p className="text-xs">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH:mm')}</p>}
                                                 </div>
                                             ))}
                                         </td>
                                         <td className="border border-gray-600 p-2">{task.mechanics.map(m => m.name).join(', ')}</td>
-                                        <td className="border border-gray-600 p-2">{task.status}</td>
+                                        <td className="border border-gray-600 p-2">{getCompletionStatusText(task)}</td>
                                     </tr>
                                 )) : (
                                     <tr>
