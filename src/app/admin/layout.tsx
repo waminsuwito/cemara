@@ -108,6 +108,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <div className="mt-auto p-4">
+            <div className="pb-4 text-center">
+              <img
+                src="https://i.ibb.co/V0NgdX7z/images.jpg"
+                alt="Logo PT Farika Riau Perkasa"
+                className="h-20 w-20 object-contain mx-auto"
+              />
+            </div>
             <Button size="sm" className="w-full" onClick={handleLogout} variant="secondary">
               <LogOut className="mr-2 h-4 w-4" />
               Logout
@@ -146,6 +153,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 ))}
               </nav>
               <div className="mt-auto">
+                 <div className="pb-4 text-center">
+                   <img
+                     src="https://i.ibb.co/V0NgdX7z/images.jpg"
+                     alt="Logo PT Farika Riau Perkasa"
+                     className="h-20 w-20 object-contain mx-auto"
+                   />
+                 </div>
                  <Button size="sm" className="w-full" onClick={handleLogout} variant="secondary">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout

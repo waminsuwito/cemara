@@ -27,13 +27,8 @@ export default function SuggestionsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-center">Usulan dan Saran dari Sopir</CardTitle>
-        <img
-          src="https://i.ibb.co/V0NgdX7z/images.jpg"
-          alt="Logo PT Farika Riau Perkasa"
-          className="h-24 w-24 object-contain my-4 mx-auto"
-        />
-        <CardDescription className="text-center">
+        <CardTitle>Usulan / Saran dari Sopir</CardTitle>
+        <CardDescription>
           Daftar usulan dan saran yang dikirimkan oleh sopir/operator untuk perbaikan.
         </CardDescription>
       </CardHeader>
