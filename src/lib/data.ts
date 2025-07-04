@@ -74,6 +74,21 @@ export type Suggestion = {
   suggestion: string;
 };
 
+export type MechanicTask = {
+  id: string;
+  createdAt: number;
+  vehicleHullNumber: string;
+  repairDescription: string;
+  targetDate: string; // YYYY-MM-DD
+  targetTime: string; // HH:mm
+  manpowerCount: number;
+  mechanics: {
+    id: string;
+    name: string;
+  }[];
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+};
+
 
 export const roles: UserRole[] = ["OPERATOR", "LOCATION_ADMIN", "SUPER_ADMIN", "MEKANIK"];
 

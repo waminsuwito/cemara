@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +31,11 @@ type AppDataContextType = {
   
   suggestions: Suggestion[];
   addSuggestion: (suggestion: Omit<Suggestion, 'id' | 'timestamp'>) => Promise<void>;
+
+  mechanicTasks: MechanicTask[];
+  addMechanicTask: (task: Omit<MechanicTask, 'id' | 'createdAt' | 'status'>) => Promise<void>;
+  updateMechanicTask: (taskId: string, updates: Partial<MechanicTask>) => Promise<void>;
+  deleteMechanicTask: (taskId: string) => Promise<void>;
   
   locations: Location[];
   locationNames: string[];
@@ -49,6 +54,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [mechanicTasks, setMechanicTasks] = useState<MechanicTask[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
@@ -118,6 +124,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           { name: 'reports', setter: setReports, orderByField: 'timestamp' },
           { name: 'complaints', setter: setComplaints, orderByField: 'timestamp' },
           { name: 'suggestions', setter: setSuggestions, orderByField: 'timestamp' },
+          { name: 'mechanicTasks', setter: setMechanicTasks, orderByField: 'createdAt' },
       ];
 
       const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
@@ -125,13 +132,14 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           return onSnapshot(q, (querySnapshot) => {
               const data = querySnapshot.docs.map((doc) => {
                   const docData = doc.data();
-                  if (docData.timestamp && docData.timestamp instanceof Timestamp) {
-                      docData.timestamp = docData.timestamp.toMillis();
+                  const timestampField = orderByField || 'timestamp';
+                  if (docData[timestampField] && docData[timestampField] instanceof Timestamp) {
+                      docData[timestampField] = docData[timestampField].toMillis();
                   }
                   return { id: doc.id, ...docData };
               });
               // Sort descending by timestamp locally
-              data.sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+              data.sort((a: any, b: any) => (b[orderByField] || 0) - (a[orderByField] || 0));
               setter(data as any);
           }, (error) => {
               console.error(`Error fetching ${name}: `, error);
@@ -149,6 +157,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       setReports([]);
       setComplaints([]);
       setSuggestions([]);
+      setMechanicTasks([]);
     }
   }, [adminUser, operatorUser, toast]);
 
@@ -316,6 +325,42 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       throw e;
     }
   };
+  
+  const addMechanicTask = async (taskData: Omit<MechanicTask, 'id' | 'createdAt' | 'status'>) => {
+    try {
+      await addDoc(collection(db, 'mechanicTasks'), {
+        ...taskData,
+        status: 'PENDING',
+        createdAt: serverTimestamp(),
+      });
+      toast({ title: "Sukses", description: "Target pekerjaan baru berhasil ditambahkan." });
+    } catch (e) {
+      console.error("Error adding mechanic task: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menambahkan target pekerjaan." });
+      throw e;
+    }
+  };
+  
+  const updateMechanicTask = async (taskId: string, updates: Partial<MechanicTask>) => {
+    try {
+      await updateDoc(doc(db, 'mechanicTasks', taskId), updates);
+      toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
+    } catch (e) {
+      console.error("Error updating mechanic task: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui status pekerjaan." });
+    }
+  };
+
+  const deleteMechanicTask = async (taskId: string) => {
+    try {
+      await deleteDoc(doc(db, 'mechanicTasks', taskId));
+      toast({ title: "Sukses", description: "Target pekerjaan berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting mechanic task: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus target pekerjaan." });
+    }
+  };
+
 
   const locationNames = locations.map(l => l.namaBP).sort();
 
@@ -325,6 +370,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     reports, submitReport,
     complaints, addComplaint, updateComplaintStatus,
     suggestions, addSuggestion,
+    mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

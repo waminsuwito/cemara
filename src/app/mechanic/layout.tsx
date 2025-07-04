@@ -9,6 +9,7 @@ import {
   LogOut,
   LayoutDashboard,
   Wrench,
+  ClipboardList,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { useAdminAuth } from "@/context/admin-auth-context";
 
 const navItems = [
   { href: "/mechanic/dashboard", icon: LayoutDashboard, label: "Dashboard Kerusakan" },
+  { href: "/mechanic/tasks", icon: ClipboardList, label: "Target Pekerjaan" },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
@@ -93,7 +95,7 @@ function MechanicLayoutContent({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
           </div>
-          <div className="p-4 border-t">
+          <div className="p-4 border-t mt-auto">
             <div className="pb-4 text-center">
               <img
                 src="https://i.ibb.co/V0NgdX7z/images.jpg"
@@ -140,7 +142,7 @@ function MechanicLayoutContent({ children }: { children: React.ReactNode }) {
                   ))}
                 </nav>
               </div>
-              <div className="p-4 border-t">
+              <div className="p-4 border-t mt-auto">
                  <div className="pb-4 text-center">
                    <img
                      src="https://i.ibb.co/V0NgdX7z/images.jpg"
