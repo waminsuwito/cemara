@@ -77,10 +77,16 @@ export default function RepairHistoryPage() {
   });
 
   const operators = useMemo(() => {
-    return users
-      .filter(u => u.role === 'OPERATOR')
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [users]);
+    const allOperators = users.filter(u => u.role === 'OPERATOR');
+
+    if (user?.role === 'MEKANIK' && user.location) {
+        return allOperators
+            .filter(o => o.location === user.location)
+            .sort((a,b) => a.name.localeCompare(b.name));
+    }
+    
+    return allOperators.sort((a, b) => a.name.localeCompare(b.name));
+  }, [users, user]);
 
   const filteredTasks = useMemo(() => {
     const fromDate = date?.from ? startOfDay(date.from) : null;
