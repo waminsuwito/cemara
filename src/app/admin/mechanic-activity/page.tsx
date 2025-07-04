@@ -2,8 +2,10 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { format } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
+import { Printer } from "lucide-react";
 
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
@@ -13,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const getStatusBadge = (status: MechanicTask['status']) => {
   switch (status) {
@@ -93,6 +96,12 @@ export default function MechanicActivityPage() {
     }).sort((a,b) => b.createdAt - a.createdAt);
   }, [mechanicTasks, locationFilter, isSuperAdmin, user, vehicles]);
 
+  const printUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('location', locationFilter);
+    return `/admin/mechanic-activity/print?${params.toString()}`;
+  }, [locationFilter]);
+
 
   return (
     <Card>
@@ -101,21 +110,29 @@ export default function MechanicActivityPage() {
             <CardTitle>Monitoring Kegiatan Mekanik</CardTitle>
             <CardDescription>Lihat semua target pekerjaan yang ditugaskan kepada tim mekanik.</CardDescription>
         </div>
-        {isSuperAdmin && (
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter Lokasi" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Lokasi</SelectItem>
-                {locationNames.map((location) => (
-                  <SelectItem key={location} value={location}>
-                    {location}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-        )}
+        <div className="flex items-center gap-2">
+            <Button asChild>
+                <Link href={printUrl}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Cetak Laporan
+                </Link>
+            </Button>
+            {isSuperAdmin && (
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter Lokasi" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">Semua Lokasi</SelectItem>
+                    {locationNames.map((location) => (
+                    <SelectItem key={location} value={location}>
+                        {location}
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+            )}
+        </div>
       </CardHeader>
       <CardContent>
           <div className="border rounded-md">
