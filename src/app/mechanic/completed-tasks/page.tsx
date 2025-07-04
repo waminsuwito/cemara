@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from "react";
@@ -83,9 +82,9 @@ export default function CompletedTasksPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pekerjaan Terselesaikan Hari Ini</CardTitle>
+        <CardTitle>Realisasi Pekerjaan Hari Ini</CardTitle>
         <CardDescription>
-            Daftar semua target pekerjaan yang telah diselesaikan pada hari ini
+            Daftar semua realisasi pekerjaan yang telah diselesaikan pada hari ini
             {user?.location && user.role !== 'SUPER_ADMIN' ? ` di lokasi ${user.location}.` : '.'}
         </CardDescription>
       </CardHeader>
