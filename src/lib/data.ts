@@ -8,12 +8,10 @@ export type User = {
   name: string;
   password?: string;
   role: UserRole;
-  // Operator specific
-  nik?: string;
-  batangan?: string; // Can be a comma-separated list of license plates
+  nik?: string; // For Operator & Mekanik
+  batangan?: string; // For Operator
   location?: string;
-  // Admin specific
-  username?: string;
+  username?: string; // For Admin & Mekanik
 };
 
 export type Vehicle = {

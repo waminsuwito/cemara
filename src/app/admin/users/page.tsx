@@ -19,15 +19,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,8 +29,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PlusCircle, Pencil, Trash2, ShieldAlert } from "lucide-react";
 import {
   Select,
@@ -48,10 +37,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminAuth, type AdminUser } from "@/context/admin-auth-context";
+import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
-import { roles, type User, type UserRole } from "@/lib/data";
+import { User, UserRole } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
+import { UserFormDialog } from "@/components/user-form-dialog";
 
 export default function UserManagementPage() {
   const { user: currentUser } = useAdminAuth();
@@ -115,22 +105,21 @@ export default function UserManagementPage() {
     const batangan = formData.get("batangan") as string;
 
     // --- Start Validation ---
-    if (role === "OPERATOR" && nik) {
-      const isNikTaken = users.some(
-        (u) =>
-          u.role === "OPERATOR" &&
-          u.nik?.toLowerCase().trim() === nik.toLowerCase().trim() &&
-          u.id !== editingUser?.id
+    if ((role === 'OPERATOR' || role === 'MEKANIK') && nik) {
+      const isNikTaken = users.some(u => 
+        (u.role === role) && u.nik?.toLowerCase().trim() === nik.toLowerCase().trim() && u.id !== editingUser?.id
       );
       if (isNikTaken) {
         toast({
           variant: "destructive",
           title: "Gagal Menyimpan",
-          description: `Operator dengan NIK ${nik} sudah terdaftar.`,
+          description: `${role} dengan NIK ${nik} sudah terdaftar.`,
         });
         return;
       }
+    }
 
+    if (role === "OPERATOR" && batangan) {
       const newBatanganList = batangan.split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
       for (const b of newBatanganList) {
         const isBatanganInOtherLocation = users.some(u => 
@@ -181,14 +170,19 @@ export default function UserManagementPage() {
             userToUpdate.batangan = batangan;
             userToUpdate.location = location;
             userToUpdate.username = undefined; // Clean up admin-specific fields
-        } else { // SUPER_ADMIN, LOCATION_ADMIN, or MEKANIK
+        } else if (role === 'MEKANIK') {
             userToUpdate.username = username;
-            if (role === 'LOCATION_ADMIN' || role === 'MEKANIK') {
+            userToUpdate.nik = nik;
+            userToUpdate.location = location;
+            userToUpdate.batangan = undefined;
+        } else { // SUPER_ADMIN, LOCATION_ADMIN
+            userToUpdate.username = username;
+            if (role === 'LOCATION_ADMIN') {
                 userToUpdate.location = location;
             } else { // SUPER_ADMIN
                 userToUpdate.location = undefined;
             }
-            userToUpdate.nik = undefined; // Clean up operator-specific fields
+            userToUpdate.nik = undefined; // Clean up other roles fields
             userToUpdate.batangan = undefined;
         }
         
@@ -208,9 +202,11 @@ export default function UserManagementPage() {
 
         if (role === 'OPERATOR') {
             newUser = { ...newUser, nik, batangan, location };
-        } else { // SUPER_ADMIN, LOCATION_ADMIN, or MEKANIK
+        } else if (role === 'MEKANIK') {
+             newUser = { ...newUser, username, nik, location };
+        } else { // SUPER_ADMIN, LOCATION_ADMIN
              newUser = { ...newUser, username };
-            if (role === 'LOCATION_ADMIN' || role === 'MEKANIK') {
+            if (role === 'LOCATION_ADMIN') {
                 newUser.location = location;
             }
         }
@@ -344,107 +340,4 @@ export default function UserManagementPage() {
       />
     </>
   );
-}
-
-function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, currentUser }: {
-    isOpen: boolean,
-    setIsOpen: (open: boolean) => void,
-    editingUser: User | null,
-    onSave: (e: React.FormEvent<HTMLFormElement>) => void,
-    currentUser: AdminUser | null
-}) {
-    const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-    const [role, setRole] = useState<UserRole>(editingUser?.role || 'OPERATOR');
-    const { locationNames } = useAppData();
-
-    React.useEffect(() => {
-        if (isOpen) {
-            setRole(editingUser?.role || 'OPERATOR');
-        }
-    }, [isOpen, editingUser]);
-
-    const availableRoles = isSuperAdmin ? roles : roles.filter(r => r !== 'SUPER_ADMIN');
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={onSave}>
-                <DialogHeader>
-                <DialogTitle>
-                    {editingUser ? "Edit Pengguna" : "Tambah Pengguna Baru"}
-                </DialogTitle>
-                <DialogDescription>
-                    {editingUser
-                    ? "Ubah detail pengguna dan klik simpan."
-                    : "Isi detail pengguna baru dan klik tambah."}
-                </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="role" className="text-right">Role</Label>
-                        <Select name="role" value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Pilih Role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableRoles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">Nama</Label>
-                        <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
-                    </div>
-                    
-                    {role === 'OPERATOR' ? (
-                        <>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="nik" className="text-right">NIK</Label>
-                                <Input id="nik" name="nik" defaultValue={editingUser?.nik} className="col-span-3" required />
-                            </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="batangan" className="text-right">Batangan</Label>
-                                <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" placeholder="Pisahkan dengan koma" required />
-                            </div>
-                        </>
-                    ) : (
-                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="username" className="text-right">Username</Label>
-                            <Input id="username" name="username" defaultValue={editingUser?.username} className="col-span-3" required disabled={editingUser?.username === 'superadmin'} />
-                        </div>
-                    )}
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password" className="text-right">Password</Label>
-                        <Input id="password" name="password" type="password" className="col-span-3" required={!editingUser} placeholder={editingUser ? "Isi untuk mengubah" : ""} />
-                    </div>
-
-                    {(role === 'LOCATION_ADMIN' || role === 'OPERATOR' || role === 'MEKANIK') && (
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="location" className="text-right">Lokasi</Label>
-                             <Select name="location" defaultValue={editingUser?.location || (currentUser?.role === 'LOCATION_ADMIN' ? currentUser.location : '')} required={role !== 'MEKANIK'} disabled={!isSuperAdmin && currentUser?.role !== 'SUPER_ADMIN'}>
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Pilih Lokasi" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {locationNames.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-                </div>
-                <DialogFooter>
-                <DialogClose asChild>
-                    <Button type="button" variant="secondary">Batal</Button>
-                </DialogClose>
-                <Button type="submit">
-                    {editingUser ? "Simpan Perubahan" : "Tambah Pengguna"}
-                </Button>
-                </DialogFooter>
-            </form>
-            </DialogContent>
-        </Dialog>
-    );
 }
