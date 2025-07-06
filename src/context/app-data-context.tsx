@@ -362,12 +362,13 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       await updateDoc(doc(db, 'mechanicTasks', taskId), updatePayload);
       toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
 
-      // If the task is completed, create a new "Baik" report for each vehicle.
+      // If the task is completed, create a new "Baik" report for the vehicle.
       // This will automatically update the vehicle's status to "Baik" across the app.
       if (updates.status === 'COMPLETED') {
-        for (const vehicleInTask of taskBeingUpdated.vehicles) {
-          const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
-          if (vehicleDetails) {
+        const vehicleInTask = taskBeingUpdated.vehicle;
+        const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
+
+        if (vehicleInTask && vehicleDetails) {
             const goodConditionReport = {
               vehicleId: vehicleDetails.hullNumber,
               vehicleType: vehicleDetails.type,
@@ -380,9 +381,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
               reportDate: format(new Date(), 'yyyy-MM-dd'),
             };
             await addDoc(collection(db, 'reports'), goodConditionReport);
-          }
+             toast({ title: "Status Kendaraan Diperbarui", description: `Kendaraan ${vehicleDetails.licensePlate} telah ditandai 'Baik'.` });
         }
-        toast({ title: "Status Kendaraan Diperbarui", description: "Kendaraan yang diperbaiki telah ditandai sebagai 'Baik'." });
       }
 
     } catch (e) {

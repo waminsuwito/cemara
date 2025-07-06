@@ -77,13 +77,13 @@ export type MechanicTask = {
   createdAt: number;
   startedAt?: number;
   completedAt?: number;
-  vehicles: {
+  vehicle: {
     hullNumber: string;
     licensePlate: string;
     repairDescription: string;
     targetDate: string; // YYYY-MM-DD
     targetTime: string; // HH:mm
-  }[];
+  };
   manpowerCount: number;
   mechanics: {
     id: string;

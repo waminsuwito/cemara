@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, Suspense } from 'react';
@@ -17,7 +18,7 @@ function PrintPageContent() {
 
     const filteredTasks = useMemo(() => {
         return mechanicTasks.filter(task => {
-            const taskLocation = vehicles.find(v => v.hullNumber === task.vehicles?.[0]?.hullNumber)?.location;
+            const taskLocation = vehicles.find(v => v.hullNumber === task.vehicle?.hullNumber)?.location;
 
             if (locationFilter === 'all') return true;
             return taskLocation === locationFilter;
@@ -36,7 +37,7 @@ function PrintPageContent() {
             return task.status;
         }
 
-        const vehicleInTask = task.vehicles?.[0];
+        const vehicleInTask = task.vehicle;
         if (!vehicleInTask) {
             return 'SELESAI';
         }
@@ -116,14 +117,14 @@ function PrintPageContent() {
                                     <tr key={task.id} className="even:bg-gray-50 align-top">
                                         <td className="border border-gray-600 p-2 whitespace-nowrap">{format(new Date(task.createdAt), 'dd MMM yyyy', { locale: localeID })}</td>
                                         <td className="border border-gray-600 p-2">
-                                            {task.vehicles.map((v, i) => (
-                                                <div key={i} className={i > 0 ? 'mt-2 pt-2 border-t border-gray-300' : ''}>
-                                                    <p className="font-semibold">{v.licensePlate} ({v.hullNumber})</p>
-                                                    <p className="text-xs">&bull; {v.repairDescription}</p>
-                                                    <p className="text-xs">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH:mm')}</p>
+                                            {task.vehicle && (
+                                                <div>
+                                                    <p className="font-semibold">{task.vehicle.licensePlate} ({task.vehicle.hullNumber})</p>
+                                                    <p className="text-xs">&bull; {task.vehicle.repairDescription}</p>
+                                                    <p className="text-xs">&bull; Target: {format(new Date(`${task.vehicle.targetDate}T${task.vehicle.targetTime}`), 'dd MMM yyyy, HH:mm')}</p>
                                                     {task.completedAt && <p className="text-xs">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH:mm')}</p>}
                                                 </div>
-                                            ))}
+                                            )}
                                         </td>
                                         <td className="border border-gray-600 p-2">{task.mechanics.map(m => m.name).join(', ')}</td>
                                         <td className="border border-gray-600 p-2">{getCompletionStatusText(task)}</td>

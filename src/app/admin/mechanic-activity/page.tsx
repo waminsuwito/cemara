@@ -70,20 +70,11 @@ export default function MechanicActivityPage() {
     isSuperAdmin ? "all" : user?.location || "all"
   );
   
-  const vehiclesInFilter = useMemo(() => {
-    if (locationFilter === 'all') {
-        return vehicles;
-    }
-    return vehicles.filter(v => v.location === locationFilter);
-  }, [vehicles, locationFilter]);
-  
-  const vehiclesHullNumbersInFilter = useMemo(() => new Set(vehiclesInFilter.map(v => v.hullNumber)), [vehiclesInFilter]);
-
   const filteredTasks = useMemo(() => {
     return mechanicTasks.filter(task => {
         if (!isSuperAdmin && !user?.location) return false;
-
-        const taskLocation = vehicles.find(v => v.hullNumber === task.vehicles?.[0]?.hullNumber)?.location;
+        
+        const taskLocation = vehicles.find(v => v.hullNumber === task.vehicle?.hullNumber)?.location;
 
         if(isSuperAdmin) {
             if (locationFilter === 'all') return true;
@@ -149,19 +140,15 @@ export default function MechanicActivityPage() {
                       {filteredTasks.length > 0 ? filteredTasks.map(task => (
                           <TableRow key={task.id}>
                               <TableCell>
-                                  {task.vehicles?.length > 0 ? (
-                                  <ul className="space-y-3">
-                                      {task.vehicles.map((v, i) => (
-                                          <li key={i} className="border-l-2 border-primary pl-3">
-                                              <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
-                                              <p className="text-sm text-muted-foreground">&bull; {v.repairDescription}</p>
-                                              <p className="text-sm text-muted-foreground">&bull; Target Selesai: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>
-                                              {task.startedAt && <p className="text-sm text-muted-foreground">&bull; Mulai: {format(new Date(task.startedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
-                                              {task.completedAt && <p className="text-sm text-muted-foreground">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
-                                              {task.status === 'COMPLETED' && task.completedAt && <div className="mt-1"><CompletionStatusBadge targetDate={v.targetDate} targetTime={v.targetTime} completedAt={task.completedAt} /></div>}
-                                          </li>
-                                      ))}
-                                  </ul>
+                                  {task.vehicle ? (
+                                    <div className="border-l-2 border-primary pl-3">
+                                        <p className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></p>
+                                        <p className="text-sm text-muted-foreground">&bull; {task.vehicle.repairDescription}</p>
+                                        <p className="text-sm text-muted-foreground">&bull; Target Selesai: {format(new Date(`${task.vehicle.targetDate}T${task.vehicle.targetTime}`), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>
+                                        {task.startedAt && <p className="text-sm text-muted-foreground">&bull; Mulai: {format(new Date(task.startedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
+                                        {task.completedAt && <p className="text-sm text-muted-foreground">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
+                                        {task.status === 'COMPLETED' && task.completedAt && <div className="mt-1"><CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} /></div>}
+                                    </div>
                                   ) : ( 'N/A' )}
                               </TableCell>
                               <TableCell>

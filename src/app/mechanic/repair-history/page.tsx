@@ -99,7 +99,7 @@ export default function RepairHistoryPage() {
         
         // Filter by user's location if mechanic
         if (user?.role === 'MEKANIK' && user.location) {
-          const taskLocation = vehicles.find(v => v.hullNumber === task.vehicles?.[0]?.hullNumber)?.location;
+          const taskLocation = vehicles.find(v => v.hullNumber === task.vehicle?.hullNumber)?.location;
           if (taskLocation !== user.location) return false;
         }
 
@@ -116,11 +116,8 @@ export default function RepairHistoryPage() {
             const operator = operators.find(o => o.id === selectedOperatorId);
             if (!operator) return false;
 
-            const vehicleOperatorsInTask = task.vehicles.map(v => {
-                return vehicles.find(vh => vh.hullNumber === v.hullNumber)?.operator;
-            }).filter(Boolean);
-
-            if (!vehicleOperatorsInTask.includes(operator.name)) {
+            const vehicleOperatorInTask = vehicles.find(vh => vh.hullNumber === task.vehicle.hullNumber)?.operator;
+            if (vehicleOperatorInTask !== operator.name) {
                 return false;
             }
         }
@@ -206,16 +203,12 @@ export default function RepairHistoryPage() {
                 filteredTasks.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell>
-                      {task.vehicles?.length > 0 ? (
-                        <ul className="space-y-3">
-                          {task.vehicles.map((v, i) => (
-                            <li key={i} className="border-l-2 border-primary pl-3">
-                              <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
-                              <p className="text-sm text-muted-foreground">&bull; Operator: {vehicles.find(vh => vh.hullNumber === v.hullNumber)?.operator || 'N/A'}</p>
-                              <p className="text-sm text-muted-foreground">&bull; Perbaikan: {v.repairDescription}</p>
-                            </li>
-                          ))}
-                        </ul>
+                      {task.vehicle ? (
+                        <div className="border-l-2 border-primary pl-3">
+                          <p className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></p>
+                          <p className="text-sm text-muted-foreground">&bull; Operator: {vehicles.find(vh => vh.hullNumber === task.vehicle.hullNumber)?.operator || 'N/A'}</p>
+                          <p className="text-sm text-muted-foreground">&bull; Perbaikan: {task.vehicle.repairDescription}</p>
+                        </div>
                       ) : ( 'N/A' )}
                     </TableCell>
                     <TableCell>
@@ -227,7 +220,7 @@ export default function RepairHistoryPage() {
                       {task.completedAt ? format(new Date(task.completedAt), 'dd MMM yyyy, HH:mm', { locale: localeID }) : '-'}
                     </TableCell>
                     <TableCell>
-                      {task.completedAt && task.vehicles?.[0] && <CompletionStatusBadge targetDate={task.vehicles[0].targetDate} targetTime={task.vehicles[0].targetTime} completedAt={task.completedAt} />}
+                      {task.completedAt && task.vehicle && <CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} />}
                     </TableCell>
                   </TableRow>
                 ))
