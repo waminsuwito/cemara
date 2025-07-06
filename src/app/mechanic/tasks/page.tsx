@@ -193,7 +193,6 @@ export default function MechanicTasksPage() {
         targetDate: format(data.targetDate, 'yyyy-MM-dd'),
         targetTime: data.targetTime,
       },
-      manpowerCount: data.mechanics.length,
       mechanics: data.mechanics,
     };
     await addMechanicTask(taskPayload);
@@ -415,7 +414,7 @@ export default function MechanicTasksPage() {
                                       </div>
                                     ) : ( 'N/A' )}
                                 </TableCell>
-                                <TableCell>{task.mechanics.map(m => m.name).join(', ')} ({task.manpowerCount})</TableCell>
+                                <TableCell>{task.mechanics.map(m => m.name).join(', ')}</TableCell>
                                 <TableCell>{getStatusBadge(task.status)}</TableCell>
                                 <TableCell className="text-right">
                                   <DropdownMenu>

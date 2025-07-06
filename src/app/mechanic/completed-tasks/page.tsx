@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -61,7 +62,7 @@ export default function CompletedTasksPage() {
         }
 
         // Filter 3: Must be in the user's location (if applicable)
-        const taskVehicle = task.vehicles?.[0];
+        const taskVehicle = task.vehicle;
         if (!taskVehicle) return false;
 
         const taskLocation = vehicles.find(v => v.hullNumber === taskVehicle.hullNumber)?.location;
@@ -103,16 +104,12 @@ export default function CompletedTasksPage() {
                       {completedTodayTasks.length > 0 ? completedTodayTasks.map(task => (
                           <TableRow key={task.id}>
                               <TableCell>
-                                  {task.vehicles?.length > 0 ? (
-                                  <ul className="space-y-3">
-                                      {task.vehicles.map((v, i) => (
-                                          <li key={i} className="border-l-2 border-primary pl-3">
-                                              <p className="font-semibold">{v.licensePlate} <span className="text-muted-foreground font-normal">({v.hullNumber})</span></p>
-                                              <p className="text-sm text-muted-foreground">&bull; {v.repairDescription}</p>
-                                              <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${v.targetDate}T${v.targetTime}`), 'dd MMM, HH.mm', { locale: localeID })}</p>
-                                          </li>
-                                      ))}
-                                  </ul>
+                                  {task.vehicle ? (
+                                      <div className="border-l-2 border-primary pl-3">
+                                          <p className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></p>
+                                          <p className="text-sm text-muted-foreground">&bull; {task.vehicle.repairDescription}</p>
+                                          <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${task.vehicle.targetDate}T${task.vehicle.targetTime}`), 'dd MMM, HH.mm', { locale: localeID })}</p>
+                                      </div>
                                   ) : ( 'N/A' )}
                               </TableCell>
                               <TableCell>
@@ -124,7 +121,7 @@ export default function CompletedTasksPage() {
                                   {task.completedAt ? format(new Date(task.completedAt), 'HH:mm', { locale: localeID }) : '-'}
                               </TableCell>
                               <TableCell>
-                                {task.completedAt && task.vehicles?.[0] && <CompletionStatusBadge targetDate={task.vehicles[0].targetDate} targetTime={task.vehicles[0].targetTime} completedAt={task.completedAt} />}
+                                {task.completedAt && task.vehicle && <CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} />}
                               </TableCell>
                           </TableRow>
                       )) : (

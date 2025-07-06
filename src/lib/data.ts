@@ -84,7 +84,6 @@ export type MechanicTask = {
     targetDate: string; // YYYY-MM-DD
     targetTime: string; // HH:mm
   };
-  manpowerCount: number;
   mechanics: {
     id: string;
     name: string;
