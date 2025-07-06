@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -215,8 +215,38 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
-  const { vehicles, reports, locationNames } = useAppData();
+  const { vehicles, reports, locationNames, isDataLoaded } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const prevReportsRef = useRef<Report[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Lazy initialization of Audio object to avoid creating it on the server
+    if (audioRef.current === null && typeof window !== 'undefined') {
+      audioRef.current = new Audio('https://notificationsounds.com/storage/sounds/43baa6762fa81bbcb339c19305452b36/file-sounds-1144-clearly.mp3');
+    }
+
+    // Only run logic if data is loaded and there are new reports
+    if (isDataLoaded && reports.length > prevReportsRef.current.length) {
+      const prevReportIds = new Set(prevReportsRef.current.map(r => r.id));
+      const newReports = reports.filter(r => !prevReportIds.has(r.id));
+      
+      const hasNewDamagedReport = newReports.some(
+        r => r.overallStatus === 'Rusak' || r.overallStatus === 'Perlu Perhatian'
+      );
+
+      if (hasNewDamagedReport) {
+        audioRef.current?.play().catch(error => {
+          console.warn("Audio play failed. This can happen if the user hasn't interacted with the page yet.", error);
+        });
+      }
+    }
+
+    // Update the ref to the current reports for the next render
+    prevReportsRef.current = reports;
+
+  }, [reports, isDataLoaded]);
 
   const [selectedLocation, setSelectedLocation] = useState(
     isSuperAdmin ? "all" : user?.location || "all"
