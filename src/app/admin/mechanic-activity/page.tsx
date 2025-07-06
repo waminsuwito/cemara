@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 
 const getStatusBadge = (status: MechanicTask['status']) => {
   switch (status) {
@@ -25,6 +27,8 @@ const getStatusBadge = (status: MechanicTask['status']) => {
       return <Badge variant="secondary" className="bg-yellow-400 text-yellow-900">Dikerjakan</Badge>;
     case "COMPLETED":
       return <Badge variant="secondary" className="bg-green-400 text-green-900">Selesai</Badge>;
+    case "DELAYED":
+      return <Badge variant="secondary" className="bg-orange-400 text-orange-900">Tertunda</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
@@ -148,6 +152,7 @@ export default function MechanicActivityPage() {
                                         {task.startedAt && <p className="text-sm text-muted-foreground">&bull; Mulai: {format(new Date(task.startedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
                                         {task.completedAt && <p className="text-sm text-muted-foreground">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
                                         {task.status === 'COMPLETED' && task.completedAt && <div className="mt-1"><CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} /></div>}
+                                        {task.status === 'DELAYED' && task.delayReason && <p className="text-sm text-orange-500 italic mt-1">&bull; Alasan Tertunda: {task.delayReason}</p>}
                                     </div>
                                   ) : ( 'N/A' )}
                               </TableCell>
@@ -159,7 +164,28 @@ export default function MechanicActivityPage() {
                               <TableCell>
                                   {format(new Date(task.createdAt), 'dd MMM yyyy, HH:mm', { locale: localeID })}
                               </TableCell>
-                              <TableCell>{getStatusBadge(task.status)}</TableCell>
+                              <TableCell>
+                                {task.status === 'DELAYED' && task.delayReason ? (
+                                    <Dialog>
+                                    <DialogTrigger asChild>
+                                        <span className="cursor-pointer">{getStatusBadge(task.status)}</span>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                        <DialogTitle>Alasan Penundaan untuk {task.vehicle?.licensePlate}</DialogTitle>
+                                        <DialogDescription>
+                                            Pekerjaan ini ditunda karena alasan berikut:
+                                        </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="py-4 text-sm">
+                                        {task.delayReason}
+                                        </div>
+                                    </DialogContent>
+                                    </Dialog>
+                                ) : (
+                                    getStatusBadge(task.status)
+                                )}
+                              </TableCell>
                           </TableRow>
                       )) : (
                           <TableRow>
