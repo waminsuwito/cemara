@@ -32,48 +32,54 @@ function PrintPageContent() {
         window.print();
     };
 
-    const getCompletionStatusText = (task: MechanicTask): string => {
-        if (task.status !== 'COMPLETED' || !task.completedAt) {
-            return task.status;
-        }
+    const getTaskStatusText = (task: MechanicTask): string => {
+        switch (task.status) {
+            case 'PENDING':
+                return 'MENUNGGU';
+            case 'IN_PROGRESS':
+                return 'DIKERJAKAN';
+            case 'DELAYED':
+                return 'TERTUNDA';
+            case 'COMPLETED':
+                const vehicleInTask = task.vehicle;
+                if (!vehicleInTask || !task.completedAt) {
+                    return 'SELESAI';
+                }
+                const { targetDate, targetTime } = vehicleInTask;
+                const { completedAt } = task;
 
-        const vehicleInTask = task.vehicle;
-        if (!vehicleInTask) {
-            return 'SELESAI';
-        }
-        
-        const { targetDate, targetTime } = vehicleInTask;
-        const { completedAt } = task;
+                if (!targetDate || !targetTime || !completedAt) {
+                    return 'SELESAI';
+                }
 
-        if (!targetDate || !targetTime || !completedAt) {
-            return 'SELESAI';
-        }
+                const targetDateTime = new Date(`${targetDate}T${targetTime}`);
+                const completedDateTime = new Date(completedAt);
+                const diffMinutes = Math.round((completedDateTime.getTime() - targetDateTime.getTime()) / (60 * 1000));
 
-        const targetDateTime = new Date(`${targetDate}T${targetTime}`);
-        const completedDateTime = new Date(completedAt);
-        const diffMinutes = Math.round((completedDateTime.getTime() - targetDateTime.getTime()) / (60 * 1000));
+                if (diffMinutes <= 5 && diffMinutes >= -5) {
+                    return 'SELESAI (Tepat Waktu)';
+                }
 
-        if (diffMinutes <= 5 && diffMinutes >= -5) {
-            return 'SELESAI (Tepat Waktu)';
+                if (diffMinutes < -5) {
+                    const diffAbs = Math.abs(diffMinutes);
+                    const hours = Math.floor(diffAbs / 60);
+                    const minutes = diffAbs % 60;
+                    let text = 'Lebih Cepat';
+                    if (hours > 0) text += ` ${hours} jam`;
+                    if (minutes > 0) text += ` ${minutes} menit`;
+                    return `SELESAI (${text})`;
+                } else { // diffMinutes > 5
+                    const hours = Math.floor(diffMinutes / 60);
+                    const minutes = diffMinutes % 60;
+                    let text = 'Terlambat';
+                    if (hours > 0) text += ` ${hours} jam`;
+                    if (minutes > 0) text += ` ${minutes} menit`;
+                    return `SELESAI (${text})`;
+                }
+            default:
+                return task.status;
         }
-
-        if (diffMinutes < -5) {
-            const diffAbs = Math.abs(diffMinutes);
-            const hours = Math.floor(diffAbs / 60);
-            const minutes = diffAbs % 60;
-            let text = 'Lebih Cepat';
-            if (hours > 0) text += ` ${hours} jam`;
-            if (minutes > 0) text += ` ${minutes} menit`;
-            return `SELESAI (${text})`;
-        } else { // diffMinutes > 5
-            const hours = Math.floor(diffMinutes / 60);
-            const minutes = diffMinutes % 60;
-            let text = 'Terlambat';
-            if (hours > 0) text += ` ${hours} jam`;
-            if (minutes > 0) text += ` ${minutes} menit`;
-            return `SELESAI (${text})`;
-        }
-    }
+    };
 
     return (
         <div className="bg-gray-100 min-h-screen">
@@ -123,11 +129,12 @@ function PrintPageContent() {
                                                     <p className="text-xs">&bull; {task.vehicle.repairDescription}</p>
                                                     <p className="text-xs">&bull; Target: {format(new Date(`${task.vehicle.targetDate}T${task.vehicle.targetTime}`), 'dd MMM yyyy, HH:mm')}</p>
                                                     {task.completedAt && <p className="text-xs">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH:mm')}</p>}
+                                                    {task.status === 'DELAYED' && task.delayReason && <p className="text-xs italic">&bull; Alasan Tertunda: {task.delayReason}</p>}
                                                 </div>
                                             )}
                                         </td>
                                         <td className="border border-gray-600 p-2">{task.mechanics.map(m => m.name).join(', ')}</td>
-                                        <td className="border border-gray-600 p-2">{getCompletionStatusText(task)}</td>
+                                        <td className="border border-gray-600 p-2">{getTaskStatusText(task)}</td>
                                     </tr>
                                 )) : (
                                     <tr>
