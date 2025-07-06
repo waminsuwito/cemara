@@ -28,6 +28,8 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 
@@ -49,6 +51,8 @@ const getStatusBadge = (status: MechanicTask['status']) => {
       return <Badge variant="secondary" className="bg-yellow-400 text-yellow-900">Dikerjakan</Badge>;
     case "COMPLETED":
       return <Badge variant="secondary" className="bg-green-400 text-green-900">Selesai</Badge>;
+    case "DELAYED":
+      return <Badge variant="secondary" className="bg-orange-400 text-orange-900">Tertunda</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
@@ -91,6 +95,9 @@ export default function MechanicTasksPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [damageDetails, setDamageDetails] = useState("");
+  const [isDelayDialogOpen, setIsDelayDialogOpen] = useState(false);
+  const [selectedTaskForDelay, setSelectedTaskForDelay] = useState<MechanicTask | null>(null);
+  const [delayReasonInput, setDelayReasonInput] = useState("");
 
   const mechanics = useMemo(() => users.filter((u) => u.role === "MEKANIK" && (!user?.location || u.location === user.location)), [users, user]);
   
@@ -208,8 +215,24 @@ export default function MechanicTasksPage() {
   };
   
   const handleStatusChange = (taskId: string, status: MechanicTask['status']) => {
-    updateMechanicTask(taskId, { status });
+    const payload: Partial<MechanicTask> = { status };
+    if (status !== 'DELAYED') {
+      payload.delayReason = ""; // Clear delay reason if status changes to something else
+    }
+    updateMechanicTask(taskId, payload);
   };
+
+  const handleConfirmDelay = () => {
+      if (!selectedTaskForDelay) return;
+      if (delayReasonInput.trim().length < 5) {
+        toast({ variant: 'destructive', title: 'Alasan terlalu pendek', description: 'Mohon berikan alasan penundaan yang jelas.' });
+        return;
+      }
+      updateMechanicTask(selectedTaskForDelay.id, { status: 'DELAYED', delayReason: delayReasonInput.trim() });
+      setIsDelayDialogOpen(false);
+      setSelectedTaskForDelay(null);
+      setDelayReasonInput("");
+    };
 
 
   return (
@@ -340,6 +363,7 @@ export default function MechanicTasksPage() {
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
+                          <CommandInput placeholder="Cari mekanik..." />
                           <CommandList>
                             <CommandEmpty>Mekanik tidak ditemukan.</CommandEmpty>
                             <CommandGroup>
@@ -410,6 +434,7 @@ export default function MechanicTasksPage() {
                                           {task.startedAt && <p className="text-sm text-muted-foreground">&bull; Mulai: {format(new Date(task.startedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
                                           {task.completedAt && <p className="text-sm text-muted-foreground">&bull; Selesai: {format(new Date(task.completedAt), 'dd MMM yyyy, HH.mm', { locale: localeID })}</p>}
                                           {task.status === 'COMPLETED' && task.completedAt && <div className="mt-1"><CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} /></div>}
+                                          {task.status === 'DELAYED' && task.delayReason && <p className="text-sm text-orange-500 italic mt-1">&bull; Alasan Tertunda: {task.delayReason}</p>}
                                       </div>
                                     ) : ( 'N/A' )}
                                 </TableCell>
@@ -426,6 +451,16 @@ export default function MechanicTasksPage() {
                                     <DropdownMenuContent align="end">
                                       <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'IN_PROGRESS')} disabled={task.status === 'IN_PROGRESS' || task.status === 'COMPLETED'}>Tandai "Dikerjakan"</DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'COMPLETED')} disabled={task.status === 'COMPLETED'}>Tandai "Selesai"</DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={() => {
+                                          setSelectedTaskForDelay(task);
+                                          setDelayReasonInput(task.delayReason || "");
+                                          setIsDelayDialogOpen(true);
+                                        }} 
+                                        disabled={task.status === 'COMPLETED'}
+                                      >
+                                        Set "Tertunda"
+                                      </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'PENDING')} disabled={task.status === 'PENDING' || task.status === 'COMPLETED'}>Set "Menunggu"</DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                       <AlertDialog>
@@ -459,6 +494,29 @@ export default function MechanicTasksPage() {
             </div>
         </CardContent>
       </Card>
+      
+      <Dialog open={isDelayDialogOpen} onOpenChange={setIsDelayDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alasan Penundaan untuk {selectedTaskForDelay?.vehicle.licensePlate}</DialogTitle>
+            <DialogDescription>
+              Jelaskan mengapa pekerjaan ini ditunda. Keterangan ini akan disimpan dalam riwayat.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Contoh: Menunggu spare part rem tiba..."
+              value={delayReasonInput}
+              onChange={(e) => setDelayReasonInput(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDelayDialogOpen(false)}>Batal</Button>
+            <Button onClick={handleConfirmDelay}>Simpan Alasan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

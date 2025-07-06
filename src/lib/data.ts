@@ -88,7 +88,8 @@ export type MechanicTask = {
     id: string;
     name: string;
   }[];
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DELAYED';
+  delayReason?: string;
 };
 
 

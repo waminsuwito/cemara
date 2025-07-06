@@ -34,7 +34,7 @@ type AppDataContextType = {
 
   mechanicTasks: MechanicTask[];
   addMechanicTask: (task: Omit<MechanicTask, 'id' | 'createdAt' | 'status'>) => Promise<void>;
-  updateMechanicTask: (taskId: string, updates: Partial<MechanicTask>) => Promise<void>;
+  updateMechanicTask: (taskId: string, updates: Partial<Pick<MechanicTask, 'status' | 'delayReason'>>) => Promise<void>;
   deleteMechanicTask: (taskId: string) => Promise<void>;
   
   locations: Location[];
@@ -343,7 +343,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const updateMechanicTask = async (taskId: string, updates: Partial<MechanicTask>) => {
+  const updateMechanicTask = async (taskId: string, updates: Partial<Pick<MechanicTask, 'status' | 'delayReason'>>) => {
     try {
       const taskBeingUpdated = mechanicTasks.find(t => t.id === taskId);
       if (!taskBeingUpdated) {
@@ -357,6 +357,11 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
       if (updates.status === 'COMPLETED' && !taskBeingUpdated.completedAt) {
         updatePayload.completedAt = serverTimestamp();
+      }
+      
+      // If status is not DELAYED, ensure delayReason is removed from the document
+      if (updates.status !== 'DELAYED' && taskBeingUpdated.delayReason) {
+        updatePayload.delayReason = deleteField();
       }
 
       await updateDoc(doc(db, 'mechanicTasks', taskId), updatePayload);
