@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import type { MechanicTask, Vehicle } from "@/lib/data";
+import type { MechanicTask, Vehicle, Report } from "@/lib/data";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { MoreHorizontal } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 const taskFormSchema = z.object({
   vehicleHullNumber: z.string().min(1, "Kendaraan harus dipilih."),
@@ -82,16 +83,31 @@ const CompletionStatusBadge = ({ targetDate, targetTime, completedAt }: { target
     }
 }
 
-type VehicleWithStatus = Vehicle & { status: string };
+type VehicleWithStatus = Vehicle & { status: string; latestReport?: Report };
 
 export default function MechanicTasksPage() {
   const { user } = useAdminAuth();
   const { vehicles, users, mechanicTasks, reports, addMechanicTask, updateMechanicTask, deleteMechanicTask } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [damageDetails, setDamageDetails] = useState("");
 
   const mechanics = useMemo(() => users.filter((u) => u.role === "MEKANIK" && (!user?.location || u.location === user.location)), [users, user]);
   
+  const form = useForm<TaskFormData>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: {
+      vehicleHullNumber: "",
+      repairDescription: "",
+      targetDate: new Date(),
+      targetTime: "",
+      mechanics: [],
+    },
+  });
+
+  const { watch } = form;
+  const selectedVehicleHullNumber = watch("vehicleHullNumber");
+
   const vehiclesWithStatus = useMemo(() => {
     const today = startOfToday();
     return vehicles.map((vehicle): VehicleWithStatus => {
@@ -113,16 +129,14 @@ export default function MechanicTasksPage() {
         }
       }
       
-      return { ...vehicle, status };
+      return { ...vehicle, status, latestReport };
     });
   }, [vehicles, reports]);
 
   const vehiclesForUser = useMemo(() => vehicles.filter(v => !user?.location || v.location === user.location), [vehicles, user]);
   
   const damagedOrAttentionVehicles = useMemo(() => {
-    // Filter by user location first
     const vehiclesInLocation = vehiclesWithStatus.filter(v => !user?.location || v.location === user.location);
-    // Then filter by status
     return vehiclesInLocation.filter(v => v.status === 'Rusak' || v.status === 'Perlu Perhatian');
   }, [vehiclesWithStatus, user]);
 
@@ -133,16 +147,30 @@ export default function MechanicTasksPage() {
     ).sort((a,b) => b.createdAt - a.createdAt);
   }, [mechanicTasks, vehiclesForUser]);
 
-  const form = useForm<TaskFormData>({
-    resolver: zodResolver(taskFormSchema),
-    defaultValues: {
-      vehicleHullNumber: "",
-      repairDescription: "",
-      targetDate: new Date(),
-      targetTime: "",
-      mechanics: [],
-    },
-  });
+  useEffect(() => {
+    if (selectedVehicleHullNumber) {
+        const vehicle = damagedOrAttentionVehicles.find(v => v.hullNumber === selectedVehicleHullNumber);
+        
+        if (vehicle && vehicle.latestReport) {
+            const report = vehicle.latestReport;
+            const problemItems = report.items
+                ?.filter(item => item.status !== 'BAIK')
+                .map(item => `- ${item.label} (${item.status}): ${item.keterangan || 'Tidak ada keterangan.'}`)
+                .join('\n') || '';
+
+            const otherDamage = report.kerusakanLain?.keterangan 
+                ? `- Kerusakan Lainnya: ${report.kerusakanLain.keterangan}` 
+                : '';
+            
+            const fullDescription = [problemItems, otherDamage].filter(Boolean).join('\n');
+            setDamageDetails(fullDescription.trim() || "Tidak ada detail kerusakan spesifik dari laporan operator.");
+        } else {
+            setDamageDetails("");
+        }
+    } else {
+        setDamageDetails("");
+    }
+  }, [selectedVehicleHullNumber, damagedOrAttentionVehicles]);
 
   const onSubmit = async (data: TaskFormData) => {
     setIsLoading(true);
@@ -176,6 +204,7 @@ export default function MechanicTasksPage() {
       targetTime: "",
       mechanics: [],
     });
+    setDamageDetails("");
     setIsLoading(false);
   };
   
@@ -221,6 +250,21 @@ export default function MechanicTasksPage() {
                     </FormItem>
                   )}
                 />
+                
+                {damageDetails && (
+                  <div className="space-y-2">
+                    <Label>Deskripsi Kerusakan dari Sopir/Operator</Label>
+                    <Textarea
+                      readOnly
+                      value={damageDetails}
+                      className="bg-muted/40 border-dashed h-auto resize-none focus-visible:ring-0"
+                      rows={damageDetails.split('\n').length > 1 ? damageDetails.split('\n').length : 2}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Deskripsi ini diambil otomatis dari laporan checklist terakhir.
+                    </p>
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}
