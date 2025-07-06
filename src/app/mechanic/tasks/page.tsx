@@ -340,7 +340,6 @@ export default function MechanicTasksPage() {
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
-                          <CommandInput placeholder="Ketik nama untuk mencari..." />
                           <CommandList>
                             <CommandEmpty>Mekanik tidak ditemukan.</CommandEmpty>
                             <CommandGroup>
