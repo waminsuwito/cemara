@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -31,12 +32,44 @@ import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import type { SparePartLog, Report, MechanicTask } from '@/lib/data';
+
+const DamageDetails = ({ log, reports, mechanicTasks }: { log: SparePartLog, reports: Report[], mechanicTasks: MechanicTask[] }) => {
+    const task = mechanicTasks.find((t) => t.id === log.taskId);
+    if (!task) {
+        return <span className="text-xs text-muted-foreground italic">Tidak ada detail pekerjaan terkait.</span>;
+    }
+
+    const report = reports.find((r) => r.id === task.vehicle?.triggeringReportId);
+
+    const problemItems = report?.items?.filter((item) => item.status !== 'BAIK') || [];
+    const otherDamage = report?.kerusakanLain;
+
+    return (
+        <div className="text-xs space-y-1">
+            <p><strong className="font-semibold text-foreground">WO Mekanik:</strong> {task.vehicle.repairDescription}</p>
+            { (problemItems.length > 0 || otherDamage?.keterangan) && (
+                 <div className="pt-1 mt-1 border-t border-dashed">
+                    <p className="font-semibold text-foreground">Laporan Sopir:</p>
+                    <ul className="list-disc pl-4 text-muted-foreground">
+                        {problemItems.map((item, index) => (
+                            <li key={index}><strong>{item.label} ({item.status}):</strong> {item.keterangan || '-'}</li>
+                        ))}
+                        {otherDamage?.keterangan && (
+                             <li><strong>Kerusakan Lain:</strong> {otherDamage.keterangan}</li>
+                        )}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function LogisticsReportPage() {
-  const { sparePartLogs, vehicles, locationNames } = useAppData();
+  const { sparePartLogs, vehicles, locationNames, mechanicTasks, reports } = useAppData();
   const { user } = useAdminAuth();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -56,9 +89,12 @@ export default function LogisticsReportPage() {
         }
         if (locationFilter === 'all') return true;
         return v.location === locationFilter;
-    });
+    }).sort((a, b) => a.licensePlate.localeCompare(b.licensePlate));
   }, [vehicles, locationFilter, isSuperAdmin, user?.location]);
 
+  React.useEffect(() => {
+      setSelectedVehicleId('all');
+  }, [locationFilter]);
 
   const filteredLogs = useMemo(() => {
     const fromDate = date?.from ? startOfDay(date.from) : null;
@@ -69,7 +105,6 @@ export default function LogisticsReportPage() {
         const vehicle = vehicles.find(v => v.hullNumber === log.vehicleHullNumber);
         if (!vehicle) return false;
 
-        // Filter by location
         if (locationFilter !== 'all' && vehicle.location !== locationFilter) {
             return false;
         }
@@ -78,12 +113,10 @@ export default function LogisticsReportPage() {
             return false;
         }
 
-        // Filter by selected vehicle
         if (selectedVehicleId !== "all" && log.vehicleHullNumber !== selectedVehicleId) {
           return false;
         }
 
-        // Filter by date range
         if (fromDate && toDate) {
           const logDate = new Date(log.logDate);
           if (isBefore(logDate, fromDate) || isAfter(logDate, toDate)) {
@@ -95,20 +128,29 @@ export default function LogisticsReportPage() {
       })
       .sort((a, b) => b.logDate - a.logDate);
   }, [sparePartLogs, selectedVehicleId, date, vehicles, locationFilter, isSuperAdmin, user?.location]);
+  
+  const printUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('location', locationFilter);
+    params.set('vehicleId', selectedVehicleId);
+    if (date?.from) params.set('from', date.from.toISOString());
+    if (date?.to) params.set('to', date.to.toISOString());
+    return `/admin/logistics-report/print?${params.toString()}`;
+  }, [locationFilter, selectedVehicleId, date]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Laporan Logistik</CardTitle>
         <CardDescription>
-          Tinjau riwayat penggunaan suku cadang untuk perbaikan alat.
+          Tinjau riwayat penggunaan suku cadang untuk perbaikan alat, beserta detail kerusakannya.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col md:flex-row gap-2 items-start md:items-center flex-wrap">
           {isSuperAdmin && (
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="w-full md:w-auto md:min-w-[180px]">
                 <SelectValue placeholder="Pilih Lokasi" />
               </SelectTrigger>
               <SelectContent>
@@ -121,7 +163,7 @@ export default function LogisticsReportPage() {
           )}
 
           <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-            <SelectTrigger className="md:w-[250px]">
+            <SelectTrigger className="w-full md:w-auto md:min-w-[250px]">
               <SelectValue placeholder="Pilih Alat" />
             </SelectTrigger>
             <SelectContent>
@@ -140,7 +182,7 @@ export default function LogisticsReportPage() {
                 id="date"
                 variant={"outline"}
                 className={cn(
-                  "w-full md:w-[300px] justify-start text-left font-normal",
+                  "w-full md:w-auto md:min-w-[300px] justify-start text-left font-normal",
                   !date && "text-muted-foreground"
                 )}
               >
@@ -170,6 +212,12 @@ export default function LogisticsReportPage() {
               />
             </PopoverContent>
           </Popover>
+          <Button asChild>
+            <Link href={printUrl}>
+                <Printer className="mr-2 h-4 w-4" />
+                Cetak Laporan
+            </Link>
+          </Button>
         </div>
         <div className="border rounded-md">
           <Table>
@@ -178,7 +226,8 @@ export default function LogisticsReportPage() {
                 <TableHead>Tanggal</TableHead>
                 <TableHead>Kendaraan</TableHead>
                 <TableHead>Operator</TableHead>
-                <TableHead className="w-[40%]">Spare Part Digunakan</TableHead>
+                <TableHead className="w-[30%]">Detail Kerusakan</TableHead>
+                <TableHead className="w-[25%]">Spare Part Digunakan</TableHead>
                 <TableHead>Diinput Oleh</TableHead>
               </TableRow>
             </TableHeader>
@@ -188,17 +237,20 @@ export default function LogisticsReportPage() {
                   const vehicle = vehicles.find(v => v.hullNumber === log.vehicleHullNumber);
                   return (
                     <TableRow key={log.id}>
-                      <TableCell>{format(new Date(log.logDate), 'dd MMM yyyy', { locale: localeID })}</TableCell>
-                      <TableCell className="font-medium">{vehicle?.licensePlate || log.vehicleHullNumber}</TableCell>
-                      <TableCell>{vehicle?.operator || 'N/A'}</TableCell>
-                      <TableCell className="text-sm whitespace-pre-wrap">{log.partsUsed}</TableCell>
-                      <TableCell>{log.loggedByName}</TableCell>
+                      <TableCell className="align-top">{format(new Date(log.logDate), 'dd MMM yyyy', { locale: localeID })}</TableCell>
+                      <TableCell className="font-medium align-top">{vehicle?.licensePlate || log.vehicleHullNumber}</TableCell>
+                      <TableCell className="align-top">{vehicle?.operator || 'N/A'}</TableCell>
+                      <TableCell className="align-top">
+                        <DamageDetails log={log} reports={reports} mechanicTasks={mechanicTasks} />
+                      </TableCell>
+                      <TableCell className="text-sm whitespace-pre-wrap align-top">{log.partsUsed}</TableCell>
+                      <TableCell className="align-top">{log.loggedByName}</TableCell>
                     </TableRow>
                   )
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     Tidak ada riwayat ditemukan untuk filter yang dipilih.
                   </TableCell>
                 </TableRow>
