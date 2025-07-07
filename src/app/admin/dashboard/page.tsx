@@ -321,7 +321,7 @@ export default function DashboardPage() {
     // Lazy initialization of Audio objects to avoid creating them on the server
     if (typeof window !== 'undefined') {
       if (damageAudioRef.current === null) {
-        damageAudioRef.current = new Audio('https://notificationsounds.com/storage/sounds/43baa6762fa81bbcb339c19305452b36/file-sounds-1144-clearly.mp3');
+        damageAudioRef.current = new Audio('https://www.myinstants.com/media/sounds/tornado-siren-ii.mp3');
         damageAudioRef.current.volume = 1.0;
       }
       if (successAudioRef.current === null) {
