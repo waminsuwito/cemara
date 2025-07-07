@@ -7,7 +7,7 @@ import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, Mec
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, startOfToday, isSameDay, isBefore } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
 import { useOperatorAuth } from './operator-auth-context';
 
@@ -23,7 +23,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, submittedBy: 'operator' | 'mechanic', repairerName?: string) => Promise<void>;
   deleteReport: (reportId: string) => Promise<void>;
 
   complaints: Complaint[];
@@ -294,7 +294,11 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<void> => {
+  const submitReport = async (
+    newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>,
+    submittedBy: 'operator' | 'mechanic',
+    repairerName?: string
+  ): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
 
@@ -315,28 +319,36 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     batch.set(reportRef, reportWithTimestamp);
     
     // --- Notification Logic ---
-    const isNewDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
-
-    // Find the latest report for this vehicle BEFORE this new one
     const previousReports = reports
-        .filter(r => r.vehicleId === newReportData.vehicleId)
-        .sort((a, b) => b.timestamp - a.timestamp);
-    
+      .filter(r => r.vehicleId === newReportData.vehicleId)
+      .sort((a, b) => b.timestamp - a.timestamp);
     const latestPreviousReport = previousReports[0];
-    const wasPreviouslyDamaged = latestPreviousReport && (latestPreviousReport.overallStatus === 'Rusak' || latestPreviousReport.overallStatus === 'Perlu Perhatian');
-    
+
+    let statusBeforeSubmission: Report['overallStatus'] | 'Belum Checklist' = 'Belum Checklist';
+    if (latestPreviousReport) {
+        const reportDate = new Date(latestPreviousReport.timestamp);
+        if (isSameDay(reportDate, startOfToday())) { 
+            statusBeforeSubmission = latestPreviousReport.overallStatus;
+        } else if (isBefore(reportDate, startOfToday())) { 
+            if (latestPreviousReport.overallStatus === 'Rusak' || latestPreviousReport.overallStatus === 'Perlu Perhatian') {
+                statusBeforeSubmission = latestPreviousReport.overallStatus;
+            }
+        }
+    }
+
+    const wasPreviouslyDamaged = statusBeforeSubmission === 'Rusak' || statusBeforeSubmission === 'Perlu Perhatian';
     const isNowBaik = newReportData.overallStatus === 'Baik';
-    const isRepairCompletion = isNowBaik && wasPreviouslyDamaged;
+    const isNowDamaged = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
+
+    const shouldSendNotification = isNowDamaged || (isNowBaik && wasPreviouslyDamaged);
     
-    // Only notify on new damage OR on repair completion. Do NOT notify on routine "Baik" checks.
-    if (isNewDamage || isRepairCompletion) {
+    if (shouldSendNotification) {
         const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
         const usersToNotifyQuery = users.filter(u => 
             adminRoles.includes(u.role) && 
             (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
         );
         
-        // Also notify the original operator of the vehicle
         const operatorUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
         
         const allUsersToNotify = [...usersToNotifyQuery];
@@ -345,19 +357,21 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         }
 
         let title = 'Laporan Baru';
-        let message = `Laporan baru untuk kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dari ${newReportData.operatorName}.`;
+        let message = `Laporan baru untuk kendaraan ${vehicle.licensePlate} dari ${newReportData.operatorName}.`;
         let type: NotificationType = 'INFO';
 
-        if (isNewDamage) {
+        if (isNowDamaged) {
             title = `Laporan Kerusakan Baru`;
-            message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
+            message = `Kendaraan ${vehicle.licensePlate} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
             type = 'DAMAGE';
-        } else if (isRepairCompletion) {
+        } else if (isNowBaik && wasPreviouslyDamaged) {
             type = 'SUCCESS';
             title = 'Perbaikan Selesai';
-            message = newReportData.kerusakanLain?.keterangan 
-                ? `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} kondisi baik. ${newReportData.kerusakanLain.keterangan}`
-                : `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} telah diperbaiki dan sekarang dalam kondisi Baik.`;
+             if (submittedBy === 'mechanic') {
+                message = `Kendaraan ${vehicle.licensePlate} telah selesai perbaikan, dikerjakan dan dilaporkan oleh mekanik ${newReportData.operatorName.replace('Mekanik: ','')}.`;
+            } else { // submitted by operator
+                message = `Kendaraan ${vehicle.licensePlate} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh ${repairerName || 'Tim Mekanik'} dan dilaporkan oleh operator ${newReportData.operatorName}.`;
+            }
         }
 
         for (const userToNotify of allUsersToNotify) {
@@ -483,8 +497,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       await updateDoc(doc(db, 'mechanicTasks', taskId), updatePayload);
       toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
 
-      // If the task is completed, create a new "Baik" report.
-      // The notification logic will be handled centrally by submitReport.
       if (updates.status === 'COMPLETED') {
         const vehicleInTask = taskBeingUpdated.vehicle;
         const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
@@ -498,10 +510,10 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
               location: vehicleDetails.location,
               overallStatus: 'Baik' as const,
               items: [],
-              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}. Dilaporkan oleh mekanik ${mechanicNames}.` },
+              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}.` },
             };
             
-            await submitReport(reportData);
+            await submitReport(reportData, 'mechanic');
             toast({ title: "Status Kendaraan Diperbarui", description: `Kendaraan ${vehicleDetails.licensePlate} telah ditandai 'Baik'.` });
         }
       }

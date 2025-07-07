@@ -220,7 +220,7 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
           }
       }
       
-      await submitReport(reportData);
+      await submitReport(reportData, 'operator');
       
       const successTitle = reportToUpdate ? "Laporan Diperbarui" : "Laporan Terkirim";
       const baseDescription = reportToUpdate ? "Detail kerusakan telah berhasil diperbarui." : "Checklist harian Anda telah berhasil dikirim.";
@@ -294,6 +294,10 @@ export default function ChecklistPage() {
     if (!vehicle) {
       if (user.role === 'KEPALA_BP') {
           router.replace("/checklist/select-vehicle");
+      } else {
+        // Operator with single vehicle but no vehicle selected in session for some reason.
+        // This case is less likely but good to handle.
+        router.replace("/"); 
       }
       return;
     }
@@ -336,6 +340,8 @@ export default function ChecklistPage() {
     
     const vehicleDetails = vehicles.find(v => v.hullNumber === vehicle);
     if (!vehicleDetails || !user.location) return;
+    
+    const repairerName = resolvedBy === 'Dikerjakan Sendiri' ? user.name : 'Tim Mekanik';
 
     const reportData = {
         vehicleId: vehicle,
@@ -345,12 +351,12 @@ export default function ChecklistPage() {
         overallStatus: 'Baik' as const,
         items: [],
         kerusakanLain: {
-            keterangan: `Perbaikan dari laporan sebelumnya telah selesai. Dikerjakan oleh: ${resolvedBy}.`,
+            keterangan: `Perbaikan dari laporan sebelumnya telah selesai.`,
         }
     };
     
     try {
-      await submitReport(reportData);
+      await submitReport(reportData, 'operator', repairerName);
       const baseDescription = "Kendaraan telah ditandai dalam kondisi Baik.";
 
       if (user?.role === 'KEPALA_BP') {
