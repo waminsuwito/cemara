@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { AdminUser } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import { User, UserRole, roles } from "@/lib/data";
@@ -84,9 +85,17 @@ export function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, current
                                 <Label htmlFor="nik" className="text-right">NIK</Label>
                                 <Input id="nik" name="nik" defaultValue={editingUser?.nik} className="col-span-3" required />
                             </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="batangan" className="text-right">Batangan</Label>
-                                <Input id="batangan" name="batangan" defaultValue={editingUser?.batangan} className="col-span-3" placeholder="Pisahkan dengan koma" required />
+                             <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="batangan" className="text-right pt-2">Batangan</Label>
+                                <Textarea 
+                                  id="batangan" 
+                                  name="batangan" 
+                                  defaultValue={editingUser?.batangan} 
+                                  className="col-span-3" 
+                                  placeholder="Satu No. Polisi per baris, atau pisahkan dengan koma" 
+                                  rows={3}
+                                  required 
+                                />
                             </div>
                         </>
                     )}

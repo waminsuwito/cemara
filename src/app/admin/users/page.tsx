@@ -45,7 +45,7 @@ import { UserFormDialog } from "@/components/user-form-dialog";
 
 export default function UserManagementPage() {
   const { user: currentUser } = useAdminAuth();
-  const { users, addUser, updateUser, deleteUser, locationNames } = useAppData();
+  const { users, addUser, updateUser, deleteUser, locationNames, vehicles } = useAppData();
   const { toast } = useToast();
 
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
@@ -120,13 +120,28 @@ export default function UserManagementPage() {
     }
 
     if ((role === "OPERATOR" || role === "KEPALA_BP") && batangan) {
-      const newBatanganList = batangan.split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
+      const allVehiclePlates = vehicles.map(v => v.licensePlate.replace(/[-\s]/g, '').toLowerCase());
+      const newBatanganList = batangan.split(/[\n,]/).map(b => b.trim()).filter(Boolean);
+
+      for (const plate of newBatanganList) {
+          const cleanPlate = plate.replace(/[-\s]/g, '').toLowerCase();
+          if (!allVehiclePlates.includes(cleanPlate)) {
+              toast({
+                  variant: "destructive",
+                  title: "Gagal Menyimpan",
+                  description: `Kendaraan dengan Nomor Polisi "${plate.toUpperCase()}" tidak ditemukan di Manajemen Alat.`,
+                  duration: 7000,
+              });
+              return;
+          }
+      }
+
       for (const b of newBatanganList) {
         const isBatanganInOtherLocation = users.some(u => 
           u.id !== editingUser?.id &&
           (u.role === 'OPERATOR' || u.role === 'KEPALA_BP') &&
           u.location !== location &&
-          u.batangan?.split(',').map(bt => bt.trim().toLowerCase()).includes(b)
+          u.batangan?.split(',').map(bt => bt.trim().toLowerCase()).includes(b.toLowerCase())
         );
         if (isBatanganInOtherLocation) {
           toast({
