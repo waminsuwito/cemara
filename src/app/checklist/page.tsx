@@ -220,7 +220,7 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
           }
       }
       
-      await submitReport(reportData, reportToUpdate?.id);
+      await submitReport(reportData);
       
       const successTitle = reportToUpdate ? "Laporan Diperbarui" : "Laporan Terkirim";
       const baseDescription = reportToUpdate ? "Detail kerusakan telah berhasil diperbarui." : "Checklist harian Anda telah berhasil dikirim.";

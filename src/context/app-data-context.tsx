@@ -23,7 +23,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportIdToUpdate?: string) => Promise<void>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
   deleteReport: (reportId: string) => Promise<void>;
 
   complaints: Complaint[];
@@ -294,7 +294,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportIdToUpdate?: string): Promise<void> => {
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
 
@@ -311,52 +311,47 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     
     const batch = writeBatch(db);
 
-    if (reportIdToUpdate) {
-        const reportRef = doc(db, 'reports', reportIdToUpdate);
-        batch.update(reportRef, reportWithTimestamp as any);
-    } else {
-        const reportRef = doc(collection(db, 'reports'));
-        batch.set(reportRef, reportWithTimestamp);
-        
-        // Notification logic for new reports ('Rusak', 'Perlu Perhatian', or 'Baik')
-        if (newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian' || newReportData.overallStatus === 'Baik') {
-            const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
-            const usersToNotify = users.filter(u => 
-                adminRoles.includes(u.role) && 
-                (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
-            );
+    const reportRef = doc(collection(db, 'reports'));
+    batch.set(reportRef, reportWithTimestamp);
+    
+    // Notification logic for new reports ('Rusak', 'Perlu Perhatian', or 'Baik')
+    if (newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian' || newReportData.overallStatus === 'Baik') {
+        const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
+        const usersToNotify = users.filter(u => 
+            adminRoles.includes(u.role) && 
+            (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
+        );
 
-            const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
-            const isSuccess = newReportData.overallStatus === 'Baik';
+        const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
+        const isSuccess = newReportData.overallStatus === 'Baik';
 
-            let title = 'Laporan Baru';
-            let message = `Laporan baru untuk kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dari ${newReportData.operatorName}.`;
-            let type: NotificationType = 'INFO';
+        let title = 'Laporan Baru';
+        let message = `Laporan baru untuk kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dari ${newReportData.operatorName}.`;
+        let type: NotificationType = 'INFO';
 
-            if (isDamage) {
-                title = `Laporan Kerusakan Baru`;
-                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
-                type = 'DAMAGE';
-            } else if (isSuccess) {
-                title = `Laporan Kondisi Baik`;
-                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
-                type = 'SUCCESS';
-            }
+        if (isDamage) {
+            title = `Laporan Kerusakan Baru`;
+            message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
+            type = 'DAMAGE';
+        } else if (isSuccess) {
+            title = `Laporan Kondisi Baik`;
+            message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
+            type = 'SUCCESS';
+        }
 
-            for (const userToNotify of usersToNotify) {
-                const notificationRef = doc(collection(db, 'notifications'));
-                batch.set(notificationRef, {
-                    userId: userToNotify.id,
-                    title,
-                    message,
-                    timestamp: serverTimestamp(),
-                    isRead: false,
-                    type,
-                });
-            }
+        for (const userToNotify of usersToNotify) {
+            const notificationRef = doc(collection(db, 'notifications'));
+            batch.set(notificationRef, {
+                userId: userToNotify.id,
+                title,
+                message,
+                timestamp: serverTimestamp(),
+                isRead: false,
+                type,
+            });
         }
     }
-
+    
     await batch.commit();
   };
   
