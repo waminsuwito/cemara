@@ -115,6 +115,15 @@ export type Penalty = {
   givenByAdminUsername: string;
 };
 
+export type Notification = {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  timestamp: number;
+  isRead: boolean;
+};
+
 
 export const roles: UserRole[] = ["OPERATOR", "MEKANIK", "KEPALA_BP", "LOGISTIK", "LOCATION_ADMIN", "SUPER_ADMIN"];
 

@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +41,9 @@ type AppDataContextType = {
   addSparePartLog: (log: Omit<SparePartLog, 'id' | 'logDate' | 'loggedById' | 'loggedByName'>) => Promise<void>;
 
   penalties: Penalty[];
-  addPenalties: (penaltiesToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>[]) => Promise<void>;
+  addPenalty: (penaltyToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>) => Promise<void>;
+
+  notifications: Notification[];
 
   locations: Location[];
   locationNames: string[];
@@ -63,6 +65,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [mechanicTasks, setMechanicTasks] = useState<MechanicTask[]>([]);
   const [sparePartLogs, setSparePartLogs] = useState<SparePartLog[]>([]);
   const [penalties, setPenalties] = useState<Penalty[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
@@ -135,6 +138,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           { name: 'mechanicTasks', setter: setMechanicTasks, orderByField: 'createdAt' },
           { name: 'sparePartLogs', setter: setSparePartLogs, orderByField: 'logDate' },
           { name: 'penalties', setter: setPenalties, orderByField: 'timestamp' },
+          { name: 'notifications', setter: setNotifications, orderByField: 'timestamp' },
       ];
 
       const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
@@ -172,6 +176,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       setMechanicTasks([]);
       setSparePartLogs([]);
       setPenalties([]);
+      setNotifications([]);
     }
   }, [adminUser, operatorUser, toast]);
 
@@ -444,26 +449,37 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addPenalties = async (penaltiesToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>[]) => {
+  const addPenalty = async (penaltyToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>) => {
     if (!adminUser) {
         toast({ variant: "destructive", title: "Aksi Gagal", description: "Anda harus login sebagai admin." });
         return;
     }
     try {
         const batch = writeBatch(db);
-        penaltiesToAdd.forEach(penalty => {
-            const docRef = doc(collection(db, 'penalties'));
-            batch.set(docRef, { 
-                ...penalty,
-                timestamp: serverTimestamp(),
-                givenByAdminUsername: adminUser.username
-            });
+
+        // 1. Add penalty document
+        const penaltyRef = doc(collection(db, 'penalties'));
+        batch.set(penaltyRef, { 
+            ...penaltyToAdd,
+            timestamp: serverTimestamp(),
+            givenByAdminUsername: adminUser.username
         });
+
+        // 2. Add notification document for the user
+        const notificationRef = doc(collection(db, 'notifications'));
+        batch.set(notificationRef, {
+            userId: penaltyToAdd.userId,
+            title: "Anda Menerima Poin Penalty",
+            message: `Anda menerima ${penaltyToAdd.points} poin penalty karena belum melakukan checklist untuk kendaraan ${penaltyToAdd.vehicleHullNumber}.`,
+            timestamp: serverTimestamp(),
+            isRead: false
+        });
+        
         await batch.commit();
-        toast({ title: "Sukses", description: "Data penalty berhasil disimpan." });
+        toast({ title: "Sukses", description: `Penalty untuk ${penaltyToAdd.userName} telah dikirim.` });
     } catch (e) {
-        console.error("Error adding penalties: ", e);
-        toast({ variant: "destructive", title: "Error", description: "Gagal menyimpan data penalty." });
+        console.error("Error adding penalty: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal mengirim data penalty." });
     }
   };
 
@@ -477,7 +493,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     suggestions, addSuggestion,
     mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask,
     sparePartLogs, addSparePartLog,
-    penalties, addPenalties,
+    penalties, addPenalty,
+    notifications,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

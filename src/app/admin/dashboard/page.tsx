@@ -36,6 +36,7 @@ import {
   ClipboardX,
   ChevronLeft,
   Printer,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -93,49 +94,62 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
   title: string;
   description: string;
 }) => {
-    const { addPenalties } = useAppData();
+    const { addPenalty } = useAppData();
     const { user: adminUser } = useAdminAuth();
     const { toast } = useToast();
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithStatus | null>(null);
+    
+    // Penalty related state
     const [penalties, setPenalties] = useState<Record<string, string>>({});
+    const [sendingPenalty, setSendingPenalty] = useState<Record<string, boolean>>({});
+    const [sentPenalties, setSentPenalties] = useState<string[]>([]);
 
     const handlePenaltyChange = (vehicleId: string, value: string) => {
         setPenalties(prev => ({...prev, [vehicleId]: value}));
     };
 
-    const handleSavePenalties = () => {
+    const handleSendPenalty = async (vehicleId: string) => {
         if (!adminUser) return;
-
-        const penaltiesToSave = Object.entries(penalties)
-            .map(([vehicleId, pointsStr]) => {
-                const points = parseInt(pointsStr, 10);
-                if (isNaN(points) || points <= 0 || points > 10) return null;
-
-                const vehicle = vehicles.find(v => v.id === vehicleId);
-                if (!vehicle) return null;
-                
-                const responsibleUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
-                if (!responsibleUser || !responsibleUser.nik) return null;
-
-                return {
-                    userId: responsibleUser.id,
-                    userName: responsibleUser.name,
-                    userNik: responsibleUser.nik,
-                    vehicleHullNumber: vehicle.hullNumber,
-                    points,
-                    reason: 'Belum Checklist',
-                };
-            })
-            .filter((p): p is Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'> => p !== null);
-
-        if (penaltiesToSave.length > 0) {
-            addPenalties(penaltiesToSave).then(() => {
-                setPenalties({}); // Clear local state after saving
-            });
-        } else {
-            toast({ title: "Tidak ada data untuk disimpan", description: "Tidak ada poin penalty yang valid untuk disimpan." });
+        setSendingPenalty(prev => ({ ...prev, [vehicleId]: true }));
+        
+        const pointsStr = penalties[vehicleId];
+        const points = parseInt(pointsStr, 10);
+        
+        if (isNaN(points) || points <= 0 || points > 10) {
+            toast({ title: "Poin Tidak Valid", description: "Poin penalty harus angka antara 1 dan 10.", variant: 'destructive' });
+            setSendingPenalty(prev => ({ ...prev, [vehicleId]: false }));
+            return;
         }
+
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+        
+        const responsibleUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+        if (!responsibleUser || !responsibleUser.nik) {
+            toast({ title: "Pengguna Tidak Ditemukan", description: `Tidak dapat menemukan pengguna yang bertanggung jawab untuk ${vehicle.operator}`, variant: 'destructive' });
+            setSendingPenalty(prev => ({ ...prev, [vehicleId]: false }));
+            return;
+        }
+
+        const penaltyData = {
+            userId: responsibleUser.id,
+            userName: responsibleUser.name,
+            userNik: responsibleUser.nik,
+            vehicleHullNumber: vehicle.hullNumber,
+            points,
+            reason: 'Belum Checklist Harian',
+        };
+
+        await addPenalty(penaltyData);
+        
+        setSendingPenalty(prev => ({ ...prev, [vehicleId]: false }));
+        setSentPenalties(prev => [...prev, vehicleId]); 
+        setPenalties(prev => {
+            const newPenalties = { ...prev };
+            delete newPenalties[vehicleId];
+            return newPenalties;
+        });
     };
 
     const handleDetailClick = (vehicle: VehicleWithStatus) => {
@@ -168,7 +182,7 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                     <TableHead>Lokasi</TableHead>
                                     <TableHead>Operator</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right w-[120px]">
+                                    <TableHead className="text-right w-[200px]">
                                         {title === "Detail Alat Belum Checklist" ? "Penalty" : "Aksi"}
                                     </TableHead>
                                 </TableRow>
@@ -183,15 +197,32 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                         <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
                                         <TableCell className="text-right">
                                             {title === "Detail Alat Belum Checklist" ? (
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    max="10"
-                                                    className="w-24 h-9 ml-auto text-center"
-                                                    placeholder="Poin"
-                                                    value={penalties[vehicle.id] ?? ''}
-                                                    onChange={(e) => handlePenaltyChange(vehicle.id, e.target.value)}
-                                                />
+                                                sentPenalties.includes(vehicle.id) ? (
+                                                    <div className="flex items-center justify-end text-green-500 gap-2">
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        <span>Terkirim</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Input
+                                                            type="number"
+                                                            min="1"
+                                                            max="10"
+                                                            className="w-20 h-9 text-center"
+                                                            placeholder="Poin"
+                                                            value={penalties[vehicle.id] ?? ''}
+                                                            onChange={(e) => handlePenaltyChange(vehicle.id, e.target.value)}
+                                                            disabled={sendingPenalty[vehicle.id]}
+                                                        />
+                                                        <Button 
+                                                            size="sm" 
+                                                            onClick={() => handleSendPenalty(vehicle.id)}
+                                                            disabled={!penalties[vehicle.id] || sendingPenalty[vehicle.id]}
+                                                        >
+                                                            {sendingPenalty[vehicle.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Kirim'}
+                                                        </Button>
+                                                    </div>
+                                                )
                                             ) : (
                                                 vehicle.latestReport && (vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && (
                                                     <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle)}>
@@ -209,9 +240,6 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                         <DialogClose asChild>
                             <Button variant="outline">Tutup</Button>
                         </DialogClose>
-                        {title === "Detail Alat Belum Checklist" && (
-                            <Button onClick={handleSavePenalties}>Simpan Penalty</Button>
-                        )}
                     </DialogFooter>
                 </>
             ) : (
@@ -359,7 +387,7 @@ export default function DashboardPage() {
   const baikCount = masterVehiclesForLocation.filter((v) => v.status === "Baik").length;
   const rusakCount = masterVehiclesForLocation.filter((v) => v.status === "Rusak").length;
   const perhatianCount = masterVehiclesForLocation.filter((v) => v.status === "Perlu Perhatian").length;
-  const notCheckedInCount = masterVehiclesForLocation.filter((v) => v.status === "Belum Checklist").length;
+  const notCheckedInCount = totalCount - baikCount - rusakCount - perhatianCount;
   const checkedInCount = totalCount - notCheckedInCount;
 
   const checkedInVehicles = masterVehiclesForLocation.filter(v => v.status !== 'Belum Checklist');
