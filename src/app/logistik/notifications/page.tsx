@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import { id as localeID } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell } from "lucide-react";
+import { Bell, Inbox } from "lucide-react";
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
 
@@ -23,9 +23,9 @@ export default function NotificationsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pemberitahuan</CardTitle>
+        <CardTitle>Pesan Masuk</CardTitle>
         <CardDescription>
-          Semua notifikasi dan pembaruan penting akan ditampilkan di sini.
+          Semua pesan, notifikasi, dan pembaruan penting akan ditampilkan di sini.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -48,8 +48,8 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-48 text-center border-2 border-dashed rounded-lg">
-            <Bell className="w-12 h-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">Belum ada pemberitahuan baru.</p>
+            <Inbox className="w-12 h-12 text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">Belum ada pesan baru.</p>
           </div>
         )}
       </CardContent>

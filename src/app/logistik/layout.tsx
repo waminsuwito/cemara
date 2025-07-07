@@ -11,8 +11,8 @@ import {
   ClipboardCheck,
   History,
   Package,
-  Bell,
-  ShieldX,
+  ShieldAlert,
+  Inbox,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,11 +40,11 @@ const navItems = [
   { href: "/logistik/repairs", icon: ClipboardCheck, label: "Daftar Perbaikan Hari Ini" },
   { href: "/logistik/spare-parts", icon: Package, label: "Spare Parts Digunakan Hari Ini" },
   { href: "/logistik/spare-parts-history", icon: History, label: "Riwayat Spare Part" },
-  { href: "/logistik/penalty", icon: ShieldX, label: "Jumlah Penalty Saya" },
-  { href: "/logistik/notifications", icon: Bell, label: "Pemberitahuan" },
+  { href: "/logistik/penalty", icon: ShieldAlert, label: "Riwayat Penalti Saya", className: "text-destructive hover:text-destructive/90" },
+  { href: "/logistik/notifications", icon: Inbox, label: "Pesan Masuk" },
 ];
 
-const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
+const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: React.ElementType, label: string, className?: string}) => {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -53,7 +53,8 @@ const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.Element
       href={href}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-        isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow"
+        isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow",
+        className
       )}
     >
       <Icon className="h-4 w-4" />
@@ -98,7 +99,7 @@ function LogistikLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex-1 overflow-y-auto">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
               {navItems.map((item) => (
-                <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                <NavLink key={item.href} {...item} />
               ))}
             </nav>
           </div>
@@ -145,7 +146,7 @@ function LogistikLayoutContent({ children }: { children: React.ReactNode }) {
                     </SheetTitle>
                   </SheetHeader>
                   {navItems.map((item) => (
-                    <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                    <NavLink key={item.href} {...item} />
                   ))}
                 </nav>
               </div>

@@ -29,16 +29,16 @@ export default function MyPenaltyPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Jumlah Penalty Saya</CardTitle>
+                <CardTitle>Riwayat Penalti Saya</CardTitle>
                 <CardDescription>
-                    Berikut adalah riwayat dan total poin penalty Anda.
+                    Berikut adalah riwayat dan total poin penalti Anda.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center justify-center p-6 bg-muted/50 rounded-lg">
                     <ShieldX className="w-12 h-12 text-destructive mr-6" />
                     <div>
-                        <p className="text-lg text-muted-foreground">Total Poin Penalty Anda</p>
+                        <p className="text-lg text-muted-foreground">Total Poin Penalti Anda</p>
                         <p className="text-5xl font-bold text-destructive">{totalPoints}</p>
                     </div>
                 </div>

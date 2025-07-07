@@ -17,8 +17,8 @@ import {
   Lightbulb,
   Activity,
   Package,
-  Bell,
   ShieldX,
+  Inbox,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ const navItems = [
   { href: "/admin/penalty", icon: ShieldX, label: "Riwayat Penalti", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
-  { href: "/admin/notifications", icon: Bell, label: "Pemberitahuan", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/notifications", icon: Inbox, label: "Pesan Masuk", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
@@ -162,7 +162,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   ))}
                 </nav>
               </div>
-              <div className="mt-auto p-4 border-t">
+              <div className="p-4 border-t mt-auto">
                  <div className="pb-4 text-center">
                    <img
                      src="https://i.ibb.co/V0NgdX7z/images.jpg"

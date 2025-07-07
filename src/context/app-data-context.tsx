@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -303,13 +303,40 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         reportDate: reportDateStr,
     };
     
+    const batch = writeBatch(db);
+
     if (reportIdToUpdate) {
-        // We are updating an existing report
-        await updateDoc(doc(db, 'reports', reportIdToUpdate), reportWithTimestamp);
+        const reportRef = doc(db, 'reports', reportIdToUpdate);
+        batch.update(reportRef, reportWithTimestamp as any);
     } else {
-        // We are creating a new report
-        await addDoc(collection(db, 'reports'), reportWithTimestamp);
+        const reportRef = doc(collection(db, 'reports'));
+        batch.set(reportRef, reportWithTimestamp);
+        
+        // Notification logic for new 'Rusak' reports
+        if (newReportData.overallStatus === 'Rusak') {
+            const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
+            const usersToNotify = users.filter(u => 
+                adminRoles.includes(u.role) && 
+                (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
+            );
+
+            const title = `Laporan Kerusakan Baru`;
+            const message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan rusak oleh ${newReportData.operatorName}.`;
+
+            for (const userToNotify of usersToNotify) {
+                const notificationRef = doc(collection(db, 'notifications'));
+                batch.set(notificationRef, {
+                    userId: userToNotify.id,
+                    title,
+                    message,
+                    timestamp: serverTimestamp(),
+                    isRead: false
+                });
+            }
+        }
     }
+
+    await batch.commit();
   };
   
   const addComplaint = async (complaintData: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => {
@@ -382,21 +409,21 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         updatePayload.completedAt = serverTimestamp();
       }
       
-      // If status is not DELAYED, ensure delayReason is removed from the document
       if (updates.status !== 'DELAYED' && taskBeingUpdated.delayReason) {
         updatePayload.delayReason = deleteField();
       }
 
-      await updateDoc(doc(db, 'mechanicTasks', taskId), updatePayload);
-      toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
+      const batch = writeBatch(db);
+      const taskRef = doc(db, 'mechanicTasks', taskId);
+      batch.update(taskRef, updatePayload);
 
-      // If the task is completed, create a new "Baik" report for the vehicle.
-      // This will automatically update the vehicle's status to "Baik" across the app.
+      // If the task is completed, create a new "Baik" report and notifications.
       if (updates.status === 'COMPLETED') {
         const vehicleInTask = taskBeingUpdated.vehicle;
         const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
 
         if (vehicleInTask && vehicleDetails) {
+            // Create "Baik" report
             const goodConditionReport = {
               vehicleId: vehicleDetails.hullNumber,
               vehicleType: vehicleDetails.type,
@@ -408,10 +435,41 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
               timestamp: serverTimestamp(),
               reportDate: format(new Date(), 'yyyy-MM-dd'),
             };
-            await addDoc(collection(db, 'reports'), goodConditionReport);
-             toast({ title: "Status Kendaraan Diperbarui", description: `Kendaraan ${vehicleDetails.licensePlate} telah ditandai 'Baik'.` });
+            const goodReportRef = doc(collection(db, 'reports'));
+            batch.set(goodReportRef, goodConditionReport);
+
+            // Create Notifications
+            const operatorUser = users.find(u => u.name === vehicleDetails.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+            const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
+            const adminUsersToNotify = users.filter(u => 
+                adminRoles.includes(u.role) && 
+                (u.role === 'SUPER_ADMIN' || u.location === vehicleDetails.location)
+            );
+
+            const allUsersToNotify = [...adminUsersToNotify];
+            if (operatorUser && !allUsersToNotify.find(u => u.id === operatorUser.id)) {
+                allUsersToNotify.push(operatorUser);
+            }
+
+            const title = `Perbaikan Selesai`;
+            const message = `Perbaikan untuk kendaraan ${vehicleDetails.licensePlate} (${vehicleInTask.repairDescription}) telah selesai.`;
+
+            for (const userToNotify of allUsersToNotify) {
+                const notificationRef = doc(collection(db, 'notifications'));
+                batch.set(notificationRef, {
+                    userId: userToNotify.id,
+                    title,
+                    message,
+                    timestamp: serverTimestamp(),
+                    isRead: false
+                });
+            }
+            toast({ title: "Status Kendaraan Diperbarui", description: `Kendaraan ${vehicleDetails.licensePlate} telah ditandai 'Baik'.` });
         }
       }
+
+      await batch.commit();
+      toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
 
     } catch (e) {
       console.error("Error updating mechanic task: ", e);

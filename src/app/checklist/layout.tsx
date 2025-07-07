@@ -14,8 +14,8 @@ import {
   ClipboardCheck,
   KeyRound,
   ClipboardList,
-  Bell,
-  ShieldX,
+  ShieldAlert,
+  Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
+const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: React.ElementType, label: string, className?: string}) => {
   const pathname = usePathname();
   const isActive = pathname === href;
 
@@ -48,7 +48,8 @@ const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.Element
       href={href}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-        isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow"
+        isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow",
+        className
       )}
     >
       <Icon className="h-4 w-4" />
@@ -88,8 +89,8 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
       { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
       { href: "/checklist/history", icon: History, label: "Riwayat Saya" },
       { href: "/checklist/change-password", icon: KeyRound, label: "Ganti Password" },
-      { href: "/checklist/penalty", icon: ShieldX, label: "Jumlah Penalty Saya" },
-      { href: "/checklist/notifications", icon: Bell, label: "Pemberitahuan" },
+      { href: "/checklist/penalty", icon: ShieldAlert, label: "Riwayat Penalti Saya", className: "text-destructive hover:text-destructive/90" },
+      { href: "/checklist/notifications", icon: Inbox, label: "Pesan Masuk" },
     ];
 
     if (user?.role === 'KEPALA_BP') {
@@ -131,7 +132,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
           <div className="flex-1 overflow-y-auto">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
               {navItems.map((item) => (
-                <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                <NavLink key={item.href} {...item} />
               ))}
             </nav>
           </div>
@@ -171,7 +172,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                     </SheetTitle>
                   </SheetHeader>
                   {navItems.map((item) => (
-                    <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                    <NavLink key={item.href} {...item} />
                   ))}
                 </nav>
               </div>
