@@ -461,7 +461,7 @@ export default function MechanicTasksPage() {
                                       >
                                         Set "Tertunda"
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'PENDING')} disabled={task.status === 'PENDING' || task.status === 'COMPLETED'}>Set "Menunggu"</DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'PENDING')} disabled={task.status === 'PENDING' || task.status === 'IN_PROGRESS' || task.status === 'COMPLETED'}>Set "Menunggu"</DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
