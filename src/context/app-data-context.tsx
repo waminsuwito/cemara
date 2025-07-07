@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -318,20 +318,30 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         const reportRef = doc(collection(db, 'reports'));
         batch.set(reportRef, reportWithTimestamp);
         
-        // Notification logic for new reports ('Rusak' or 'Baik')
-        if (newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Baik') {
+        // Notification logic for new reports ('Rusak', 'Perlu Perhatian', or 'Baik')
+        if (newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian' || newReportData.overallStatus === 'Baik') {
             const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
             const usersToNotify = users.filter(u => 
                 adminRoles.includes(u.role) && 
                 (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
             );
 
-            const isDamage = newReportData.overallStatus === 'Rusak';
-            const title = isDamage ? `Laporan Kerusakan Baru` : `Laporan Kondisi Baik`;
-            const message = isDamage 
-                ? `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan rusak oleh ${newReportData.operatorName}.`
-                : `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
-            const type = isDamage ? 'DAMAGE' : 'SUCCESS';
+            const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
+            const isSuccess = newReportData.overallStatus === 'Baik';
+
+            let title = 'Laporan Baru';
+            let message = `Laporan baru untuk kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dari ${newReportData.operatorName}.`;
+            let type: NotificationType = 'INFO';
+
+            if (isDamage) {
+                title = `Laporan Kerusakan Baru`;
+                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
+                type = 'DAMAGE';
+            } else if (isSuccess) {
+                title = `Laporan Kondisi Baik`;
+                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
+                type = 'SUCCESS';
+            }
 
             for (const userToNotify of usersToNotify) {
                 const notificationRef = doc(collection(db, 'notifications'));
