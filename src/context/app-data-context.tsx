@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +37,9 @@ type AppDataContextType = {
   updateMechanicTask: (taskId: string, updates: Partial<Pick<MechanicTask, 'status' | 'delayReason'>>) => Promise<void>;
   deleteMechanicTask: (taskId: string) => Promise<void>;
   
+  sparePartLogs: SparePartLog[];
+  addSparePartLog: (log: Omit<SparePartLog, 'id' | 'logDate' | 'loggedById' | 'loggedByName'>) => Promise<void>;
+
   locations: Location[];
   locationNames: string[];
   addLocation: (location: Omit<Location, 'id'>) => Promise<void>;
@@ -55,6 +58,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [mechanicTasks, setMechanicTasks] = useState<MechanicTask[]>([]);
+  const [sparePartLogs, setSparePartLogs] = useState<SparePartLog[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
@@ -125,6 +129,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           { name: 'complaints', setter: setComplaints, orderByField: 'timestamp' },
           { name: 'suggestions', setter: setSuggestions, orderByField: 'timestamp' },
           { name: 'mechanicTasks', setter: setMechanicTasks, orderByField: 'createdAt' },
+          { name: 'sparePartLogs', setter: setSparePartLogs, orderByField: 'logDate' },
       ];
 
       const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
@@ -160,6 +165,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       setComplaints([]);
       setSuggestions([]);
       setMechanicTasks([]);
+      setSparePartLogs([]);
     }
   }, [adminUser, operatorUser, toast]);
 
@@ -412,6 +418,25 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const addSparePartLog = async (logData: Omit<SparePartLog, 'id' | 'logDate' | 'loggedById' | 'loggedByName'>) => {
+    if (!adminUser || !adminUser.username) {
+        toast({ variant: "destructive", title: "Error", description: "Anda harus login untuk melakukan aksi ini." });
+        throw new Error("User not logged in");
+    }
+    try {
+      await addDoc(collection(db, 'sparePartLogs'), {
+        ...logData,
+        logDate: serverTimestamp(),
+        loggedById: adminUser.username, 
+        loggedByName: adminUser.username,
+      });
+      toast({ title: "Sukses", description: "Data spare part berhasil disimpan." });
+    } catch (e) {
+      console.error("Error adding spare part log: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menyimpan data spare part." });
+      throw e;
+    }
+  };
 
   const locationNames = locations.map(l => l.namaBP).sort();
 
@@ -422,6 +447,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     complaints, addComplaint, updateComplaintStatus,
     suggestions, addSuggestion,
     mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask,
+    sparePartLogs, addSparePartLog,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

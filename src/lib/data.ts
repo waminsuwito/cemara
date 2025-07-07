@@ -83,6 +83,7 @@ export type MechanicTask = {
     repairDescription: string;
     targetDate: string; // YYYY-MM-DD
     targetTime: string; // HH:mm
+    triggeringReportId?: string;
   };
   mechanics: {
     id: string;
@@ -90,6 +91,16 @@ export type MechanicTask = {
   }[];
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DELAYED';
   delayReason?: string;
+};
+
+export type SparePartLog = {
+  id: string;
+  taskId: string;
+  vehicleHullNumber: string;
+  partsUsed: string;
+  logDate: number;
+  loggedById: string;
+  loggedByName: string;
 };
 
 

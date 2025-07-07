@@ -199,6 +199,7 @@ export default function MechanicTasksPage() {
         repairDescription: data.repairDescription,
         targetDate: format(data.targetDate, 'yyyy-MM-dd'),
         targetTime: data.targetTime,
+        triggeringReportId: vehicle.latestReport?.id,
       },
       mechanics: data.mechanics,
     };

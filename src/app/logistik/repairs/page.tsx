@@ -7,13 +7,13 @@ import { id as localeID } from 'date-fns/locale';
 
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
-import type { MechanicTask } from "@/lib/data";
+import type { MechanicTask, Report } from "@/lib/data";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
-// Re-using this component from other pages for consistency.
 const CompletionStatusBadge = ({ targetDate, targetTime, completedAt }: { targetDate: string, targetTime: string, completedAt: number }) => {
     if (!targetDate || !targetTime || !completedAt) return null;
 
@@ -43,32 +43,57 @@ const CompletionStatusBadge = ({ targetDate, targetTime, completedAt }: { target
     }
 }
 
+const OriginalReportDetails = ({ report }: { report: Report | undefined }) => {
+    if (!report) return null;
+    
+    const problemItems = report.items?.filter(item => item.status !== 'BAIK') || [];
+    const otherDamage = report.kerusakanLain;
+
+    if (problemItems.length === 0 && !otherDamage?.keterangan) {
+        return null;
+    }
+
+    return (
+        <div className="mt-3 pt-3 border-t border-dashed">
+            <h4 className="text-xs font-semibold text-muted-foreground mb-1">Laporan Awal Sopir:</h4>
+            <ul className="list-disc pl-4 text-xs text-muted-foreground space-y-1">
+                {problemItems.map(item => (
+                    <li key={item.id}>
+                        <strong>{item.label} ({item.status}):</strong> {item.keterangan || 'Tidak ada keterangan.'}
+                    </li>
+                ))}
+                {otherDamage?.keterangan && (
+                     <li>
+                        <strong>Kerusakan Lainnya:</strong> {otherDamage.keterangan}
+                    </li>
+                )}
+            </ul>
+        </div>
+    );
+};
 
 export default function RepairsPage() {
   const { user } = useAdminAuth();
-  const { mechanicTasks, vehicles } = useAppData();
+  const { mechanicTasks, vehicles, reports } = useAppData();
 
   const completedTodayTasks = useMemo(() => {
     const today = startOfToday();
     return mechanicTasks.filter(task => {
-        // Filter 1: Must be completed
         if (task.status !== 'COMPLETED' || !task.completedAt) {
             return false;
         }
 
-        // Filter 2: Must be completed today
         if (!isSameDay(new Date(task.completedAt), today)) {
             return false;
         }
 
-        // Filter 3: Must be in the user's location (if applicable)
         const taskVehicle = task.vehicle;
         if (!taskVehicle) return false;
 
         const taskLocation = vehicles.find(v => v.hullNumber === taskVehicle.hullNumber)?.location;
 
         if (user?.role === 'SUPER_ADMIN') {
-            return true; // Super admin sees all
+            return true;
         }
 
         if ((user?.role === 'LOGISTIK' || user?.role === 'MEKANIK') && user.location) {
@@ -76,7 +101,7 @@ export default function RepairsPage() {
         }
 
         return false;
-    }).sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)); // Sort by most recently completed
+    }).sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
   }, [mechanicTasks, user, vehicles]);
 
 
@@ -101,30 +126,39 @@ export default function RepairsPage() {
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {completedTodayTasks.length > 0 ? completedTodayTasks.map(task => (
+                      {completedTodayTasks.length > 0 ? completedTodayTasks.map(task => {
+                        const originalReport = reports.find(r => r.id === task.vehicle.triggeringReportId);
+                        
+                        return (
                           <TableRow key={task.id}>
-                              <TableCell>
+                              <TableCell className="align-top">
                                   {task.vehicle ? (
-                                      <div className="border-l-2 border-primary pl-3">
-                                          <p className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></p>
-                                          <p className="text-sm text-muted-foreground">&bull; {task.vehicle.repairDescription}</p>
-                                          <p className="text-sm text-muted-foreground">&bull; Target: {format(new Date(`${task.vehicle.targetDate}T${task.vehicle.targetTime}`), 'dd MMM, HH.mm', { locale: localeID })}</p>
+                                      <div>
+                                        <div className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></div>
+                                        <div className="text-sm text-muted-foreground mt-1">
+                                          <span className="font-medium text-foreground">Deskripsi Perbaikan (WO):</span> {task.vehicle.repairDescription}
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                          <span className="font-medium text-foreground">Target Selesai:</span> {format(new Date(`${task.vehicle.targetDate}T${task.vehicle.targetTime}`), 'dd MMM yyyy, HH.mm', { locale: localeID })}
+                                        </div>
+                                        <OriginalReportDetails report={originalReport} />
                                       </div>
                                   ) : ( 'N/A' )}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="align-top">
                                 <div className="flex flex-col gap-1">
                                     {task.mechanics.map(m => <span key={m.id}>{m.name}</span>)}
                                 </div>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="align-top">
                                   {task.completedAt ? format(new Date(task.completedAt), 'HH:mm', { locale: localeID }) : '-'}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="align-top">
                                 {task.completedAt && task.vehicle && <CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} />}
                               </TableCell>
                           </TableRow>
-                      )) : (
+                        )
+                      }) : (
                           <TableRow>
                               <TableCell colSpan={4} className="h-24 text-center">Belum ada pekerjaan yang diselesaikan hari ini.</TableCell>
                           </TableRow>
