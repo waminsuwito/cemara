@@ -77,12 +77,23 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
         const formItems = itemsToRender.map((templateItem) => {
             const reportedItem = reportToUpdate.items.find(i => i.id === templateItem.id);
             if (reportedItem) {
-                // This item was reported as damaged before
+                // This is where the error happens.
+                // The status from Firestore is treated as a generic string.
+                // We need to ensure it's one of the allowed values for the form.
+                const validStatus = (s: any): "BAIK" | "RUSAK" | "PERLU PERHATIAN" => {
+                    const upperS = s?.toUpperCase();
+                    if (upperS === "BAIK" || upperS === "RUSAK" || upperS === "PERLU PERHATIAN") {
+                        return upperS;
+                    }
+                    // Default to a safe value if the data is somehow corrupt or unexpected.
+                    return "PERLU PERHATIAN"; 
+                };
+
                 return { 
                     id: reportedItem.id,
                     label: reportedItem.label,
-                    status: reportedItem.status as "BAIK" | "RUSAK" | "PERLU PERHATIAN",
-                    keterangan: reportedItem.keterangan,
+                    status: validStatus(reportedItem.status),
+                    keterangan: reportedItem.keterangan || '',
                     foto: undefined // We can't pre-fill file inputs
                 };
             }

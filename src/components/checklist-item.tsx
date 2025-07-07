@@ -74,7 +74,7 @@ export function ChecklistItem({ label, index }: ChecklistItemProps) {
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="PERLU PERHATIAN" id={`${label}-perhatian`} />
-              <Label htmlFor={`${label}-perhatian`}>PERHATIAN</Label>
+              <Label htmlFor={`${label}-perhatian`}>Perlu Perhatian</Label>
             </div>
           </RadioGroup>
           
