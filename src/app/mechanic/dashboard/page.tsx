@@ -65,20 +65,20 @@ export default function MechanicDashboardPage() {
       };
     });
 
-    // Now filter this list to get only the reports for damaged vehicles in the correct location.
+    // Now filter this list to get only the reports for damaged or attention-needed vehicles.
     return vehicleStatuses
       .filter(item => {
-        // Must have a report and be damaged
+        // Condition 1: Must have a report and be either 'Rusak' or 'Perlu Perhatian'
         if (!item.latestReport || (item.status !== 'Rusak' && item.status !== 'Perlu Perhatian')) {
           return false;
         }
 
-        // Filter by location for mechanics
+        // Condition 2: Filter by location for mechanics
         if (user?.role === 'MEKANIK' && user.location) {
           return item.vehicle.location === user.location;
         }
         
-        // Super admin sees all
+        // Condition 3: Super admin sees all
         if (user?.role === 'SUPER_ADMIN') {
           return true;
         }
