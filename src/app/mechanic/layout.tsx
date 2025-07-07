@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -35,8 +36,8 @@ import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/context/admin-auth-context";
 
 const navItems = [
-  { href: "/mechanic/dashboard", icon: LayoutDashboard, label: "Dashboard Kerusakan" },
-  { href: "/mechanic/tasks", icon: ClipboardList, label: "Target Pekerjaan Hari Ini" },
+  { href: "/mechanic/dashboard", icon: LayoutDashboard, label: "Alat Rusak Hari Ini" },
+  { href: "/mechanic/tasks", icon: ClipboardList, label: "Work Order (WO) Saya Hari Ini" },
   { href: "/mechanic/completed-tasks", icon: ClipboardCheck, label: "Realisasi Pekerjaan Hari Ini" },
   { href: "/mechanic/repair-history", icon: History, label: "Histori Perbaikan Alat" },
   { href: "/mechanic/members", icon: Users, label: "Anggota Mekanik" },

@@ -239,8 +239,8 @@ export default function MechanicTasksPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Target Pekerjaan Hari Ini</CardTitle>
-          <CardDescription>Tambah dan kelola target pekerjaan perbaikan alat untuk tim mekanik.</CardDescription>
+          <CardTitle>Work Order (WO) Saya Hari Ini</CardTitle>
+          <CardDescription>Tambah dan kelola Work Order (WO) perbaikan alat untuk tim mekanik.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

@@ -93,7 +93,7 @@ export default function MechanicDashboardPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Laporan Kerusakan Alat</CardTitle>
+          <CardTitle>Alat Rusak Hari Ini</CardTitle>
           <CardDescription>
             Daftar semua alat yang dilaporkan rusak atau perlu perhatian oleh operator.
             {user?.location && user.role !== 'SUPER_ADMIN' && ` Menampilkan laporan untuk lokasi: ${user.location}.`}
