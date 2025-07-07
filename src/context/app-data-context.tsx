@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfToday, isSameDay, isBefore } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
@@ -301,47 +301,53 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
-
+  
+    // Find vehicle details from state (which is assumed to be up-to-date for this)
     const vehicle = vehicles.find(v => v.hullNumber === newReportData.vehicleId);
     if (!vehicle) {
-        throw new Error(`Kendaraan dengan nomor lambung ${newReportData.vehicleId} tidak ditemukan.`);
+      throw new Error(`Kendaraan dengan nomor lambung ${newReportData.vehicleId} tidak ditemukan.`);
     }
-
+  
     const reportWithTimestamp = {
-        ...newReportData,
-        timestamp: serverTimestamp(),
-        reportDate: reportDateStr,
+      ...newReportData,
+      timestamp: serverTimestamp(),
+      reportDate: reportDateStr,
     };
-    
+  
     const batch = writeBatch(db);
-
+  
+    // Add the new report to the batch
     const reportRef = doc(collection(db, 'reports'));
     batch.set(reportRef, reportWithTimestamp);
-    
+  
     // --- Notification Logic ---
-    const previousReports = reports
-      .filter(r => r.vehicleId === newReportData.vehicleId)
-      .sort((a, b) => b.timestamp - a.timestamp);
-    const latestPreviousReport = previousReports[0];
-
+    // Fetch the single latest report directly from Firestore to get the true previous state
+    const reportsRef = collection(db, 'reports');
+    const q = query(reportsRef, where("vehicleId", "==", newReportData.vehicleId), orderBy("timestamp", "desc"), limit(1));
+    const querySnapshot = await getDocs(q);
+    const latestPreviousReportDoc = querySnapshot.docs[0];
+  
     let statusBeforeSubmission: Report['overallStatus'] | 'Belum Checklist' = 'Belum Checklist';
-    if (latestPreviousReport) {
-        const reportDate = new Date(latestPreviousReport.timestamp);
-        if (isSameDay(reportDate, startOfToday())) { 
-            statusBeforeSubmission = latestPreviousReport.overallStatus;
-        } else if (isBefore(reportDate, startOfToday())) { 
-            if (latestPreviousReport.overallStatus === 'Rusak' || latestPreviousReport.overallStatus === 'Perlu Perhatian') {
-                statusBeforeSubmission = latestPreviousReport.overallStatus;
-            }
+    if (latestPreviousReportDoc) {
+      const latestReportData = latestPreviousReportDoc.data() as Report;
+      const reportTimestamp = (latestReportData.timestamp as unknown as Timestamp).toMillis();
+      const reportDate = new Date(reportTimestamp);
+  
+      if (isSameDay(reportDate, startOfToday())) {
+        statusBeforeSubmission = latestReportData.overallStatus;
+      } else if (isBefore(reportDate, startOfToday())) {
+        if (latestReportData.overallStatus === 'Rusak' || latestReportData.overallStatus === 'Perlu Perhatian') {
+          statusBeforeSubmission = latestReportData.overallStatus;
         }
+      }
     }
-
+  
     const wasPreviouslyDamaged = statusBeforeSubmission === 'Rusak' || statusBeforeSubmission === 'Perlu Perhatian';
     const isNowBaik = newReportData.overallStatus === 'Baik';
     const isNowDamaged = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
-
+  
     const shouldSendNotification = isNowDamaged || (isNowBaik && wasPreviouslyDamaged);
-    
+  
     if (shouldSendNotification) {
         const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
         const usersToNotifyQuery = users.filter(u => 
@@ -362,15 +368,15 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
         if (isNowDamaged) {
             title = `Laporan Kerusakan Baru`;
-            message = `Kendaraan ${vehicle.licensePlate} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
+            message = `Kendaraan ${vehicle.licensePlate} (${vehicle.hullNumber}) dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
             type = 'DAMAGE';
         } else if (isNowBaik && wasPreviouslyDamaged) {
             type = 'SUCCESS';
             title = 'Perbaikan Selesai';
              if (submittedBy === 'mechanic') {
-                message = `Kendaraan ${vehicle.licensePlate} telah selesai perbaikan, dikerjakan dan dilaporkan oleh mekanik ${newReportData.operatorName.replace('Mekanik: ','')}.`;
+                message = `Kendaraan ${vehicle.licensePlate} (${vehicle.hullNumber}) telah selesai perbaikan, dikerjakan dan dilaporkan oleh mekanik ${newReportData.operatorName.replace('Mekanik: ','')}.`;
             } else { // submitted by operator
-                message = `Kendaraan ${vehicle.licensePlate} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh ${repairerName || 'Tim Mekanik'} dan dilaporkan oleh operator ${newReportData.operatorName}.`;
+                message = `Kendaraan ${vehicle.licensePlate} (${vehicle.hullNumber}) dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh ${repairerName || 'Tim Mekanik'} dan dilaporkan oleh operator ${newReportData.operatorName}.`;
             }
         }
 
@@ -386,7 +392,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             });
         }
     }
-    
+  
     await batch.commit();
   };
   
