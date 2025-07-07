@@ -316,6 +316,10 @@ function ChecklistPageContents() {
   const handleDialogSelesai = () => {
     setDialogStep('confirm_resolve');
   };
+
+  const handleDialogKembali = () => {
+      router.back();
+  };
     
   const handleConfirmResolve = async (resolvedBy: 'Dikerjakan Sendiri' | 'Dikerjakan Mekanik') => {
     setIsProcessing(true);
@@ -378,9 +382,12 @@ function ChecklistPageContents() {
                           Sistem menemukan laporan kerusakan/perlu perhatian yang belum terselesaikan untuk kendaraan ini. Apa yang ingin Anda lakukan?
                       </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <Button variant="outline" onClick={handleDialogTambah}>Tambah/Perbarui Laporan Kerusakan</Button>
-                      <Button onClick={handleDialogSelesai}>Kendaraan Sudah Diperbaiki</Button>
+                  <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+                      <Button variant="secondary" onClick={handleDialogKembali}>Kembali</Button>
+                      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                        <Button variant="outline" onClick={handleDialogTambah}>Tambah/Perbarui Laporan Kerusakan</Button>
+                        <Button onClick={handleDialogSelesai}>Kendaraan Sudah Diperbaiki</Button>
+                      </div>
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
@@ -397,15 +404,18 @@ function ChecklistPageContents() {
                           Siapa yang melakukan perbaikan pada kendaraan ini?
                       </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <Button variant="outline" onClick={() => handleConfirmResolve('Dikerjakan Sendiri')} disabled={isProcessing}>
-                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Dikerjakan Sendiri
-                      </Button>
-                      <Button onClick={() => handleConfirmResolve('Dikerjakan Mekanik')} disabled={isProcessing}>
-                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Dikerjakan Mekanik
-                      </Button>
+                  <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+                      <Button variant="secondary" onClick={() => setDialogStep('initial')} disabled={isProcessing}>Kembali</Button>
+                      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                        <Button variant="outline" onClick={() => handleConfirmResolve('Dikerjakan Sendiri')} disabled={isProcessing}>
+                            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Dikerjakan Sendiri
+                        </Button>
+                        <Button onClick={() => handleConfirmResolve('Dikerjakan Mekanik')} disabled={isProcessing}>
+                            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Dikerjakan Mekanik
+                        </Button>
+                      </div>
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
@@ -438,3 +448,5 @@ export default function ChecklistPage() {
 
   return <ChecklistPageContents />;
 }
+
+    
