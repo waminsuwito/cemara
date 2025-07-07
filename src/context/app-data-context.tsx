@@ -23,7 +23,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportIdToUpdate?: string) => Promise<void>;
 
   complaints: Complaint[];
   addComplaint: (complaint: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => Promise<void>;
@@ -271,22 +271,28 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<void> => {
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportIdToUpdate?: string): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
-    
+
     const vehicle = vehicles.find(v => v.hullNumber === newReportData.vehicleId);
     if (!vehicle) {
         throw new Error(`Kendaraan dengan nomor lambung ${newReportData.vehicleId} tidak ditemukan.`);
     }
 
-    // Always create a new report document for each submission
     const reportWithTimestamp = {
-      ...newReportData,
-      timestamp: serverTimestamp(),
-      reportDate: reportDateStr,
+        ...newReportData,
+        timestamp: serverTimestamp(),
+        reportDate: reportDateStr,
     };
-    await addDoc(collection(db, 'reports'), reportWithTimestamp);
+    
+    if (reportIdToUpdate) {
+        // We are updating an existing report
+        await updateDoc(doc(db, 'reports', reportIdToUpdate), reportWithTimestamp);
+    } else {
+        // We are creating a new report
+        await addDoc(collection(db, 'reports'), reportWithTimestamp);
+    }
   };
   
   const addComplaint = async (complaintData: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => {

@@ -16,6 +16,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
+import { startOfDay } from "date-fns";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 
 const checklistFormSchema = z.object({
@@ -35,7 +37,7 @@ const checklistFormSchema = z.object({
 type ChecklistFormData = z.infer<typeof checklistFormSchema>;
 
 
-function ChecklistForm() {
+function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
   const { user: operator, vehicle: vehicleHullNumber, logout } = useOperatorAuth();
   const { submitReport, vehicles } = useAppData();
   const [isLoading, setIsLoading] = useState(false);
@@ -68,21 +70,56 @@ function ChecklistForm() {
   const { reset } = methods;
 
   useEffect(() => {
-    if (itemsToRender.length > 0) {
-      reset({
-        items: itemsToRender.map((item) => ({
-          ...item,
-          status: "BAIK",
-          keterangan: "",
-          foto: undefined,
-        })),
-        kerusakanLain: {
-          keterangan: "",
-          foto: undefined,
-        },
-      });
+    if (itemsToRender.length === 0) return;
+
+    if (reportToUpdate) {
+        // Pre-fill from an existing, unresolved report
+        const formItems = itemsToRender.map((templateItem) => {
+            const reportedItem = reportToUpdate.items.find(i => i.id === templateItem.id);
+            if (reportedItem) {
+                // This item was reported as damaged before
+                return { 
+                    id: reportedItem.id,
+                    label: reportedItem.label,
+                    status: reportedItem.status,
+                    keterangan: reportedItem.keterangan,
+                    foto: undefined // We can't pre-fill file inputs
+                };
+            }
+            // This item was 'BAIK' in the previous report (implicitly)
+            return {
+                id: templateItem.id,
+                label: templateItem.label,
+                status: 'BAIK',
+                keterangan: '',
+                foto: undefined,
+            };
+        });
+
+        reset({
+            items: formItems,
+            kerusakanLain: {
+                keterangan: reportToUpdate.kerusakanLain?.keterangan || "",
+                foto: undefined,
+            },
+        });
+
+    } else {
+        // Default behavior for a fresh checklist
+        reset({
+            items: itemsToRender.map((item) => ({
+                ...item,
+                status: 'BAIK',
+                keterangan: '',
+                foto: undefined,
+            })),
+            kerusakanLain: {
+                keterangan: '',
+                foto: undefined,
+            },
+        });
     }
-  }, [reset, itemsToRender]);
+  }, [reset, itemsToRender, reportToUpdate]);
 
   const onSubmit = async (data: ChecklistFormData) => {
     setIsLoading(true);
@@ -117,7 +154,6 @@ function ChecklistForm() {
           return downloadURL;
         } catch (uploadError) {
           console.error("Image upload failed:", uploadError);
-          // Don't block submission, just log the error and proceed without the image
           return undefined;
         }
       };
@@ -169,11 +205,11 @@ function ChecklistForm() {
           }
       }
       
-      await submitReport(reportData);
+      await submitReport(reportData, reportToUpdate?.id);
       
       toast({
-        title: "Laporan Terkirim",
-        description: "Checklist harian Anda telah berhasil dikirim.",
+        title: reportToUpdate ? "Laporan Diperbarui" : "Laporan Terkirim",
+        description: reportToUpdate ? "Detail kerusakan telah berhasil diperbarui." : "Checklist harian Anda telah berhasil dikirim.",
       });
 
       logout();
@@ -206,7 +242,7 @@ function ChecklistForm() {
         <div className="flex justify-end">
           <Button size="lg" type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Kirim Laporan
+            {reportToUpdate ? 'Perbarui Laporan' : 'Kirim Laporan'}
           </Button>
         </div>
       </form>
@@ -215,23 +251,82 @@ function ChecklistForm() {
 }
 
 
-export default function ChecklistPage() {
-  const { user, vehicle, isLoading } = useOperatorAuth();
+function ChecklistPageContents() {
+  const { user, vehicle, isLoading: authIsLoading, logout } = useOperatorAuth();
+  const { reports, vehicles, isDataLoaded, submitReport } = useAppData();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [unresolvedReport, setUnresolvedReport] = useState<Report | null>(null);
+  const [dialogStep, setDialogStep] = useState<'hidden' | 'initial' | 'confirm_resolve'>('hidden');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // This logic is partially handled by the layout, but kept for robustness
-    if (!isLoading && !user) {
+    if (authIsLoading || !isDataLoaded) return;
+    if (!user) {
       router.replace("/");
+      return;
     }
-    // If user is logged in but hasn't selected a vehicle, redirect them to the selection page.
-    if (!isLoading && user && !vehicle) {
+    if (!vehicle) {
       router.replace("/checklist/select-vehicle");
+      return;
     }
-  }, [user, vehicle, isLoading, router]);
 
-  if (isLoading || !user || !vehicle) {
-    // The layout already shows a loading state, this is a fallback.
+    const reportsForVehicle = reports
+        .filter(r => r.vehicleId === vehicle)
+        .sort((a, b) => b.timestamp - a.timestamp);
+    
+    const latestReport = reportsForVehicle[0];
+
+    if (latestReport && (latestReport.overallStatus === 'Rusak' || latestReport.overallStatus === 'Perlu Perhatian')) {
+        setUnresolvedReport(latestReport);
+        setDialogStep('initial');
+    } else {
+        setUnresolvedReport(null);
+        setDialogStep('hidden');
+    }
+  }, [user, vehicle, reports, authIsLoading, isDataLoaded, router]);
+
+
+  const handleDialogTambah = () => {
+    setDialogStep('hidden'); 
+  };
+
+  const handleDialogSelesai = () => {
+    setDialogStep('confirm_resolve');
+  };
+    
+  const handleConfirmResolve = async (resolvedBy: 'Dikerjakan Sendiri' | 'Dikerjakan Mekanik') => {
+    setIsProcessing(true);
+    if (!user || !vehicle) return;
+    
+    const vehicleDetails = vehicles.find(v => v.hullNumber === vehicle);
+    if (!vehicleDetails || !user.location) return;
+
+    const reportData = {
+        vehicleId: vehicle,
+        vehicleType: vehicleDetails.type,
+        operatorName: user.name,
+        location: user.location,
+        overallStatus: 'Baik' as const,
+        items: [],
+        kerusakanLain: {
+            keterangan: `Perbaikan dari laporan sebelumnya telah selesai. Dikerjakan oleh: ${resolvedBy}.`,
+        }
+    };
+    
+    try {
+      await submitReport(reportData);
+      toast({ title: "Status Diperbarui", description: "Kendaraan telah ditandai dalam kondisi Baik. Anda akan logout." });
+      logout();
+      router.push('/');
+    } catch(e) {
+      toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menandai perbaikan selesai."});
+      setIsProcessing(false);
+    }
+  };
+
+  if (authIsLoading || !isDataLoaded || (dialogStep !== 'hidden' && !unresolvedReport)) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -239,14 +334,73 @@ export default function ChecklistPage() {
     );
   }
 
+  if (dialogStep === 'initial') {
+      return (
+          <AlertDialog open onOpenChange={() => {}}>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Laporan Kerusakan Ditemukan</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          Sistem menemukan laporan kerusakan/perlu perhatian yang belum terselesaikan untuk kendaraan ini. Apa yang ingin Anda lakukan?
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <Button variant="outline" onClick={handleDialogTambah}>Tambah/Perbarui Laporan Kerusakan</Button>
+                      <Button onClick={handleDialogSelesai}>Kendaraan Sudah Diperbaiki</Button>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+      );
+  }
+  
+  if (dialogStep === 'confirm_resolve') {
+      return (
+            <AlertDialog open onOpenChange={() => {}}>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Konfirmasi Perbaikan</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          Siapa yang melakukan perbaikan pada kendaraan ini?
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <Button variant="outline" onClick={() => handleConfirmResolve('Dikerjakan Sendiri')} disabled={isProcessing}>
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Dikerjakan Sendiri
+                      </Button>
+                      <Button onClick={() => handleConfirmResolve('Dikerjakan Mekanik')} disabled={isProcessing}>
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Dikerjakan Mekanik
+                      </Button>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+      );
+  }
+
   return (
     <>
       <div className="flex items-center mb-6">
         <h1 className="text-2xl font-semibold md:text-3xl font-headline">
-          Checklist Harian Alat
+          {unresolvedReport ? 'Perbarui Laporan Checklist' : 'Checklist Harian Alat'}
         </h1>
       </div>
-      <ChecklistForm />
+      <ChecklistForm reportToUpdate={unresolvedReport} />
     </>
   );
+}
+
+
+export default function ChecklistPage() {
+  const { user, vehicle, isLoading } = useOperatorAuth();
+  
+  if (isLoading || !user || !vehicle) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return <ChecklistPageContents />;
 }
