@@ -16,7 +16,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
-import { startOfDay } from "date-fns";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 
@@ -276,8 +275,7 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
   );
 }
 
-
-function ChecklistPageContents() {
+export default function ChecklistPage() {
   const { user, vehicle, isLoading: authIsLoading, logout } = useOperatorAuth();
   const { reports, vehicles, isDataLoaded, submitReport } = useAppData();
   const router = useRouter();
@@ -294,7 +292,9 @@ function ChecklistPageContents() {
       return;
     }
     if (!vehicle) {
-      router.replace("/checklist/select-vehicle");
+      if (user.role === 'KEPALA_BP') {
+          router.replace("/checklist/select-vehicle");
+      }
       return;
     }
 
@@ -323,7 +323,11 @@ function ChecklistPageContents() {
   };
 
   const handleDialogKembali = () => {
-      router.back();
+      if (user?.role === 'KEPALA_BP') {
+        router.push('/checklist/select-vehicle');
+      } else {
+        router.back();
+      }
   };
     
   const handleConfirmResolve = async (resolvedBy: 'Dikerjakan Sendiri' | 'Dikerjakan Mekanik') => {
@@ -369,12 +373,20 @@ function ChecklistPageContents() {
     }
   };
 
-  if (authIsLoading || !isDataLoaded || (dialogStep !== 'hidden' && !unresolvedReport)) {
+  if (authIsLoading || !isDataLoaded || !user || !vehicle) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (dialogStep !== 'hidden' && !unresolvedReport) {
+     return (
+        <div className="flex h-full w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
   }
 
   if (dialogStep === 'initial') {
@@ -438,20 +450,3 @@ function ChecklistPageContents() {
     </>
   );
 }
-
-
-export default function ChecklistPage() {
-  const { user, vehicle, isLoading } = useOperatorAuth();
-  
-  if (isLoading || !user || !vehicle) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return <ChecklistPageContents />;
-}
-
-    
