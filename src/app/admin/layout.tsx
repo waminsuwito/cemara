@@ -39,14 +39,14 @@ import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/context/admin-auth-context";
 
 const navItems = [
-  { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
-  { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
-  { href: "/admin/history", icon: History, label: "Riwayat Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
-  { href: "/admin/mechanic-activity", icon: Activity, label: "Kegiatan Mekanik", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
+  { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/history", icon: History, label: "Riwayat Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/mechanic-activity", icon: Activity, label: "Kegiatan Mekanik", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
-  { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
-  { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
-  { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN', 'KEPALA_BP'] },
+  { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {

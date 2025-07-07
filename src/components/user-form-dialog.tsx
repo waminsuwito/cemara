@@ -78,7 +78,7 @@ export function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, current
                         <Input id="name" name="name" defaultValue={editingUser?.name} className="col-span-3" required />
                     </div>
                     
-                    {role === 'OPERATOR' && (
+                    {(role === 'OPERATOR' || role === 'KEPALA_BP') && (
                         <>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="nik" className="text-right">NIK</Label>
@@ -104,7 +104,7 @@ export function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, current
                         </>
                     )}
                     
-                    {(role === 'SUPER_ADMIN' || role === 'LOCATION_ADMIN' || role === 'KEPALA_BP') && (
+                    {(role === 'SUPER_ADMIN' || role === 'LOCATION_ADMIN') && (
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="username" className="text-right">Username</Label>
                             <Input id="username" name="username" defaultValue={editingUser?.username} className="col-span-3" required disabled={editingUser?.username === 'superadmin'} />
@@ -119,7 +119,7 @@ export function UserFormDialog({ isOpen, setIsOpen, editingUser, onSave, current
                     {(role === 'LOCATION_ADMIN' || role === 'OPERATOR' || role === 'MEKANIK' || role === 'KEPALA_BP') && (
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="location" className="text-right">Lokasi</Label>
-                             <Select name="location" defaultValue={editingUser?.location || (currentUser?.role === 'LOCATION_ADMIN' ? currentUser.location : '')} required={role === 'OPERATOR' || role === 'LOCATION_ADMIN' || role === 'KEPALA_BP'} disabled={!isSuperAdmin && currentUser?.role !== 'SUPER_ADMIN'}>
+                             <Select name="location" defaultValue={editingUser?.location || (currentUser?.role === 'LOCATION_ADMIN' ? currentUser.location : '')} required={role === 'OPERATOR' || role === 'LOCATION_ADMIN' || role === 'KEPALA_BP' || role === 'MEKANIK'} disabled={!isSuperAdmin && currentUser?.role !== 'SUPER_ADMIN'}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Pilih Lokasi" />
                                 </SelectTrigger>

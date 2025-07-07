@@ -50,7 +50,6 @@ export default function UserManagementPage() {
 
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
   const isLocationAdmin = currentUser?.role === 'LOCATION_ADMIN';
-  const isKepalaBP = currentUser?.role === 'KEPALA_BP';
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -58,7 +57,7 @@ export default function UserManagementPage() {
     isSuperAdmin ? "all" : currentUser?.location || "all"
   );
   
-  if (!isSuperAdmin && !isLocationAdmin && !isKepalaBP) {
+  if (!isSuperAdmin && !isLocationAdmin) {
     return (
        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
         <div className="flex flex-col items-center gap-1 text-center">
@@ -106,7 +105,7 @@ export default function UserManagementPage() {
     const batangan = formData.get("batangan") as string;
 
     // --- Start Validation ---
-    if ((role === 'OPERATOR' || role === 'MEKANIK') && nik) {
+    if ((role === 'OPERATOR' || role === 'MEKANIK' || role === 'KEPALA_BP') && nik) {
       const isNikTaken = users.some(u => 
         (u.role === role) && u.nik?.toLowerCase().trim() === nik.toLowerCase().trim() && u.id !== editingUser?.id
       );
@@ -120,12 +119,12 @@ export default function UserManagementPage() {
       }
     }
 
-    if (role === "OPERATOR" && batangan) {
+    if ((role === "OPERATOR" || role === "KEPALA_BP") && batangan) {
       const newBatanganList = batangan.split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
       for (const b of newBatanganList) {
         const isBatanganInOtherLocation = users.some(u => 
           u.id !== editingUser?.id &&
-          u.role === 'OPERATOR' &&
+          (u.role === 'OPERATOR' || u.role === 'KEPALA_BP') &&
           u.location !== location &&
           u.batangan?.split(',').map(bt => bt.trim().toLowerCase()).includes(b)
         );
@@ -133,7 +132,7 @@ export default function UserManagementPage() {
           toast({
             variant: "destructive",
             title: "Gagal Menyimpan",
-            description: `Nomor Polisi "${b.toUpperCase()}" sudah ditugaskan untuk operator di lokasi lain.`,
+            description: `Nomor Polisi "${b.toUpperCase()}" sudah ditugaskan untuk pengguna di lokasi lain.`,
             duration: 7000,
           });
           return;
@@ -141,10 +140,10 @@ export default function UserManagementPage() {
       }
     }
 
-    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN" || role === "KEPALA_BP" || role === "MEKANIK") && username) {
+    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN" || role === "MEKANIK") && username) {
       const isAdminUsernameTaken = users.some(
         (u) =>
-          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN" || u.role === "KEPALA_BP" || u.role === "MEKANIK") &&
+          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN" || u.role === "MEKANIK") &&
           u.username?.toLowerCase().trim() === username.toLowerCase().trim() &&
           u.id !== editingUser?.id
       );
@@ -166,7 +165,7 @@ export default function UserManagementPage() {
             userToUpdate.password = password;
         }
         
-        if (role === 'OPERATOR') {
+        if (role === 'OPERATOR' || role === 'KEPALA_BP') {
             userToUpdate.nik = nik;
             userToUpdate.batangan = batangan;
             userToUpdate.location = location;
@@ -176,9 +175,9 @@ export default function UserManagementPage() {
             userToUpdate.nik = nik;
             userToUpdate.location = location;
             userToUpdate.batangan = undefined;
-        } else { // SUPER_ADMIN, LOCATION_ADMIN, KEPALA_BP
+        } else { // SUPER_ADMIN, LOCATION_ADMIN
             userToUpdate.username = username;
-            if (role === 'LOCATION_ADMIN' || role === 'KEPALA_BP') {
+            if (role === 'LOCATION_ADMIN') {
                 userToUpdate.location = location;
             } else { // SUPER_ADMIN
                 userToUpdate.location = undefined;
@@ -201,13 +200,13 @@ export default function UserManagementPage() {
         
         let newUser: Omit<User, 'id'> = { name, password, role };
 
-        if (role === 'OPERATOR') {
+        if (role === 'OPERATOR' || role === 'KEPALA_BP') {
             newUser = { ...newUser, nik, batangan, location };
         } else if (role === 'MEKANIK') {
              newUser = { ...newUser, username, nik, location };
-        } else { // SUPER_ADMIN, LOCATION_ADMIN, KEPALA_BP
+        } else { // SUPER_ADMIN, LOCATION_ADMIN
              newUser = { ...newUser, username };
-            if (role === 'LOCATION_ADMIN' || role === 'KEPALA_BP') {
+            if (role === 'LOCATION_ADMIN') {
                 newUser.location = location;
             }
         }
@@ -225,13 +224,13 @@ export default function UserManagementPage() {
         // Also show users without a location (super admins)
         return user.location === locationFilter || !user.location;
       }
-      if (isLocationAdmin || isKepalaBP) {
-        // Location admin/Kepala BP can only see users from their own location and not super admins.
+      if (isLocationAdmin) {
+        // Location admin can only see users from their own location and not super admins.
         return user.location === currentUser.location && user.role !== 'SUPER_ADMIN';
       }
       return false;
     });
-  }, [users, isSuperAdmin, isLocationAdmin, isKepalaBP, locationFilter, currentUser]);
+  }, [users, isSuperAdmin, isLocationAdmin, locationFilter, currentUser]);
 
   return (
     <>

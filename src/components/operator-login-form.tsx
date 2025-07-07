@@ -49,7 +49,7 @@ export function OperatorLoginForm() {
     const inputPassword = values.password.trim();
 
     const foundUser = users.find((user) => {
-      if (user.role !== 'OPERATOR') return false;
+      if (user.role !== 'OPERATOR' && user.role !== 'KEPALA_BP') return false;
       const userNik = user.nik?.toString().toLowerCase().trim();
       const userName = user.name?.toLowerCase().trim();
       return userNik === inputUsername || userName === inputUsername;
@@ -81,7 +81,7 @@ export function OperatorLoginForm() {
       toast({
         variant: "destructive",
         title: "Login Gagal",
-        description: `Operator "${foundUser.name}" tidak memiliki kendaraan (batangan) yang ditugaskan.`,
+        description: `Pengguna "${foundUser.name}" tidak memiliki kendaraan (batangan) yang ditugaskan.`,
       });
       setIsLoading(false);
       return;
@@ -92,7 +92,7 @@ export function OperatorLoginForm() {
       description: `Selamat datang, ${foundUser.name}.`,
     });
 
-    if (batanganList.length === 1) {
+    if (batanganList.length === 1 && foundUser.role === 'OPERATOR') {
       const singleBatangan = batanganList[0];
       const cleanBatangan = singleBatangan.replace(/[-\s]/g, '').toLowerCase();
       const vehicle = vehicles.find(v => 
