@@ -23,7 +23,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportToUpdateId?: string | null) => Promise<void>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
   deleteReport: (reportId: string) => Promise<void>;
 
   complaints: Complaint[];
@@ -294,7 +294,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportToUpdateId?: string | null): Promise<void> => {
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
 
@@ -315,11 +315,12 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     const reportRef = doc(collection(db, 'reports'));
     batch.set(reportRef, reportWithTimestamp);
     
-    // Notification logic for new reports
+    // --- Notification Logic ---
     const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
-    const isSuccess = newReportData.overallStatus === 'Baik';
+    const isRepairCompletion = newReportData.overallStatus === 'Baik' && newReportData.kerusakanLain?.keterangan?.startsWith('Perbaikan dari laporan sebelumnya telah selesai');
 
-    if (isDamage || isSuccess) {
+    // Only notify on damage or on repair completion. Do NOT notify on routine "Baik" checks.
+    if (isDamage || isRepairCompletion) {
         const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
         const usersToNotify = users.filter(u => 
             adminRoles.includes(u.role) && 
@@ -334,18 +335,13 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             title = `Laporan Kerusakan Baru`;
             message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
             type = 'DAMAGE';
-        } else if (isSuccess) {
+        } else if (isRepairCompletion) {
             type = 'SUCCESS';
-            if (newReportData.kerusakanLain?.keterangan?.startsWith('Perbaikan dari laporan sebelumnya telah selesai')) {
-                title = 'Perbaikan Selesai';
-                if (newReportData.kerusakanLain.keterangan.includes('Dikerjakan Sendiri')) {
-                    message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan dan dilaporkan oleh operator ${newReportData.operatorName}.`;
-                } else { // Dikerjakan oleh Mekanik, dilaporkan oleh Operator
-                    message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh Tim Mekanik, dilaporkan oleh operator ${newReportData.operatorName}.`;
-                }
-            } else { // Normal 'Baik' report
-                title = 'Laporan Kondisi Baik';
-                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
+            title = 'Perbaikan Selesai';
+            if (newReportData.kerusakanLain!.keterangan.includes('Dikerjakan Sendiri')) {
+                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan dan dilaporkan oleh operator ${newReportData.operatorName}.`;
+            } else { // Dikerjakan oleh Mekanik, dilaporkan oleh Operator
+                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh Tim Mekanik, dilaporkan oleh operator ${newReportData.operatorName}.`;
             }
         }
 
