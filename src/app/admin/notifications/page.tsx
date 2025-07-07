@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { id as localeID } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,28 +44,24 @@ const getNotificationStyle = (type?: Notification['type']) => {
 };
 
 export default function NotificationsPage() {
-  const { notifications, users } = useAppData();
+  const { notifications, users, markNotificationsAsRead } = useAppData();
   const { user: adminUser } = useAdminAuth();
 
+  const me = useMemo(() => {
+    if (!adminUser) return null;
+    return users.find(u => u.username === adminUser.username && u.role === adminUser.role);
+  }, [adminUser, users]);
+
   const myNotifications = useMemo(() => {
-    if (!adminUser) return [];
-
-    // Admins need to see notifications for all users in their scope
-    if (adminUser.role === 'SUPER_ADMIN') {
-        // Super admin sees all notifications for all admin-level users
-        const adminRoles: string[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
-        const adminUserIds = new Set(users.filter(u => adminRoles.includes(u.role)).map(u => u.id));
-        return notifications.filter(n => adminUserIds.has(n.userId));
+    if (!me) return [];
+    return notifications.filter(n => n.userId === me.id);
+  }, [notifications, me]);
+  
+  useEffect(() => {
+    if (me) {
+      markNotificationsAsRead(me.id);
     }
-
-    if (adminUser.role === 'LOCATION_ADMIN' && adminUser.location) {
-        // Location admin sees notifications for all users in their location
-        const userIdsInLocation = new Set(users.filter(u => u.location === adminUser.location).map(u => u.id));
-        return notifications.filter(n => userIdsInLocation.has(n.userId));
-    }
-    
-    return [];
-  }, [notifications, adminUser, users]);
+  }, [me, markNotificationsAsRead]);
 
   return (
     <Card>

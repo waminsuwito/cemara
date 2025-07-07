@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { id as localeID } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,15 +44,24 @@ const getNotificationStyle = (type?: Notification['type']) => {
 };
 
 export default function NotificationsPage() {
-  const { notifications, users } = useAppData();
+  const { notifications, users, markNotificationsAsRead } = useAppData();
   const { user: adminUser } = useAdminAuth();
 
+  const me = useMemo(() => {
+    if (!adminUser) return null;
+    return users.find(u => u.username === adminUser.username && u.role === adminUser.role);
+  }, [adminUser, users]);
+
   const myNotifications = useMemo(() => {
-    if (!adminUser) return [];
-    const me = users.find(u => u.username === adminUser.username && u.role === adminUser.role);
     if (!me) return [];
     return notifications.filter(n => n.userId === me.id);
-  }, [notifications, adminUser, users]);
+  }, [notifications, me]);
+
+  useEffect(() => {
+    if (me) {
+      markNotificationsAsRead(me.id);
+    }
+  }, [me, markNotificationsAsRead]);
 
   return (
     <Card>

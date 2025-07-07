@@ -34,6 +34,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/context/admin-auth-context";
+import { useAppData } from "@/context/app-data-context";
 
 const navItems = [
   { href: "/logistik/dashboard", icon: Wrench, label: "Daftar Alat Rusak Hari Ini" },
@@ -44,7 +45,7 @@ const navItems = [
   { href: "/logistik/notifications", icon: Inbox, label: "Pesan Masuk" },
 ];
 
-const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: React.ElementType, label: string, className?: string}) => {
+const NavLink = ({ href, icon: Icon, label, className, hasBadge }: {href: string, icon: React.ElementType, label: string, className?: string, hasBadge?: boolean}) => {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -52,11 +53,17 @@ const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: Re
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+        "relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
         isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow",
         className
       )}
     >
+      {hasBadge && (
+        <span className="absolute left-1 top-1.5 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+        </span>
+      )}
       <Icon className="h-4 w-4" />
       {label}
     </Link>
@@ -66,7 +73,18 @@ const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: Re
 function LogistikLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, logout, isLoading } = useAdminAuth();
+  const { users, notifications } = useAppData();
   
+  const me = React.useMemo(() => {
+    if (!user) return null;
+    return users.find(u => u.username === user.username && u.role === user.role);
+  }, [user, users]);
+
+  const unreadCount = React.useMemo(() => {
+    if (!me) return 0;
+    return notifications.filter(n => n.userId === me.id && !n.isRead).length;
+  }, [me, notifications]);
+
   React.useEffect(() => {
     if (!isLoading && (!user || (user.role !== 'LOGISTIK' && user.role !== 'SUPER_ADMIN'))) {
       router.push('/');
@@ -99,7 +117,11 @@ function LogistikLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex-1 overflow-y-auto">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
               {navItems.map((item) => (
-                <NavLink key={item.href} {...item} />
+                <NavLink 
+                  key={item.href} 
+                  {...item} 
+                  hasBadge={item.label === 'Pesan Masuk' && unreadCount > 0}
+                />
               ))}
             </nav>
           </div>
@@ -146,7 +168,11 @@ function LogistikLayoutContent({ children }: { children: React.ReactNode }) {
                     </SheetTitle>
                   </SheetHeader>
                   {navItems.map((item) => (
-                    <NavLink key={item.href} {...item} />
+                    <NavLink 
+                      key={item.href} 
+                      {...item} 
+                      hasBadge={item.label === 'Pesan Masuk' && unreadCount > 0}
+                    />
                   ))}
                 </nav>
               </div>

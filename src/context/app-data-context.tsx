@@ -44,6 +44,7 @@ type AppDataContextType = {
   addPenalty: (penaltyToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>) => Promise<void>;
 
   notifications: Notification[];
+  markNotificationsAsRead: (userId: string) => Promise<void>;
 
   locations: Location[];
   locationNames: string[];
@@ -548,6 +549,24 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const markNotificationsAsRead = async (userId: string) => {
+    const notificationsToUpdate = notifications.filter(n => n.userId === userId && !n.isRead);
+    if (notificationsToUpdate.length === 0) return;
+
+    const batch = writeBatch(db);
+    notificationsToUpdate.forEach(n => {
+        const notifRef = doc(db, 'notifications', n.id);
+        batch.update(notifRef, { isRead: true });
+    });
+
+    try {
+        await batch.commit();
+    } catch (e) {
+        console.error("Error marking notifications as read:", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal menandai pesan sebagai sudah dibaca." });
+    }
+  };
+
   const locationNames = locations.map(l => l.namaBP).sort();
 
   const value = {
@@ -560,6 +579,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     sparePartLogs, addSparePartLog,
     penalties, addPenalty,
     notifications,
+    markNotificationsAsRead,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

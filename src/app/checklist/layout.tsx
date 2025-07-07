@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: React.ElementType, label: string, className?: string}) => {
+const NavLink = ({ href, icon: Icon, label, className, hasBadge }: {href: string, icon: React.ElementType, label: string, className?: string, hasBadge?: boolean}) => {
   const pathname = usePathname();
   const isActive = pathname === href;
 
@@ -47,11 +47,17 @@ const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: Re
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+        "relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
         isActive && "bg-primary/10 text-primary font-semibold shadow-inner-glow",
         className
       )}
     >
+       {hasBadge && (
+        <span className="absolute left-1 top-1.5 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+        </span>
+      )}
       <Icon className="h-4 w-4" />
       {label}
     </Link>
@@ -61,7 +67,7 @@ const NavLink = ({ href, icon: Icon, label, className }: {href: string, icon: Re
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, vehicle, logout, isLoading, selectVehicle } = useOperatorAuth();
-  const { vehicles } = useAppData();
+  const { vehicles, notifications } = useAppData();
   
   const selectedVehicle = React.useMemo(() => {
     if (!vehicle) return null;
@@ -75,6 +81,11 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
       .filter(v => batanganList.includes(v.licensePlate.trim().toLowerCase()))
       .sort((a, b) => a.licensePlate.localeCompare(b.licensePlate));
   }, [user, vehicles]);
+
+  const unreadCount = React.useMemo(() => {
+    if (!user) return 0;
+    return notifications.filter(n => n.userId === user.id && !n.isRead).length;
+  }, [user, notifications]);
 
   const handleVehicleChange = (hullNumber: string) => {
     if (hullNumber) {
@@ -132,7 +143,11 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
           <div className="flex-1 overflow-y-auto">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
               {navItems.map((item) => (
-                <NavLink key={item.href} {...item} />
+                <NavLink 
+                  key={item.href} 
+                  {...item}
+                  hasBadge={item.label === 'Pesan Masuk' && unreadCount > 0}
+                />
               ))}
             </nav>
           </div>
@@ -172,7 +187,11 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                     </SheetTitle>
                   </SheetHeader>
                   {navItems.map((item) => (
-                    <NavLink key={item.href} {...item} />
+                     <NavLink 
+                      key={item.href} 
+                      {...item}
+                      hasBadge={item.label === 'Pesan Masuk' && unreadCount > 0}
+                    />
                   ))}
                 </nav>
               </div>
