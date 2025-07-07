@@ -50,7 +50,7 @@ export function MechanicLoginForm() {
 
     const foundUser = users.find(
       (u) =>
-        u.role === 'MEKANIK' &&
+        (u.role === 'MEKANIK' || u.role === 'LOGISTIK') &&
         u.username?.toLowerCase().trim() === inputUsername &&
         u.password === inputPassword
     );
@@ -65,12 +65,17 @@ export function MechanicLoginForm() {
         title: "Login Berhasil",
         description: `Selamat datang, ${foundUser.name}.`,
       });
-      router.push("/mechanic/dashboard");
+
+      if (foundUser.role === 'LOGISTIK') {
+        router.push("/logistik/dashboard");
+      } else {
+        router.push("/mechanic/dashboard");
+      }
     } else {
       toast({
         variant: "destructive",
         title: "Login Gagal",
-        description: "Username atau password mekanik salah.",
+        description: "Username atau password salah.",
       });
       setIsLoading(false);
     }

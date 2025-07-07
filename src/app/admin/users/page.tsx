@@ -155,10 +155,10 @@ export default function UserManagementPage() {
       }
     }
 
-    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN" || role === "MEKANIK") && username) {
+    if ((role === "SUPER_ADMIN" || role === "LOCATION_ADMIN" || role === "MEKANIK" || role === "LOGISTIK") && username) {
       const isAdminUsernameTaken = users.some(
         (u) =>
-          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN" || u.role === "MEKANIK") &&
+          (u.role === "SUPER_ADMIN" || u.role === "LOCATION_ADMIN" || u.role === "MEKANIK" || u.role === "LOGISTIK") &&
           u.username?.toLowerCase().trim() === username.toLowerCase().trim() &&
           u.id !== editingUser?.id
       );
@@ -190,6 +190,11 @@ export default function UserManagementPage() {
             userToUpdate.nik = nik;
             userToUpdate.location = location;
             userToUpdate.batangan = undefined;
+        } else if (role === 'LOGISTIK') {
+            userToUpdate.username = username;
+            userToUpdate.location = location;
+            userToUpdate.nik = undefined;
+            userToUpdate.batangan = undefined;
         } else { // SUPER_ADMIN, LOCATION_ADMIN
             userToUpdate.username = username;
             if (role === 'LOCATION_ADMIN') {
@@ -219,6 +224,8 @@ export default function UserManagementPage() {
             newUser = { ...newUser, nik, batangan, location };
         } else if (role === 'MEKANIK') {
              newUser = { ...newUser, username, nik, location };
+        } else if (role === 'LOGISTIK') {
+             newUser = { ...newUser, username, location };
         } else { // SUPER_ADMIN, LOCATION_ADMIN
              newUser = { ...newUser, username };
             if (role === 'LOCATION_ADMIN') {

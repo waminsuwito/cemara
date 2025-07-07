@@ -39,7 +39,7 @@ export default function Home() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="operator">Operator/Driver</TabsTrigger>
               <TabsTrigger value="admin">Admin</TabsTrigger>
-              <TabsTrigger value="mekanik">Mekanik</TabsTrigger>
+              <TabsTrigger value="mekanik">Mekanik/Logistik</TabsTrigger>
             </TabsList>
             <TabsContent value="operator">
               <Card className="bg-card/80 backdrop-blur-sm border-white/10">
@@ -70,9 +70,9 @@ export default function Home() {
             <TabsContent value="mekanik">
               <Card className="bg-card/80 backdrop-blur-sm border-white/10">
                 <CardHeader>
-                  <CardTitle>Login Mekanik</CardTitle>
+                  <CardTitle>Login Mekanik / Logistik</CardTitle>
                   <CardDescription>
-                    Masukan username dan password untuk mengakses dasbor mekanik.
+                    Masukan username dan password untuk mengakses dasbor Anda.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
