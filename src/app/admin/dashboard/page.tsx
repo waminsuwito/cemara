@@ -51,8 +51,9 @@ import {
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import { cn } from "@/lib/utils";
-import { type Report, type Vehicle } from "@/lib/data";
+import { type Report, type Vehicle, type User, Penalty } from "@/lib/data";
 import { format, isSameDay, isBefore, startOfToday } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 
 const StatCard = ({ title, value, icon: Icon, description, valueClassName }: { title: string, value: string, icon: React.ElementType, description: string, valueClassName?: string }) => (
@@ -85,18 +86,56 @@ const getStatusBadge = (status: string) => {
 
 type VehicleWithStatus = Vehicle & { status: string; latestReport?: Report };
 
-const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
+const VehicleDetailContent = ({ vehicles, users, statusFilter, title, description }: {
   vehicles: VehicleWithStatus[];
+  users: User[];
   statusFilter?: string;
   title: string;
   description: string;
 }) => {
+    const { addPenalties } = useAppData();
+    const { user: adminUser } = useAdminAuth();
+    const { toast } = useToast();
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithStatus | null>(null);
     const [penalties, setPenalties] = useState<Record<string, string>>({});
 
     const handlePenaltyChange = (vehicleId: string, value: string) => {
         setPenalties(prev => ({...prev, [vehicleId]: value}));
+    };
+
+    const handleSavePenalties = () => {
+        if (!adminUser) return;
+
+        const penaltiesToSave = Object.entries(penalties)
+            .map(([vehicleId, pointsStr]) => {
+                const points = parseInt(pointsStr, 10);
+                if (isNaN(points) || points <= 0 || points > 10) return null;
+
+                const vehicle = vehicles.find(v => v.id === vehicleId);
+                if (!vehicle) return null;
+                
+                const responsibleUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+                if (!responsibleUser || !responsibleUser.nik) return null;
+
+                return {
+                    userId: responsibleUser.id,
+                    userName: responsibleUser.name,
+                    userNik: responsibleUser.nik,
+                    vehicleHullNumber: vehicle.hullNumber,
+                    points,
+                    reason: 'Belum Checklist',
+                };
+            })
+            .filter((p): p is Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'> => p !== null);
+
+        if (penaltiesToSave.length > 0) {
+            addPenalties(penaltiesToSave).then(() => {
+                setPenalties({}); // Clear local state after saving
+            });
+        } else {
+            toast({ title: "Tidak ada data untuk disimpan", description: "Tidak ada poin penalty yang valid untuk disimpan." });
+        }
     };
 
     const handleDetailClick = (vehicle: VehicleWithStatus) => {
@@ -166,6 +205,14 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                             </TableBody>
                         </Table>
                     </div>
+                     <DialogFooter className="mt-4">
+                        <DialogClose asChild>
+                            <Button variant="outline">Tutup</Button>
+                        </DialogClose>
+                        {title === "Detail Alat Belum Checklist" && (
+                            <Button onClick={handleSavePenalties}>Simpan Penalty</Button>
+                        )}
+                    </DialogFooter>
                 </>
             ) : (
                 <>
@@ -235,7 +282,7 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
-  const { vehicles, reports, locationNames, isDataLoaded } = useAppData();
+  const { vehicles, reports, users, locationNames, isDataLoaded } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const prevReportsRef = useRef<Report[]>([]);
@@ -359,6 +406,7 @@ export default function DashboardPage() {
                         title="Detail Total Alat"
                         description="Berikut adalah daftar semua alat berat yang terdaftar di lokasi yang dipilih."
                         vehicles={masterVehiclesForLocation}
+                        users={users}
                     />
                 </DialogContent>
             </Dialog>
@@ -374,6 +422,7 @@ export default function DashboardPage() {
                         title="Detail Alat Sudah Checklist"
                         description="Berikut adalah daftar alat berat yang sudah melakukan checklist hari ini."
                         vehicles={checkedInVehicles}
+                        users={users}
                     />
                 </DialogContent>
             </Dialog>
@@ -389,6 +438,7 @@ export default function DashboardPage() {
                         title="Detail Alat Belum Checklist"
                         description="Berikut adalah daftar alat berat yang belum melakukan checklist hari ini."
                         vehicles={notCheckedInVehicles}
+                        users={users}
                     />
                 </DialogContent>
             </Dialog>
@@ -404,6 +454,7 @@ export default function DashboardPage() {
                         title="Detail Alat Baik"
                         description="Berikut adalah daftar semua alat berat dalam kondisi baik."
                         vehicles={baikVehicles}
+                        users={users}
                         statusFilter="Baik"
                     />
                 </DialogContent>
@@ -420,6 +471,7 @@ export default function DashboardPage() {
                         title="Detail Alat Perlu Perhatian"
                         description="Berikut adalah daftar semua alat berat yang memerlukan perhatian."
                         vehicles={perhatianVehicles}
+                        users={users}
                         statusFilter="Perlu Perhatian"
                     />
                 </DialogContent>
@@ -436,6 +488,7 @@ export default function DashboardPage() {
                         title="Detail Alat Rusak"
                         description="Berikut adalah daftar semua alat berat yang rusak."
                         vehicles={rusakVehicles}
+                        users={users}
                         statusFilter="Rusak"
                     />
                 </DialogContent>

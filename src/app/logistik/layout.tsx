@@ -11,6 +11,8 @@ import {
   ClipboardCheck,
   History,
   Package,
+  Bell,
+  ShieldX,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,8 @@ const navItems = [
   { href: "/logistik/repairs", icon: ClipboardCheck, label: "Daftar Perbaikan Hari Ini" },
   { href: "/logistik/spare-parts", icon: Package, label: "Spare Parts Digunakan Hari Ini" },
   { href: "/logistik/spare-parts-history", icon: History, label: "Riwayat Spare Part" },
+  { href: "/logistik/penalty", icon: ShieldX, label: "Jumlah Penalty Saya" },
+  { href: "/logistik/notifications", icon: Bell, label: "Pemberitahuan" },
 ];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {

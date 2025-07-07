@@ -14,6 +14,8 @@ import {
   ClipboardCheck,
   KeyRound,
   ClipboardList,
+  Bell,
+  ShieldX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,6 +88,8 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
       { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
       { href: "/checklist/history", icon: History, label: "Riwayat Saya" },
       { href: "/checklist/change-password", icon: KeyRound, label: "Ganti Password" },
+      { href: "/checklist/penalty", icon: ShieldX, label: "Jumlah Penalty Saya" },
+      { href: "/checklist/notifications", icon: Bell, label: "Pemberitahuan" },
     ];
 
     if (user?.role === 'KEPALA_BP') {

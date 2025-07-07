@@ -3,9 +3,9 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog } from '@/lib/data';
+import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
@@ -40,6 +40,9 @@ type AppDataContextType = {
   sparePartLogs: SparePartLog[];
   addSparePartLog: (log: Omit<SparePartLog, 'id' | 'logDate' | 'loggedById' | 'loggedByName'>) => Promise<void>;
 
+  penalties: Penalty[];
+  addPenalties: (penaltiesToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>[]) => Promise<void>;
+
   locations: Location[];
   locationNames: string[];
   addLocation: (location: Omit<Location, 'id'>) => Promise<void>;
@@ -59,6 +62,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [mechanicTasks, setMechanicTasks] = useState<MechanicTask[]>([]);
   const [sparePartLogs, setSparePartLogs] = useState<SparePartLog[]>([]);
+  const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
@@ -130,6 +134,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           { name: 'suggestions', setter: setSuggestions, orderByField: 'timestamp' },
           { name: 'mechanicTasks', setter: setMechanicTasks, orderByField: 'createdAt' },
           { name: 'sparePartLogs', setter: setSparePartLogs, orderByField: 'logDate' },
+          { name: 'penalties', setter: setPenalties, orderByField: 'timestamp' },
       ];
 
       const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
@@ -166,6 +171,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       setSuggestions([]);
       setMechanicTasks([]);
       setSparePartLogs([]);
+      setPenalties([]);
     }
   }, [adminUser, operatorUser, toast]);
 
@@ -438,6 +444,29 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const addPenalties = async (penaltiesToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>[]) => {
+    if (!adminUser) {
+        toast({ variant: "destructive", title: "Aksi Gagal", description: "Anda harus login sebagai admin." });
+        return;
+    }
+    try {
+        const batch = writeBatch(db);
+        penaltiesToAdd.forEach(penalty => {
+            const docRef = doc(collection(db, 'penalties'));
+            batch.set(docRef, { 
+                ...penalty,
+                timestamp: serverTimestamp(),
+                givenByAdminUsername: adminUser.username
+            });
+        });
+        await batch.commit();
+        toast({ title: "Sukses", description: "Data penalty berhasil disimpan." });
+    } catch (e) {
+        console.error("Error adding penalties: ", e);
+        toast({ variant: "destructive", title: "Error", description: "Gagal menyimpan data penalty." });
+    }
+  };
+
   const locationNames = locations.map(l => l.namaBP).sort();
 
   const value = {
@@ -448,6 +477,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     suggestions, addSuggestion,
     mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask,
     sparePartLogs, addSparePartLog,
+    penalties, addPenalties,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

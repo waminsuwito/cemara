@@ -8,8 +8,8 @@ export type User = {
   name: string;
   password?: string;
   role: UserRole;
-  nik?: string; // For Operator & Mekanik
-  batangan?: string; // For Operator
+  nik?: string; // For Operator, Kepala BP & Mekanik
+  batangan?: string; // For Operator & Kepala BP
   location?: string;
   username?: string; // For Admin, Mekanik, Logistik
 };
@@ -101,6 +101,18 @@ export type SparePartLog = {
   logDate: number;
   loggedById: string;
   loggedByName: string;
+};
+
+export type Penalty = {
+  id: string;
+  userId: string;
+  userName: string;
+  userNik: string;
+  vehicleHullNumber: string;
+  points: number;
+  reason: string;
+  timestamp: number;
+  givenByAdminUsername: string;
 };
 
 
