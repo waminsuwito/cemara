@@ -29,7 +29,7 @@ export default function MyPenaltyPage() {
             <CardHeader>
                 <CardTitle>Riwayat Penalti Saya</CardTitle>
                 <CardDescription>
-                    Berikut adalah riwayat dan total penalty Anda terkait kedisiplinan checklist.
+                    Berikut adalah riwayat dan total poin Penalty Anda terkait kedisiplinan checklist.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -55,7 +55,7 @@ export default function MyPenaltyPage() {
                             {myPenalties.length > 0 ? (
                                 myPenalties.map(p => (
                                     <TableRow key={p.id}>
-                                        <TableCell>{format(new Date(p.timestamp), 'dd MMM yyyy', { locale: localeID })}</TableCell>
+                                        <TableCell>{format(new Date(p.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
                                         <TableCell className="font-bold">{p.points}</TableCell>
                                         <TableCell>{p.vehicleHullNumber}</TableCell>
                                         <TableCell>{p.reason}</TableCell>

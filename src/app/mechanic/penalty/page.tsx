@@ -57,7 +57,7 @@ export default function MyPenaltyPage() {
                             {myPenalties.length > 0 ? (
                                 myPenalties.map(p => (
                                     <TableRow key={p.id}>
-                                        <TableCell>{format(new Date(p.timestamp), 'dd MMM yyyy', { locale: localeID })}</TableCell>
+                                        <TableCell>{format(new Date(p.timestamp), 'dd MMM yyyy, HH:mm', { locale: localeID })}</TableCell>
                                         <TableCell className="font-bold">{p.points}</TableCell>
                                         <TableCell>{p.vehicleHullNumber}</TableCell>
                                         <TableCell>{p.reason}</TableCell>
