@@ -50,7 +50,7 @@ export function AdminLoginForm() {
 
     const foundUser = users.find(
       (u) =>
-        (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN') &&
+        (u.role === 'SUPER_ADMIN' || u.role === 'LOCATION_ADMIN' || u.role === 'KEPALA_BP') &&
         u.username?.toLowerCase().trim() === inputUsername &&
         u.password === inputPassword
     );

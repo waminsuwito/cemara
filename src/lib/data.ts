@@ -1,7 +1,7 @@
 
 import type { z } from "zod";
 
-export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR' | 'MEKANIK';
+export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR' | 'MEKANIK' | 'KEPALA_BP';
 
 export type User = {
   id: string;
@@ -93,7 +93,7 @@ export type MechanicTask = {
 };
 
 
-export const roles: UserRole[] = ["OPERATOR", "LOCATION_ADMIN", "SUPER_ADMIN", "MEKANIK"];
+export const roles: UserRole[] = ["OPERATOR", "MEKANIK", "KEPALA_BP", "LOCATION_ADMIN", "SUPER_ADMIN"];
 
 // Checklist for standard vehicles
 export const checklistItems = [
