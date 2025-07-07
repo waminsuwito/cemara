@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   CircleUser,
   Menu,
@@ -29,6 +29,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
   const pathname = usePathname();
@@ -50,13 +57,27 @@ const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.Element
 
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, vehicle, logout, isLoading } = useOperatorAuth();
+  const { user, vehicle, logout, isLoading, selectVehicle } = useOperatorAuth();
   const { vehicles } = useAppData();
   
   const selectedVehicle = React.useMemo(() => {
     if (!vehicle) return null;
     return vehicles.find(v => v.hullNumber === vehicle);
   }, [vehicle, vehicles]);
+
+  const availableVehicles = useMemo(() => {
+    if (!user?.batangan) return [];
+    const batanganList = user.batangan.split(',').map(b => b.trim().toLowerCase());
+    return vehicles
+      .filter(v => batanganList.includes(v.licensePlate.trim().toLowerCase()))
+      .sort((a, b) => a.licensePlate.localeCompare(b.licensePlate));
+  }, [user, vehicles]);
+
+  const handleVehicleChange = (hullNumber: string) => {
+    if (hullNumber) {
+      selectVehicle(hullNumber);
+    }
+  };
 
   const navItems = React.useMemo(() => {
     const baseItems = [
@@ -166,14 +187,34 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-             <div className="text-sm text-muted-foreground">
-                Operator: <span className="font-semibold text-primary">{user.name}</span>
-                {selectedVehicle && (
-                    <>
-                    , Kendaraan: <span className="font-semibold text-primary">{selectedVehicle.licensePlate} ({selectedVehicle.hullNumber})</span>
-                    </>
-                )}
-            </div>
+             {user.role === 'KEPALA_BP' ? (
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="text-sm text-muted-foreground hidden lg:block">
+                    Kepala BP: <span className="font-semibold text-primary">{user.name}</span>
+                  </div>
+                   <Select value={vehicle || ""} onValueChange={handleVehicleChange}>
+                    <SelectTrigger className="w-full max-w-[280px] text-sm h-9">
+                      <SelectValue placeholder="Pilih Kendaraan..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableVehicles.map(v => (
+                        <SelectItem key={v.id} value={v.hullNumber}>
+                          {v.licensePlate} ({v.type})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                    Operator: <span className="font-semibold text-primary">{user.name}</span>
+                    {selectedVehicle && (
+                        <>
+                        , Kendaraan: <span className="font-semibold text-primary">{selectedVehicle.licensePlate} ({selectedVehicle.hullNumber})</span>
+                        </>
+                    )}
+                </div>
+              )}
           </div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
             <p className="font-semibold text-primary tracking-wider whitespace-nowrap">
