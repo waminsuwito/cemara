@@ -312,16 +312,20 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         const reportRef = doc(collection(db, 'reports'));
         batch.set(reportRef, reportWithTimestamp);
         
-        // Notification logic for new 'Rusak' reports
-        if (newReportData.overallStatus === 'Rusak') {
+        // Notification logic for new reports ('Rusak' or 'Baik')
+        if (newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Baik') {
             const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
             const usersToNotify = users.filter(u => 
                 adminRoles.includes(u.role) && 
                 (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
             );
 
-            const title = `Laporan Kerusakan Baru`;
-            const message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan rusak oleh ${newReportData.operatorName}.`;
+            const isDamage = newReportData.overallStatus === 'Rusak';
+            const title = isDamage ? `Laporan Kerusakan Baru` : `Laporan Kondisi Baik`;
+            const message = isDamage 
+                ? `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan rusak oleh ${newReportData.operatorName}.`
+                : `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
+            const type = isDamage ? 'DAMAGE' : 'SUCCESS';
 
             for (const userToNotify of usersToNotify) {
                 const notificationRef = doc(collection(db, 'notifications'));
@@ -330,7 +334,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
                     title,
                     message,
                     timestamp: serverTimestamp(),
-                    isRead: false
+                    isRead: false,
+                    type,
                 });
             }
         }
@@ -461,7 +466,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
                     title,
                     message,
                     timestamp: serverTimestamp(),
-                    isRead: false
+                    isRead: false,
+                    type: 'SUCCESS',
                 });
             }
             toast({ title: "Status Kendaraan Diperbarui", description: `Kendaraan ${vehicleDetails.licensePlate} telah ditandai 'Baik'.` });
@@ -530,7 +536,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             title: "Anda Menerima Poin Penalty",
             message: `Anda menerima ${penaltyToAdd.points} poin penalty karena belum melakukan checklist untuk kendaraan ${penaltyToAdd.vehicleHullNumber}.`,
             timestamp: serverTimestamp(),
-            isRead: false
+            isRead: false,
+            type: 'PENALTY',
         });
         
         await batch.commit();

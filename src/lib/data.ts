@@ -115,6 +115,8 @@ export type Penalty = {
   givenByAdminUsername: string;
 };
 
+export type NotificationType = 'DAMAGE' | 'SUCCESS' | 'PENALTY' | 'INFO';
+
 export type Notification = {
   id: string;
   userId: string;
@@ -122,6 +124,7 @@ export type Notification = {
   message: string;
   timestamp: number;
   isRead: boolean;
+  type?: NotificationType;
 };
 
 
