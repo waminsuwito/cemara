@@ -16,6 +16,7 @@ import {
   ClipboardList,
   ShieldAlert,
   Inbox,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -106,6 +107,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
 
     if (user?.role === 'KEPALA_BP') {
       baseItems.unshift({ href: "/checklist/select-vehicle", icon: ClipboardList, label: "Daftar Batangan Saya" });
+      baseItems.unshift({ href: "/checklist/armada", icon: Users, label: "Daftar Armada" });
     }
 
     return baseItems;

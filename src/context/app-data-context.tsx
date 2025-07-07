@@ -515,8 +515,10 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addPenalty = async (penaltyToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>) => {
-    if (!adminUser) {
-        toast({ variant: "destructive", title: "Aksi Gagal", description: "Anda harus login sebagai admin." });
+    const penaltyGiver = adminUser ? adminUser.username : (operatorUser?.role === 'KEPALA_BP' ? operatorUser.name : null);
+
+    if (!penaltyGiver) {
+        toast({ variant: "destructive", title: "Aksi Gagal", description: "Anda tidak memiliki izin untuk memberikan penalti." });
         return;
     }
     try {
@@ -527,7 +529,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         batch.set(penaltyRef, { 
             ...penaltyToAdd,
             timestamp: serverTimestamp(),
-            givenByAdminUsername: adminUser.username
+            givenByAdminUsername: penaltyGiver
         });
 
         // 2. Add notification document for the user
