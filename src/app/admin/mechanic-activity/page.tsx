@@ -5,7 +5,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
-import { Printer } from "lucide-react";
+import { Printer, Trash2 } from "lucide-react";
 
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 const getStatusBadge = (status: MechanicTask['status']) => {
@@ -66,7 +67,7 @@ const CompletionStatusBadge = ({ targetDate, targetTime, completedAt }: { target
 
 export default function MechanicActivityPage() {
   const { user } = useAdminAuth();
-  const { mechanicTasks, vehicles, locationNames } = useAppData();
+  const { mechanicTasks, vehicles, locationNames, deleteMechanicTask } = useAppData();
   
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -138,6 +139,7 @@ export default function MechanicActivityPage() {
                           <TableHead className="w-[25%]">Mekanik Bertugas</TableHead>
                           <TableHead>Dibuat Pada</TableHead>
                           <TableHead>Status</TableHead>
+                          {isSuperAdmin && <TableHead className="text-right">Aksi</TableHead>}
                       </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -186,10 +188,35 @@ export default function MechanicActivityPage() {
                                     getStatusBadge(task.status)
                                 )}
                               </TableCell>
+                              {isSuperAdmin && (
+                                <TableCell className="text-right">
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Hapus Kegiatan Ini?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Tindakan ini akan menghapus data kegiatan mekanik ini secara permanen.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => deleteMechanicTask(task.id)} className="bg-destructive hover:bg-destructive/90">
+                                                    Hapus
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </TableCell>
+                              )}
                           </TableRow>
                       )) : (
                           <TableRow>
-                              <TableCell colSpan={4} className="h-24 text-center">Tidak ada kegiatan yang ditemukan untuk filter yang dipilih.</TableCell>
+                              <TableCell colSpan={isSuperAdmin ? 5 : 4} className="h-24 text-center">Tidak ada kegiatan yang ditemukan untuk filter yang dipilih.</TableCell>
                           </TableRow>
                       )}
                   </TableBody>

@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -29,8 +30,10 @@ import { Button } from "@/components/ui/button";
 import { useAppData } from "@/context/app-data-context";
 import { format } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { MoreHorizontal, Printer } from "lucide-react";
+import { MoreHorizontal, Printer, Trash2 } from "lucide-react";
 import { type Complaint } from "@/lib/data";
+import { useAdminAuth } from "@/context/admin-auth-context";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -46,7 +49,9 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function ComplaintsPage() {
-  const { complaints, updateComplaintStatus } = useAppData();
+  const { user } = useAdminAuth();
+  const { complaints, updateComplaintStatus, deleteComplaint } = useAppData();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const handleStatusChange = (id: string, status: Complaint['status']) => {
     updateComplaintStatus(id, status);
@@ -110,6 +115,32 @@ export default function ComplaintsPage() {
                            <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'OPEN')}>
                             Set Kembali ke "Baru"
                           </DropdownMenuItem>
+                          {isSuperAdmin && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                      <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Hapus Komplain Ini?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Tindakan ini tidak dapat diurungkan. Data komplain ini akan dihapus secara permanen.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => deleteComplaint(item.id)} className="bg-destructive hover:bg-destructive/90">
+                                            Hapus
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

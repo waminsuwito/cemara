@@ -32,10 +32,11 @@ import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon, Printer } from "lucide-react";
+import { CalendarIcon, Printer, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import type { SparePartLog, Report, MechanicTask } from '@/lib/data';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const DamageDetails = ({ log, reports, mechanicTasks }: { log: SparePartLog, reports: Report[], mechanicTasks: MechanicTask[] }) => {
     const task = mechanicTasks.find((t) => t.id === log.taskId);
@@ -69,7 +70,7 @@ const DamageDetails = ({ log, reports, mechanicTasks }: { log: SparePartLog, rep
 };
 
 export default function LogisticsReportPage() {
-  const { sparePartLogs, vehicles, locationNames, mechanicTasks, reports } = useAppData();
+  const { sparePartLogs, vehicles, locationNames, mechanicTasks, reports, deleteSparePartLog } = useAppData();
   const { user } = useAdminAuth();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -229,6 +230,7 @@ export default function LogisticsReportPage() {
                 <TableHead className="w-[30%]">Detail Kerusakan</TableHead>
                 <TableHead className="w-[25%]">Spare Part Digunakan</TableHead>
                 <TableHead>Diinput Oleh</TableHead>
+                {isSuperAdmin && <TableHead className="text-right">Aksi</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,12 +247,37 @@ export default function LogisticsReportPage() {
                       </TableCell>
                       <TableCell className="text-sm whitespace-pre-wrap align-top">{log.partsUsed}</TableCell>
                       <TableCell className="align-top">{log.loggedByName}</TableCell>
+                       {isSuperAdmin && (
+                        <TableCell className="text-right align-top">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Hapus Log Ini?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Tindakan ini akan menghapus log penggunaan spare part ini secara permanen.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => deleteSparePartLog(log.id)} className="bg-destructive hover:bg-destructive/90">
+                                            Hapus
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </TableCell>
+                      )}
                     </TableRow>
                   )
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={isSuperAdmin ? 7 : 6} className="h-24 text-center">
                     Tidak ada riwayat ditemukan untuk filter yang dipilih.
                   </TableCell>
                 </TableRow>

@@ -32,12 +32,13 @@ import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon, Printer } from "lucide-react";
+import { CalendarIcon, Printer, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function PenaltyHistoryPage() {
-  const { penalties, users, locationNames } = useAppData();
+  const { penalties, users, locationNames, deletePenalty } = useAppData();
   const { user: adminUser } = useAdminAuth();
   const isSuperAdmin = adminUser?.role === 'SUPER_ADMIN';
 
@@ -167,6 +168,7 @@ export default function PenaltyHistoryPage() {
                 <TableHead>Penalty</TableHead>
                 <TableHead>Alasan</TableHead>
                 <TableHead>Diberikan Oleh</TableHead>
+                {isSuperAdmin && <TableHead className="text-right">Aksi</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,12 +184,37 @@ export default function PenaltyHistoryPage() {
                       <TableCell className="font-bold text-destructive text-center">{penalty.points}</TableCell>
                       <TableCell>{penalty.reason}</TableCell>
                       <TableCell>{penalty.givenByAdminUsername}</TableCell>
+                      {isSuperAdmin && (
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                      <Trash2 className="h-4 w-4" />
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Hapus Penalti Ini?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          Tindakan ini akan menghapus data penalti secara permanen.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deletePenalty(penalty.id)} className="bg-destructive hover:bg-destructive/90">
+                                          Hapus
+                                      </AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      )}
                     </TableRow>
                   )
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={isSuperAdmin ? 8 : 7} className="h-24 text-center">
                     Tidak ada data penalti untuk filter yang dipilih.
                   </TableCell>
                 </TableRow>

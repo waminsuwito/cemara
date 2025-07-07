@@ -24,13 +24,16 @@ type AppDataContextType = {
   
   reports: Report[];
   submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportIdToUpdate?: string) => Promise<void>;
+  deleteReport: (reportId: string) => Promise<void>;
 
   complaints: Complaint[];
   addComplaint: (complaint: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   updateComplaintStatus: (complaintId: string, status: Complaint['status']) => Promise<void>;
+  deleteComplaint: (complaintId: string) => Promise<void>;
   
   suggestions: Suggestion[];
   addSuggestion: (suggestion: Omit<Suggestion, 'id' | 'timestamp'>) => Promise<void>;
+  deleteSuggestion: (suggestionId: string) => Promise<void>;
 
   mechanicTasks: MechanicTask[];
   addMechanicTask: (task: Omit<MechanicTask, 'id' | 'createdAt' | 'status'>) => Promise<void>;
@@ -39,9 +42,11 @@ type AppDataContextType = {
   
   sparePartLogs: SparePartLog[];
   addSparePartLog: (log: Omit<SparePartLog, 'id' | 'logDate' | 'loggedById' | 'loggedByName'>) => Promise<void>;
+  deleteSparePartLog: (logId: string) => Promise<void>;
 
   penalties: Penalty[];
   addPenalty: (penaltyToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>) => Promise<void>;
+  deletePenalty: (penaltyId: string) => Promise<void>;
 
   notifications: Notification[];
   markNotificationsAsRead: (userId: string) => Promise<void>;
@@ -345,6 +350,16 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   };
   
+  const deleteReport = async (reportId: string) => {
+    try {
+      await deleteDoc(doc(db, 'reports', reportId));
+      toast({ title: "Sukses", description: "Riwayat laporan berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting report: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus riwayat laporan." });
+    }
+  };
+  
   const addComplaint = async (complaintData: Omit<Complaint, 'id' | 'timestamp' | 'status'>) => {
     try {
       await addDoc(collection(db, 'complaints'), {
@@ -369,6 +384,16 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui status komplain." });
     }
   };
+  
+  const deleteComplaint = async (complaintId: string) => {
+    try {
+      await deleteDoc(doc(db, 'complaints', complaintId));
+      toast({ title: "Sukses", description: "Data komplain berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting complaint: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus komplain." });
+    }
+  };
 
   const addSuggestion = async (suggestionData: Omit<Suggestion, 'id' | 'timestamp'>) => {
     try {
@@ -381,6 +406,16 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error adding suggestion: ", e);
       toast({ variant: "destructive", title: "Error", description: "Gagal mengirim usulan." });
       throw e;
+    }
+  };
+  
+  const deleteSuggestion = async (suggestionId: string) => {
+    try {
+      await deleteDoc(doc(db, 'suggestions', suggestionId));
+      toast({ title: "Sukses", description: "Data usulan berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting suggestion: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus usulan." });
     }
   };
   
@@ -513,6 +548,16 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       throw e;
     }
   };
+  
+  const deleteSparePartLog = async (logId: string) => {
+    try {
+      await deleteDoc(doc(db, 'sparePartLogs', logId));
+      toast({ title: "Sukses", description: "Log suku cadang berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting spare part log: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus log suku cadang." });
+    }
+  };
 
   const addPenalty = async (penaltyToAdd: Omit<Penalty, 'id' | 'timestamp' | 'givenByAdminUsername'>) => {
     const penaltyGiver = adminUser ? adminUser.username : (operatorUser?.role === 'KEPALA_BP' ? operatorUser.name : null);
@@ -550,6 +595,16 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: "destructive", title: "Error", description: "Gagal mengirim data penalty." });
     }
   };
+  
+  const deletePenalty = async (penaltyId: string) => {
+    try {
+      await deleteDoc(doc(db, 'penalties', penaltyId));
+      toast({ title: "Sukses", description: "Data penalti berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting penalty: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus penalti." });
+    }
+  };
 
   const markNotificationsAsRead = async (userId: string) => {
     const notificationsToUpdate = notifications.filter(n => n.userId === userId && !n.isRead);
@@ -574,12 +629,12 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     users, addUser, updateUser, deleteUser,
     vehicles, addVehicle, updateVehicle, deleteVehicle,
-    reports, submitReport,
-    complaints, addComplaint, updateComplaintStatus,
-    suggestions, addSuggestion,
+    reports, submitReport, deleteReport,
+    complaints, addComplaint, updateComplaintStatus, deleteComplaint,
+    suggestions, addSuggestion, deleteSuggestion,
     mechanicTasks, addMechanicTask, updateMechanicTask, deleteMechanicTask,
-    sparePartLogs, addSparePartLog,
-    penalties, addPenalty,
+    sparePartLogs, addSparePartLog, deleteSparePartLog,
+    penalties, addPenalty, deletePenalty,
     notifications,
     markNotificationsAsRead,
     locations, locationNames, addLocation, updateLocation, deleteLocation,

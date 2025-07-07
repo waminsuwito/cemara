@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -40,9 +41,20 @@ import { useAdminAuth } from "@/context/admin-auth-context";
 import { type Report, type ReportItem } from "@/lib/data";
 import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon, Printer } from "lucide-react";
+import { CalendarIcon, Printer, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Re-using the badge logic from dashboard for consistency
 const getStatusBadge = (status: string) => {
@@ -59,8 +71,9 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function HistoryPage() {
-  const { reports, vehicles } = useAppData();
+  const { reports, vehicles, deleteReport } = useAppData();
   const { user } = useAdminAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
   const [date, setDate] = useState<DateRange | undefined>({
@@ -262,6 +275,30 @@ export default function HistoryPage() {
                         >
                           Detail
                         </Button>
+                        {isSuperAdmin && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive ml-2">
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Hapus</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus Riwayat Ini?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tindakan ini tidak dapat diurungkan. Riwayat laporan ini akan dihapus secara permanen.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteReport(report.id)} className="bg-destructive hover:bg-destructive/90">
+                                  Hapus
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
