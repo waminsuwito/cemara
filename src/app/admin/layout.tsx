@@ -18,6 +18,7 @@ import {
   Activity,
   Package,
   Bell,
+  ShieldX,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ const navItems = [
   { href: "/admin/logistics-report", icon: Package, label: "Laporan Logistik", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
   { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/penalty", icon: ShieldX, label: "Riwayat Penalti", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/notifications", icon: Bell, label: "Pemberitahuan", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
