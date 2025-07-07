@@ -52,7 +52,7 @@ import {
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useAppData } from "@/context/app-data-context";
 import { cn } from "@/lib/utils";
-import { type Report, type Vehicle, type User, Penalty } from "@/lib/data";
+import { type Report, type Vehicle, type User, type Penalty, type Notification } from "@/lib/data";
 import { format, isSameDay, isBefore, startOfToday } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -310,10 +310,10 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
 
 export default function DashboardPage() {
   const { user } = useAdminAuth();
-  const { vehicles, reports, users, locationNames, isDataLoaded } = useAppData();
+  const { vehicles, reports, users, locationNames, isDataLoaded, notifications } = useAppData();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  const prevReportsRef = useRef<Report[]>([]);
+  const prevNotificationsRef = useRef<Notification[]>([]);
   const damageAudioRef = useRef<HTMLAudioElement | null>(null);
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -330,32 +330,35 @@ export default function DashboardPage() {
       }
     }
 
-    if (isDataLoaded && reports.length > prevReportsRef.current.length) {
-      const prevReportIds = new Set(prevReportsRef.current.map(r => r.id));
-      const newReports = reports.filter(r => !prevReportIds.has(r.id));
-      
-      const hasNewDamagedReport = newReports.some(
-        r => r.overallStatus === 'Rusak' || r.overallStatus === 'Perlu Perhatian'
-      );
+    // This logic ensures sounds only play for new notifications for the current admin.
+    if (isDataLoaded && notifications.length > prevNotificationsRef.current.length && user) {
+        const prevNotificationIds = new Set(prevNotificationsRef.current.map(n => n.id));
+        const newNotifications = notifications.filter(n => !prevNotificationIds.has(n.id));
 
-      const hasNewCompletedRepair = newReports.some(
-        r => r.overallStatus === 'Baik' && r.operatorName.includes('Mekanik')
-      );
+        // Find the full user object for the currently logged-in admin
+        const me = users.find(u => u.username === user.username && u.role === user.role);
+        if (!me) return;
 
-      if (hasNewDamagedReport) {
-        damageAudioRef.current?.play().catch(error => {
-          console.warn("Damage audio play failed.", error);
-        });
-      } else if (hasNewCompletedRepair) {
-        successAudioRef.current?.play().catch(error => {
-          console.warn("Success audio play failed.", error);
-        });
-      }
+        // Filter for new notifications intended for this user
+        const myNewNotifications = newNotifications.filter(n => n.userId === me.id);
+        
+        const hasNewDamageNotification = myNewNotifications.some(n => n.type === 'DAMAGE');
+        const hasNewSuccessNotification = myNewNotifications.some(n => n.type === 'SUCCESS');
+
+        if (hasNewDamageNotification) {
+            damageAudioRef.current?.play().catch(error => {
+              console.warn("Audio play failed. This can happen if the user hasn't interacted with the page yet.", error);
+            });
+        } else if (hasNewSuccessNotification) {
+            successAudioRef.current?.play().catch(error => {
+              console.warn("Audio play failed. This can happen if the user hasn't interacted with the page yet.", error);
+            });
+        }
     }
 
-    prevReportsRef.current = reports;
+    prevNotificationsRef.current = notifications;
 
-  }, [reports, isDataLoaded]);
+  }, [notifications, isDataLoaded, user, users]);
 
 
   const [selectedLocation, setSelectedLocation] = useState(
