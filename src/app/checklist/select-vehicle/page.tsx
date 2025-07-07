@@ -15,7 +15,7 @@ import { isSameDay, isBefore, startOfToday } from "date-fns";
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "Baik":
-      return <Badge variant="secondary" className="bg-green-100 text-green-800">Sudah Checklist</Badge>;
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Status Baik</Badge>;
     case "Perlu Perhatian":
       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Perlu Perhatian</Badge>;
     case "Rusak":
