@@ -218,13 +218,23 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
       
       await submitReport(reportData, reportToUpdate?.id);
       
-      toast({
-        title: reportToUpdate ? "Laporan Diperbarui" : "Laporan Terkirim",
-        description: reportToUpdate ? "Detail kerusakan telah berhasil diperbarui." : "Checklist harian Anda telah berhasil dikirim.",
-      });
+      const successTitle = reportToUpdate ? "Laporan Diperbarui" : "Laporan Terkirim";
+      const baseDescription = reportToUpdate ? "Detail kerusakan telah berhasil diperbarui." : "Checklist harian Anda telah berhasil dikirim.";
 
-      logout();
-      router.push("/");
+      if (operator?.role === 'KEPALA_BP') {
+        toast({
+          title: successTitle,
+          description: `${baseDescription} Anda akan diarahkan kembali ke daftar batangan.`,
+        });
+        router.push('/checklist/select-vehicle');
+      } else {
+        toast({
+          title: successTitle,
+          description: `${baseDescription} Anda akan logout.`,
+        });
+        logout();
+        router.push("/");
+      }
 
     } catch (error) {
       console.error("Error during submission:", error);
@@ -328,9 +338,22 @@ function ChecklistPageContents() {
     
     try {
       await submitReport(reportData);
-      toast({ title: "Status Diperbarui", description: "Kendaraan telah ditandai dalam kondisi Baik. Anda akan logout." });
-      logout();
-      router.push('/');
+      const baseDescription = "Kendaraan telah ditandai dalam kondisi Baik.";
+
+      if (user?.role === 'KEPALA_BP') {
+        toast({
+            title: "Status Diperbarui",
+            description: `${baseDescription} Anda akan diarahkan kembali ke daftar batangan.`,
+        });
+        router.push("/checklist/select-vehicle");
+      } else {
+        toast({
+            title: "Status Diperbarui",
+            description: `${baseDescription} Anda akan logout.`,
+        });
+        logout();
+        router.push('/');
+      }
     } catch(e) {
       toast({ variant: "destructive", title: "Gagal Menyimpan", description: "Tidak dapat menandai perbaikan selesai."});
       setIsProcessing(false);
