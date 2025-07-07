@@ -23,7 +23,7 @@ type AppDataContextType = {
   deleteVehicle: (vehicleId: string) => Promise<void>;
   
   reports: Report[];
-  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>) => Promise<void>;
+  submitReport: (report: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportToUpdateId?: string | null) => Promise<void>;
   deleteReport: (reportId: string) => Promise<void>;
 
   complaints: Complaint[];
@@ -294,7 +294,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       }
   };
   
-  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>): Promise<void> => {
+  const submitReport = async (newReportData: Omit<Report, 'id' | 'timestamp' | 'reportDate'>, reportToUpdateId?: string | null): Promise<void> => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
 
@@ -311,19 +311,20 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     
     const batch = writeBatch(db);
 
+    // Always create a new report
     const reportRef = doc(collection(db, 'reports'));
     batch.set(reportRef, reportWithTimestamp);
     
-    // Notification logic for new reports ('Rusak', 'Perlu Perhatian', or 'Baik')
-    if (newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian' || newReportData.overallStatus === 'Baik') {
+    // Notification logic for new reports
+    const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
+    const isSuccess = newReportData.overallStatus === 'Baik';
+
+    if (isDamage || isSuccess) {
         const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
         const usersToNotify = users.filter(u => 
             adminRoles.includes(u.role) && 
             (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
         );
-
-        const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
-        const isSuccess = newReportData.overallStatus === 'Baik';
 
         let title = 'Laporan Baru';
         let message = `Laporan baru untuk kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dari ${newReportData.operatorName}.`;
@@ -334,9 +335,18 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
             type = 'DAMAGE';
         } else if (isSuccess) {
-            title = `Laporan Kondisi Baik`;
-            message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
             type = 'SUCCESS';
+            if (newReportData.kerusakanLain?.keterangan?.startsWith('Perbaikan dari laporan sebelumnya telah selesai')) {
+                title = 'Perbaikan Selesai';
+                if (newReportData.kerusakanLain.keterangan.includes('Dikerjakan Sendiri')) {
+                    message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan dan dilaporkan oleh operator ${newReportData.operatorName}.`;
+                } else { // Dikerjakan oleh Mekanik, dilaporkan oleh Operator
+                    message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh Tim Mekanik, dilaporkan oleh operator ${newReportData.operatorName}.`;
+                }
+            } else { // Normal 'Baik' report
+                title = 'Laporan Kondisi Baik';
+                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan dalam kondisi Baik oleh ${newReportData.operatorName}.`;
+            }
         }
 
         for (const userToNotify of usersToNotify) {
@@ -469,15 +479,17 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
 
         if (vehicleInTask && vehicleDetails) {
+            const mechanicNames = taskBeingUpdated.mechanics.map(m => m.name).join(', ');
+            
             // Create "Baik" report
             const goodConditionReport = {
               vehicleId: vehicleDetails.hullNumber,
               vehicleType: vehicleDetails.type,
-              operatorName: `Diperbaiki oleh Tim Mekanik`,
+              operatorName: `Mekanik: ${mechanicNames}`,
               location: vehicleDetails.location,
               overallStatus: 'Baik' as const,
               items: [],
-              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}` },
+              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}. Dikerjakan oleh: ${mechanicNames}.` },
               timestamp: serverTimestamp(),
               reportDate: format(new Date(), 'yyyy-MM-dd'),
             };
@@ -498,7 +510,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const title = `Perbaikan Selesai`;
-            const message = `Perbaikan untuk kendaraan ${vehicleDetails.licensePlate} (${vehicleInTask.repairDescription}) telah selesai.`;
+            const message = `Kendaraan ${vehicleDetails.licensePlate} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan dan dilaporkan oleh mekanik ${mechanicNames}.`;
 
             for (const userToNotify of allUsersToNotify) {
                 const notificationRef = doc(collection(db, 'notifications'));
