@@ -282,9 +282,6 @@ export default function MechanicTasksPage() {
                       className="bg-muted/40 border-dashed h-auto resize-none focus-visible:ring-0"
                       rows={damageDetails.split('\n').length > 1 ? damageDetails.split('\n').length : 2}
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Deskripsi ini diambil otomatis dari laporan checklist terakhir.
-                    </p>
                   </div>
                 )}
 
