@@ -74,14 +74,19 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
 
     if (reportToUpdate) {
         // Pre-fill from an existing, unresolved report
-        const formItems = itemsToRender.map((templateItem) => {
+        const formItems: {
+            id: string;
+            label: string;
+            status: "BAIK" | "RUSAK" | "PERLU PERHATIAN";
+            keterangan: string;
+            foto: undefined;
+        }[] = itemsToRender.map((templateItem) => {
             const reportedItem = reportToUpdate.items.find(i => i.id === templateItem.id);
             if (reportedItem) {
-                // This is where the error happens.
                 // The status from Firestore is treated as a generic string.
                 // We need to ensure it's one of the allowed values for the form.
                 const validStatus = (s: any): "BAIK" | "RUSAK" | "PERLU PERHATIAN" => {
-                    const upperS = s?.toUpperCase();
+                    const upperS = String(s || '').toUpperCase();
                     if (upperS === "BAIK" || upperS === "RUSAK" || upperS === "PERLU PERHATIAN") {
                         return upperS;
                     }
@@ -94,7 +99,7 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
                     label: reportedItem.label,
                     status: validStatus(reportedItem.status),
                     keterangan: reportedItem.keterangan || '',
-                    foto: undefined // We can't pre-fill file inputs
+                    foto: undefined
                 };
             }
             // This item was 'BAIK' in the previous report (implicitly)
