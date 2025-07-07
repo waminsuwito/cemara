@@ -88,7 +88,7 @@ function PrintPageContent() {
                                     <th className="border border-gray-600 p-2 text-left">Tanggal</th>
                                     <th className="border border-gray-600 p-2 text-left">Penerima</th>
                                     <th className="border border-gray-600 p-2 text-left">Kendaraan</th>
-                                    <th className="border border-gray-600 p-2 text-center">Poin</th>
+                                    <th className="border border-gray-600 p-2 text-center">Penalty</th>
                                     <th className="border border-gray-600 p-2 text-left">Alasan</th>
                                     <th className="border border-gray-600 p-2 text-left">Diberikan Oleh</th>
                                 </tr>

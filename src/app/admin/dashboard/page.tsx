@@ -117,7 +117,7 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
         const points = parseInt(pointsStr, 10);
         
         if (isNaN(points) || points <= 0 || points > 10) {
-            toast({ title: "Poin Tidak Valid", description: "Poin penalty harus angka antara 1 dan 10.", variant: 'destructive' });
+            toast({ title: "Penalty Tidak Valid", description: "Nilai penalty harus angka antara 1 dan 10.", variant: 'destructive' });
             setSendingPenalty(prev => ({ ...prev, [vehicleId]: false }));
             return;
         }
@@ -209,7 +209,7 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                                             min="1"
                                                             max="10"
                                                             className="w-20 h-9 text-center"
-                                                            placeholder="Poin"
+                                                            placeholder="Penalty"
                                                             value={penalties[vehicle.id] ?? ''}
                                                             onChange={(e) => handlePenaltyChange(vehicle.id, e.target.value)}
                                                             disabled={sendingPenalty[vehicle.id]}

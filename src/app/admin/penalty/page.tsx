@@ -164,7 +164,7 @@ export default function PenaltyHistoryPage() {
                 <TableHead>Nama Penerima</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Kendaraan</TableHead>
-                <TableHead>Poin</TableHead>
+                <TableHead>Penalty</TableHead>
                 <TableHead>Alasan</TableHead>
                 <TableHead>Diberikan Oleh</TableHead>
               </TableRow>

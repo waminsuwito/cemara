@@ -31,14 +31,14 @@ export default function MyPenaltyPage() {
             <CardHeader>
                 <CardTitle>Riwayat Penalti Saya</CardTitle>
                 <CardDescription>
-                    Berikut adalah riwayat dan total poin penalti Anda.
+                    Berikut adalah riwayat dan total penalty Anda.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center justify-center p-6 bg-muted/50 rounded-lg">
                     <ShieldX className="w-12 h-12 text-destructive mr-6" />
                     <div>
-                        <p className="text-lg text-muted-foreground">Total Poin Penalti Anda</p>
+                        <p className="text-lg text-muted-foreground">Total Penalty Anda</p>
                         <p className="text-5xl font-bold text-destructive">{totalPoints}</p>
                     </div>
                 </div>
@@ -48,7 +48,7 @@ export default function MyPenaltyPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Tanggal</TableHead>
-                                <TableHead>Poin</TableHead>
+                                <TableHead>Penalty</TableHead>
                                 <TableHead>Kendaraan</TableHead>
                                 <TableHead>Alasan</TableHead>
                             </TableRow>
@@ -66,7 +66,7 @@ export default function MyPenaltyPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} className="text-center h-24">
-                                        Selamat! Anda tidak memiliki poin penalty.
+                                        Selamat! Anda tidak memiliki penalty.
                                     </TableCell>
                                 </TableRow>
                             )}

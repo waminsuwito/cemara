@@ -534,8 +534,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         const notificationRef = doc(collection(db, 'notifications'));
         batch.set(notificationRef, {
             userId: penaltyToAdd.userId,
-            title: "Anda Menerima Poin Penalty",
-            message: `Anda menerima ${penaltyToAdd.points} poin penalty karena belum melakukan checklist untuk kendaraan ${penaltyToAdd.vehicleHullNumber}.`,
+            title: "Anda Menerima Penalty",
+            message: `Anda menerima ${penaltyToAdd.points} penalty karena belum melakukan checklist untuk kendaraan ${penaltyToAdd.vehicleHullNumber}.`,
             timestamp: serverTimestamp(),
             isRead: false,
             type: 'PENALTY',
