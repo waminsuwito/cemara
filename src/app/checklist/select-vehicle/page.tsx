@@ -8,12 +8,29 @@ import { useAppData } from '@/context/app-data-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Truck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { type Vehicle } from '@/lib/data';
+import { isSameDay, isBefore, startOfToday } from "date-fns";
+
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "Baik":
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Sudah Checklist</Badge>;
+    case "Perlu Perhatian":
+      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Perlu Perhatian</Badge>;
+    case "Rusak":
+      return <Badge variant="destructive">Rusak</Badge>;
+    case "Belum Checklist":
+       return <Badge variant="outline">Belum Checklist</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
+};
 
 export default function SelectVehiclePage() {
     const router = useRouter();
     const { user, selectVehicle, isLoading: authIsLoading } = useOperatorAuth();
-    const { vehicles, isDataLoaded } = useAppData();
+    const { vehicles, reports, isDataLoaded } = useAppData();
 
     useEffect(() => {
         if (!authIsLoading && !user) {
@@ -21,15 +38,55 @@ export default function SelectVehiclePage() {
         }
     }, [user, authIsLoading, router]);
 
-    const availableVehicles = useMemo(() => {
+    const availableVehiclesWithStatus = useMemo(() => {
         if (!user || !user.batangan) return [];
         
         const batanganList = user.batangan.split(',').map(b => b.trim().toLowerCase());
         
-        return vehicles.filter(v => 
+        const assignedVehicles = vehicles.filter(v => 
             batanganList.includes(v.licensePlate.trim().toLowerCase())
         );
-    }, [user, vehicles]);
+
+        const today = startOfToday();
+
+        return assignedVehicles.map(vehicle => {
+            const reportsForVehicle = reports
+                .filter(r => r.vehicleId === vehicle.hullNumber)
+                .sort((a, b) => b.timestamp - a.timestamp);
+            
+            const latestReport = reportsForVehicle[0];
+            let status = 'Belum Checklist';
+            let damageInfo = '';
+
+            if (latestReport) {
+                const reportDate = new Date(latestReport.timestamp);
+                if (isSameDay(reportDate, today)) {
+                    status = latestReport.overallStatus;
+                } else if (isBefore(reportDate, today)) {
+                    if (latestReport.overallStatus === 'Rusak' || latestReport.overallStatus === 'Perlu Perhatian') {
+                        status = latestReport.overallStatus;
+                    }
+                }
+                
+                if (status === 'Rusak' || status === 'Perlu Perhatian') {
+                    const problemItems = latestReport.items
+                        ?.filter(item => item.status !== 'BAIK')
+                        .map(item => item.label)
+                        .join(', ');
+
+                    const otherDamage = latestReport.kerusakanLain?.keterangan 
+                        ? 'Kerusakan Lainnya' 
+                        : '';
+                    
+                    const fullDamageInfo = [problemItems, otherDamage].filter(Boolean).join('; ');
+                    damageInfo = fullDamageInfo.length > 50 ? `${fullDamageInfo.substring(0, 50)}...` : fullDamageInfo;
+                }
+            }
+            
+            return { ...vehicle, status, damageInfo };
+        });
+    }, [user, vehicles, reports]);
+
 
     const handleSelectVehicle = (vehicle: Vehicle) => {
         selectVehicle(vehicle.hullNumber);
@@ -57,8 +114,8 @@ export default function SelectVehiclePage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                {availableVehicles.length > 0 ? (
-                    availableVehicles.map(vehicle => (
+                {availableVehiclesWithStatus.length > 0 ? (
+                    availableVehiclesWithStatus.map(vehicle => (
                         <Button
                             key={vehicle.id}
                             variant="outline"
@@ -66,10 +123,18 @@ export default function SelectVehiclePage() {
                             className="h-auto justify-start p-4 text-left"
                             onClick={() => handleSelectVehicle(vehicle)}
                         >
-                            <Truck className="mr-4 h-6 w-6 text-primary" />
-                            <div className="flex flex-col">
-                                <span className="font-bold text-base">{vehicle.licensePlate}</span>
+                            <Truck className="mr-4 h-6 w-6 text-primary flex-shrink-0 self-start mt-1" />
+                            <div className="flex flex-col w-full min-w-0">
+                                <div className="flex justify-between items-start gap-2">
+                                    <span className="font-bold text-base">{vehicle.licensePlate}</span>
+                                    {getStatusBadge(vehicle.status)}
+                                </div>
                                 <span className="text-sm text-muted-foreground">{vehicle.type} - No. Lambung: {vehicle.hullNumber}</span>
+                                 {(vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && vehicle.damageInfo && (
+                                    <p className="text-xs text-yellow-600 mt-1 truncate">
+                                        Ket: {vehicle.damageInfo}
+                                    </p>
+                                )}
                             </div>
                         </Button>
                     ))
