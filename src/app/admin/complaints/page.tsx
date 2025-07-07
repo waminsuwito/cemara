@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -28,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useAppData } from "@/context/app-data-context";
 import { format } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Printer } from "lucide-react";
 import { type Complaint } from "@/lib/data";
 
 const getStatusBadge = (status: string) => {
@@ -53,11 +54,19 @@ export default function ComplaintsPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Komplain dari Sopir</CardTitle>
-        <CardDescription>
-          Daftar komplain yang dikirimkan oleh sopir/operator terkait kondisi alat.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Komplain dari Sopir</CardTitle>
+          <CardDescription>
+            Daftar komplain yang dikirimkan oleh sopir/operator terkait kondisi alat.
+          </CardDescription>
+        </div>
+        <Button asChild>
+          <Link href="/admin/complaints/print">
+            <Printer className="mr-2 h-4 w-4" />
+            Cetak Laporan
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">

@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -20,17 +21,27 @@ import {
 import { useAppData } from "@/context/app-data-context";
 import { format } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
 
 export default function SuggestionsPage() {
   const { suggestions } = useAppData();
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Usulan / Saran dari Sopir</CardTitle>
-        <CardDescription>
-          Daftar usulan dan saran yang dikirimkan oleh sopir/operator untuk perbaikan.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Usulan / Saran dari Sopir</CardTitle>
+          <CardDescription>
+            Daftar usulan dan saran yang dikirimkan oleh sopir/operator untuk perbaikan.
+          </CardDescription>
+        </div>
+        <Button asChild>
+          <Link href="/admin/suggestions/print">
+            <Printer className="mr-2 h-4 w-4" />
+            Cetak Laporan
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">

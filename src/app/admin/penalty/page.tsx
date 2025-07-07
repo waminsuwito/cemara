@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -31,7 +32,7 @@ import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from "date-fns";
 import { id as localeID } from 'date-fns/locale';
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
@@ -79,6 +80,14 @@ export default function PenaltyHistoryPage() {
       })
       .sort((a, b) => b.timestamp - a.timestamp); // Sort by most recent first
   }, [penalties, users, locationFilter, date, isSuperAdmin, adminUser]);
+
+  const printUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('location', locationFilter);
+    if (date?.from) params.set('from', date.from.toISOString());
+    if (date?.to) params.set('to', date.to.toISOString());
+    return params.toString();
+  }, [locationFilter, date]);
 
   return (
     <Card>
@@ -140,6 +149,12 @@ export default function PenaltyHistoryPage() {
               />
             </PopoverContent>
           </Popover>
+          <Button asChild>
+            <Link href={`/admin/penalty/print?${printUrl}`}>
+                <Printer className="mr-2 h-4 w-4" />
+                Cetak Riwayat
+            </Link>
+          </Button>
         </div>
         <div className="border rounded-md">
           <Table>
