@@ -311,41 +311,56 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     
     const batch = writeBatch(db);
 
-    // Always create a new report
     const reportRef = doc(collection(db, 'reports'));
     batch.set(reportRef, reportWithTimestamp);
     
     // --- Notification Logic ---
-    const isDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
-    const isRepairCompletion = newReportData.overallStatus === 'Baik' && newReportData.kerusakanLain?.keterangan?.startsWith('Perbaikan dari laporan sebelumnya telah selesai');
+    const isNewDamage = newReportData.overallStatus === 'Rusak' || newReportData.overallStatus === 'Perlu Perhatian';
 
-    // Only notify on damage or on repair completion. Do NOT notify on routine "Baik" checks.
-    if (isDamage || isRepairCompletion) {
+    // Find the latest report for this vehicle BEFORE this new one
+    const previousReports = reports
+        .filter(r => r.vehicleId === newReportData.vehicleId)
+        .sort((a, b) => b.timestamp - a.timestamp);
+    
+    const latestPreviousReport = previousReports[0];
+    const wasPreviouslyDamaged = latestPreviousReport && (latestPreviousReport.overallStatus === 'Rusak' || latestPreviousReport.overallStatus === 'Perlu Perhatian');
+    
+    const isNowBaik = newReportData.overallStatus === 'Baik';
+    const isRepairCompletion = isNowBaik && wasPreviouslyDamaged;
+    
+    // Only notify on new damage OR on repair completion. Do NOT notify on routine "Baik" checks.
+    if (isNewDamage || isRepairCompletion) {
         const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
-        const usersToNotify = users.filter(u => 
+        const usersToNotifyQuery = users.filter(u => 
             adminRoles.includes(u.role) && 
             (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
         );
+        
+        // Also notify the original operator of the vehicle
+        const operatorUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+        
+        const allUsersToNotify = [...usersToNotifyQuery];
+        if (operatorUser && !allUsersToNotify.find(u => u.id === operatorUser.id)) {
+            allUsersToNotify.push(operatorUser);
+        }
 
         let title = 'Laporan Baru';
         let message = `Laporan baru untuk kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dari ${newReportData.operatorName}.`;
         let type: NotificationType = 'INFO';
 
-        if (isDamage) {
+        if (isNewDamage) {
             title = `Laporan Kerusakan Baru`;
             message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan ${newReportData.overallStatus.toLowerCase()} oleh ${newReportData.operatorName}.`;
             type = 'DAMAGE';
         } else if (isRepairCompletion) {
             type = 'SUCCESS';
             title = 'Perbaikan Selesai';
-            if (newReportData.kerusakanLain!.keterangan.includes('Dikerjakan Sendiri')) {
-                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan dan dilaporkan oleh operator ${newReportData.operatorName}.`;
-            } else { // Dikerjakan oleh Mekanik, dilaporkan oleh Operator
-                message = `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh Tim Mekanik, dilaporkan oleh operator ${newReportData.operatorName}.`;
-            }
+            message = newReportData.kerusakanLain?.keterangan 
+                ? `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} kondisi baik. ${newReportData.kerusakanLain.keterangan}`
+                : `Kendaraan ${vehicle?.licensePlate || newReportData.vehicleId} telah diperbaiki dan sekarang dalam kondisi Baik.`;
         }
 
-        for (const userToNotify of usersToNotify) {
+        for (const userToNotify of allUsersToNotify) {
             const notificationRef = doc(collection(db, 'notifications'));
             batch.set(notificationRef, {
                 userId: userToNotify.id,
@@ -465,66 +480,31 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         updatePayload.delayReason = deleteField();
       }
 
-      const batch = writeBatch(db);
-      const taskRef = doc(db, 'mechanicTasks', taskId);
-      batch.update(taskRef, updatePayload);
+      await updateDoc(doc(db, 'mechanicTasks', taskId), updatePayload);
+      toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
 
-      // If the task is completed, create a new "Baik" report and notifications.
+      // If the task is completed, create a new "Baik" report.
+      // The notification logic will be handled centrally by submitReport.
       if (updates.status === 'COMPLETED') {
         const vehicleInTask = taskBeingUpdated.vehicle;
         const vehicleDetails = vehicles.find(v => v.hullNumber === vehicleInTask.hullNumber);
 
         if (vehicleInTask && vehicleDetails) {
             const mechanicNames = taskBeingUpdated.mechanics.map(m => m.name).join(', ');
-            
-            // Create "Baik" report
-            const goodConditionReport = {
+            const reportData = {
               vehicleId: vehicleDetails.hullNumber,
               vehicleType: vehicleDetails.type,
               operatorName: `Mekanik: ${mechanicNames}`,
               location: vehicleDetails.location,
               overallStatus: 'Baik' as const,
               items: [],
-              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}. Dikerjakan oleh: ${mechanicNames}.` },
-              timestamp: serverTimestamp(),
-              reportDate: format(new Date(), 'yyyy-MM-dd'),
+              kerusakanLain: { keterangan: `Perbaikan selesai: ${vehicleInTask.repairDescription}. Dilaporkan oleh mekanik ${mechanicNames}.` },
             };
-            const goodReportRef = doc(collection(db, 'reports'));
-            batch.set(goodReportRef, goodConditionReport);
-
-            // Create Notifications
-            const operatorUser = users.find(u => u.name === vehicleDetails.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
-            const adminRoles: UserRole[] = ['SUPER_ADMIN', 'LOCATION_ADMIN', 'MEKANIK', 'LOGISTIK'];
-            const adminUsersToNotify = users.filter(u => 
-                adminRoles.includes(u.role) && 
-                (u.role === 'SUPER_ADMIN' || u.location === vehicleDetails.location)
-            );
-
-            const allUsersToNotify = [...adminUsersToNotify];
-            if (operatorUser && !allUsersToNotify.find(u => u.id === operatorUser.id)) {
-                allUsersToNotify.push(operatorUser);
-            }
-
-            const title = `Perbaikan Selesai`;
-            const message = `Kendaraan ${vehicleDetails.licensePlate} dilaporkan telah selesai perbaikan kondisi baik, dikerjakan dan dilaporkan oleh mekanik ${mechanicNames}.`;
-
-            for (const userToNotify of allUsersToNotify) {
-                const notificationRef = doc(collection(db, 'notifications'));
-                batch.set(notificationRef, {
-                    userId: userToNotify.id,
-                    title,
-                    message,
-                    timestamp: serverTimestamp(),
-                    isRead: false,
-                    type: 'SUCCESS',
-                });
-            }
+            
+            await submitReport(reportData);
             toast({ title: "Status Kendaraan Diperbarui", description: `Kendaraan ${vehicleDetails.licensePlate} telah ditandai 'Baik'.` });
         }
       }
-
-      await batch.commit();
-      toast({ title: "Sukses", description: "Status pekerjaan berhasil diperbarui." });
 
     } catch (e) {
       console.error("Error updating mechanic task: ", e);
