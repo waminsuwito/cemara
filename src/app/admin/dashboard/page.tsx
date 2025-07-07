@@ -37,6 +37,7 @@ import {
   ChevronLeft,
   Printer,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -92,6 +93,11 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
 }) => {
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithStatus | null>(null);
+    const [penalties, setPenalties] = useState<Record<string, string>>({});
+
+    const handlePenaltyChange = (vehicleId: string, value: string) => {
+        setPenalties(prev => ({...prev, [vehicleId]: value}));
+    };
 
     const handleDetailClick = (vehicle: VehicleWithStatus) => {
         setSelectedVehicle(vehicle);
@@ -123,7 +129,9 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                                     <TableHead>Lokasi</TableHead>
                                     <TableHead>Operator</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Aksi</TableHead>
+                                    <TableHead className="text-right w-[120px]">
+                                        {title === "Detail Alat Belum Checklist" ? "Penalty" : "Aksi"}
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -135,10 +143,22 @@ const VehicleDetailContent = ({ vehicles, statusFilter, title, description }: {
                                         <TableCell>{vehicle.operator}</TableCell>
                                         <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
                                         <TableCell className="text-right">
-                                            {vehicle.latestReport && (vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && (
-                                                <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle)}>
-                                                    Detail
-                                                </Button>
+                                            {title === "Detail Alat Belum Checklist" ? (
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max="10"
+                                                    className="w-24 h-9 ml-auto text-center"
+                                                    placeholder="Poin"
+                                                    value={penalties[vehicle.id] ?? ''}
+                                                    onChange={(e) => handlePenaltyChange(vehicle.id, e.target.value)}
+                                                />
+                                            ) : (
+                                                vehicle.latestReport && (vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && (
+                                                    <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle)}>
+                                                        Detail
+                                                    </Button>
+                                                )
                                             )}
                                         </TableCell>
                                     </TableRow>
