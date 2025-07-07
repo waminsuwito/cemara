@@ -325,7 +325,7 @@ export default function DashboardPage() {
         damageAudioRef.current.volume = 1.0;
       }
       if (successAudioRef.current === null) {
-        successAudioRef.current = new Audio('https://notificationsounds.com/storage/sounds/5294wefr592f/file-sounds-1150-pristine.mp3');
+        successAudioRef.current = new Audio('https://www.myinstants.com/media/sounds/success-fanfare-trumpets.mp3');
         successAudioRef.current.volume = 1.0;
       }
     }
