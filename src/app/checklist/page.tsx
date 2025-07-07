@@ -81,7 +81,7 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
                 return { 
                     id: reportedItem.id,
                     label: reportedItem.label,
-                    status: reportedItem.status,
+                    status: reportedItem.status as "BAIK" | "RUSAK" | "PERLU PERHATIAN",
                     keterangan: reportedItem.keterangan,
                     foto: undefined // We can't pre-fill file inputs
                 };
