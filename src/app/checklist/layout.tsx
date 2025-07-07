@@ -13,6 +13,7 @@ import {
   Lightbulb,
   ClipboardCheck,
   KeyRound,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,14 +29,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useAppData } from "@/context/app-data-context";
-
-const navItems = [
-  { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
-  { href: "/checklist/complaint", icon: MessageSquareWarning, label: "Komplain" },
-  { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
-  { href: "/checklist/history", icon: History, label: "Riwayat Saya" },
-  { href: "/checklist/change-password", icon: KeyRound, label: "Ganti Password" },
-];
 
 const NavLink = ({ href, icon: Icon, label }: {href: string, icon: React.ElementType, label: string}) => {
   const pathname = usePathname();
@@ -64,6 +57,22 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     if (!vehicle) return null;
     return vehicles.find(v => v.hullNumber === vehicle);
   }, [vehicle, vehicles]);
+
+  const navItems = React.useMemo(() => {
+    const baseItems = [
+      { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
+      { href: "/checklist/complaint", icon: MessageSquareWarning, label: "Komplain" },
+      { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
+      { href: "/checklist/history", icon: History, label: "Riwayat Saya" },
+      { href: "/checklist/change-password", icon: KeyRound, label: "Ganti Password" },
+    ];
+
+    if (user?.role === 'KEPALA_BP') {
+      baseItems.unshift({ href: "/checklist/select-vehicle", icon: ClipboardList, label: "Daftar Batangan Saya" });
+    }
+
+    return baseItems;
+  }, [user]);
 
   React.useEffect(() => {
     if (!isLoading && !user) {
