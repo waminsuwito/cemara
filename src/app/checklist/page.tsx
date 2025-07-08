@@ -169,6 +169,12 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
           return downloadURL;
         } catch (uploadError) {
           console.error("Image upload failed:", uploadError);
+          toast({
+            variant: "destructive",
+            title: "Upload Foto Gagal",
+            description: "Tidak dapat mengunggah gambar. Periksa koneksi internet Anda atau hubungi admin jika masalah berlanjut.",
+            duration: 7000,
+          });
           return undefined;
         }
       };
