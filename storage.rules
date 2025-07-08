@@ -1,9 +1,14 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read; // Anyone can read files.
-      allow write: if request.auth != null; // Only authenticated users can write.
+    // Allow read access to all files, so the app can display images
+    // Allow write access only for image files under 5MB in the 'report-images' folder.
+    // This allows unauthenticated uploads from the operator client, but adds some protection.
+    match /report-images/{imageId} {
+      allow read;
+      allow write: if request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
     }
   }
 }
