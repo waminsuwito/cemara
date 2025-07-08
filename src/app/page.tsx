@@ -1,11 +1,7 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OperatorLoginForm } from "@/components/operator-login-form";
-import { AdminLoginForm } from "@/components/admin-login-form";
-import { MechanicLoginForm } from "@/components/mechanic-login-form";
+import { UnifiedLoginForm } from "@/components/unified-login-form";
 import { Truck, Loader2 } from "lucide-react";
 import { useAppData } from "@/context/app-data-context";
 
@@ -35,52 +31,17 @@ export default function Home() {
             <p className="text-muted-foreground">Memuat data aplikasi...</p>
           </div>
         ) : (
-          <Tabs defaultValue="operator" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="operator">Operator/Driver</TabsTrigger>
-              <TabsTrigger value="admin">Admin</TabsTrigger>
-              <TabsTrigger value="mekanik">Mekanik/Logistik</TabsTrigger>
-            </TabsList>
-            <TabsContent value="operator">
-              <Card className="bg-card/80 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle>Login Operator</CardTitle>
-                  <CardDescription>
-                    Silakan login dengan NIK atau Nama Anda.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <OperatorLoginForm />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="admin">
-              <Card className="bg-card/80 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle>Login Admin</CardTitle>
-                  <CardDescription>
-                    Masukan username dan password untuk memonitor laporan.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AdminLoginForm />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="mekanik">
-              <Card className="bg-card/80 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle>Login Mekanik / Logistik</CardTitle>
-                  <CardDescription>
-                    Masukan username dan password untuk mengakses dasbor Anda.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MechanicLoginForm />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <Card className="bg-card/80 backdrop-blur-sm border-white/10">
+            <CardHeader>
+              <CardTitle>Login Sistem</CardTitle>
+              <CardDescription>
+                Masukkan Username, NIK, atau Nama Anda untuk melanjutkan.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UnifiedLoginForm />
+            </CardContent>
+          </Card>
         )}
       </div>
     </main>
