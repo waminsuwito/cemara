@@ -183,7 +183,10 @@ function ChecklistForm({ reportToUpdate }: { reportToUpdate: Report | null }) {
             keterangan: item.keterangan || '',
           };
           if (item.foto) {
-            cleanItem.foto = await uploadImageAndGetURL(item.foto);
+            const fotoUrl = await uploadImageAndGetURL(item.foto);
+            if (fotoUrl) { // Only add the 'foto' property if the URL is valid
+              cleanItem.foto = fotoUrl;
+            }
           }
           reportItems.push(cleanItem);
         }
