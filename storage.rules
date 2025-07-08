@@ -1,14 +1,20 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read access to all files, so the app can display images
-    // Allow write access only for image files under 5MB in the 'report-images' folder.
-    // This allows unauthenticated uploads from the operator client, but adds some protection.
+    // Aturan untuk folder gambar laporan
     match /report-images/{imageId} {
+      // Izinkan siapa saja untuk membaca (melihat) gambar.
+      // Ini diperlukan agar admin, mekanik, dan logistik dapat melihat foto kerusakan.
       allow read;
-      allow write: if request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+
+      // Izinkan penulisan (unggah) HANYA jika file tersebut adalah gambar
+      // dan ukurannya di bawah 5MB. Ini adalah kompromi keamanan
+      // karena aplikasi ini menggunakan sistem login kustom yang tidak
+      // mengisi `request.auth` di Storage Rules.
+      allow write: if request.resource.size < 5 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
     }
   }
 }
