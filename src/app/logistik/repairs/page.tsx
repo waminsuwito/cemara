@@ -60,11 +60,17 @@ const OriginalReportDetails = ({ report }: { report: Report | undefined }) => {
                 {problemItems.map(item => (
                     <li key={item.id}>
                         <strong>{item.label} ({item.status}):</strong> {item.keterangan || 'Tidak ada keterangan.'}
+                        {item.foto && (
+                             <a href={item.foto} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-2">[Lihat Foto]</a>
+                        )}
                     </li>
                 ))}
                 {otherDamage?.keterangan && (
                      <li>
                         <strong>Kerusakan Lainnya:</strong> {otherDamage.keterangan}
+                        {otherDamage.foto && (
+                             <a href={otherDamage.foto} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-2">[Lihat Foto]</a>
+                        )}
                     </li>
                 )}
             </ul>

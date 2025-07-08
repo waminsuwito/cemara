@@ -95,6 +95,7 @@ export default function MechanicTasksPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [damageDetails, setDamageDetails] = useState("");
+  const [damagePhotoUrl, setDamagePhotoUrl] = useState("");
   const [isDelayDialogOpen, setIsDelayDialogOpen] = useState(false);
   const [selectedTaskForDelay, setSelectedTaskForDelay] = useState<MechanicTask | null>(null);
   const [delayReasonInput, setDelayReasonInput] = useState("");
@@ -171,11 +172,17 @@ export default function MechanicTasksPage() {
             
             const fullDescription = [problemItems, otherDamage].filter(Boolean).join('\n');
             setDamageDetails(fullDescription.trim() || "Tidak ada detail kerusakan spesifik dari laporan operator.");
+
+            const problemItemWithPhoto = report.items?.find(item => item.status !== 'BAIK' && item.foto);
+            const otherDamagePhoto = report.kerusakanLain?.foto;
+            setDamagePhotoUrl(problemItemWithPhoto?.foto || otherDamagePhoto || "");
         } else {
             setDamageDetails("");
+            setDamagePhotoUrl("");
         }
     } else {
         setDamageDetails("");
+        setDamagePhotoUrl("");
     }
   }, [selectedVehicleHullNumber, damagedOrAttentionVehicles]);
 
@@ -212,6 +219,7 @@ export default function MechanicTasksPage() {
       mechanics: [],
     });
     setDamageDetails("");
+    setDamagePhotoUrl("");
     setIsLoading(false);
   };
   
@@ -283,6 +291,14 @@ export default function MechanicTasksPage() {
                       className="bg-muted/40 border-dashed h-auto resize-none focus-visible:ring-0"
                       rows={damageDetails.split('\n').length > 1 ? damageDetails.split('\n').length : 2}
                     />
+                     {damagePhotoUrl && (
+                        <div className="mt-2">
+                            <p className="text-sm text-muted-foreground mb-1">Foto dari Laporan:</p>
+                            <a href={damagePhotoUrl} target="_blank" rel="noopener noreferrer">
+                                <img src={damagePhotoUrl} alt="Foto Laporan Kerusakan" className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine damage" />
+                            </a>
+                        </div>
+                    )}
                   </div>
                 )}
 
