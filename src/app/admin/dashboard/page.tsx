@@ -274,7 +274,9 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                                 {item.foto && (
                                                     <div className="mt-2">
                                                         <p className="text-sm text-muted-foreground mb-1">Foto:</p>
-                                                        <img src={item.foto} alt={`Foto ${item.label}`} className="rounded-md w-full max-w-xs" data-ai-hint="machine damage" />
+                                                        <a href={item.foto} target="_blank" rel="noopener noreferrer">
+                                                            <img src={item.foto} alt={`Foto ${item.label}`} className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine damage" />
+                                                        </a>
                                                     </div>
                                                 )}
                                             </div>
@@ -292,7 +294,9 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                          {report.kerusakanLain.foto && (
                                             <div className="mt-2">
                                                 <p className="text-sm text-muted-foreground mb-1">Foto:</p>
-                                                <img src={report.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" className="rounded-md w-full max-w-xs" data-ai-hint="machine part" />
+                                                <a href={report.kerusakanLain.foto} target="_blank" rel="noopener noreferrer">
+                                                    <img src={report.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine part" />
+                                                </a>
                                             </div>
                                         )}
                                     </CardContent>
