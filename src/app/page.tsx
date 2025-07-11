@@ -14,7 +14,7 @@ export default function Home() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
           <img
-            src="https://i.ibb.co/V0NgdX7z/images.jpg"
+            src="/logo.png"
             alt="Logo PT Farika Riau Perkasa"
             className="h-32 w-32 object-contain"
           />

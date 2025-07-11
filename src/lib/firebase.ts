@@ -13,13 +13,12 @@ import { getStorage } from "firebase/storage";
 // 5. Salin objek "firebaseConfig" dan tempel seluruhnya di sini.
 // ===================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyB5MPo5udTSUTgitB_oK6I2ZeKOcv3-tS4",
-  authDomain: "batchingplantmanager-5f679.firebaseapp.com",
-  projectId: "batchingplantmanager-5f679",
-  storageBucket: "batchingplantmanager-5f679.appspot.com",
-  messagingSenderId: "643284217395",
-  appId: "1:643284217395:web:e474af169185d52d3d7d46",
-  measurementId: "G-JMF86KVYLP"
+  apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  authDomain: "xxxxxxxxxxxxxxxxxxxxxxxx.firebaseapp.com",
+  projectId: "xxxxxxxxxxxxxxxxxxxxxxxx",
+  storageBucket: "xxxxxxxxxxxxxxxxxxxxxxxx.appspot.com",
+  messagingSenderId: "xxxxxxxxxxxx",
+  appId: "x:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
 };
 
 

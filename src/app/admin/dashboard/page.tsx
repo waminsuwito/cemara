@@ -3,7 +3,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -276,7 +275,7 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                                     <div className="mt-2">
                                                         <p className="text-sm text-muted-foreground mb-1">Foto:</p>
                                                         <a href={item.foto} target="_blank" rel="noopener noreferrer">
-                                                            <Image src={item.foto} alt={`Foto ${item.label}`} width={400} height={300} className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine damage" />
+                                                            <img src={item.foto} alt={`Foto ${item.label}`} className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine damage" />
                                                         </a>
                                                     </div>
                                                 )}
@@ -296,7 +295,7 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                             <div className="mt-2">
                                                 <p className="text-sm text-muted-foreground mb-1">Foto:</p>
                                                 <a href={report.kerusakanLain.foto} target="_blank" rel="noopener noreferrer">
-                                                    <Image src={report.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" width={400} height={300} className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine part" />
+                                                    <img src={report.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine part" />
                                                 </a>
                                             </div>
                                         )}
