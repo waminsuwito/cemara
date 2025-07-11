@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -170,7 +171,7 @@ export default function LogistikDashboardPage() {
                                     <div className="mt-2">
                                         <p className="text-sm text-muted-foreground mb-1">Foto:</p>
                                         <a href={item.foto} target="_blank" rel="noopener noreferrer">
-                                            <img src={item.foto} alt={`Foto ${item.label}`} className="rounded-md w-full max-w-xs cursor-pointer" data-ai-hint="machine damage" />
+                                            <Image src={item.foto} alt={`Foto ${item.label}`} width={400} height={300} className="rounded-md w-full max-w-xs cursor-pointer" data-ai-hint="machine damage" />
                                         </a>
                                     </div>
                                 )}
@@ -189,7 +190,7 @@ export default function LogistikDashboardPage() {
                                 <div className="mt-2">
                                     <p className="text-sm text-muted-foreground mb-1">Foto:</p>
                                     <a href={selectedReport.kerusakanLain.foto} target="_blank" rel="noopener noreferrer">
-                                        <img src={selectedReport.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" className="rounded-md w-full max-w-xs cursor-pointer" data-ai-hint="machine part" />
+                                        <Image src={selectedReport.kerusakanLain.foto} alt="Foto Kerusakan Lainnya" width={400} height={300} className="rounded-md w-full max-w-xs cursor-pointer" data-ai-hint="machine part" />
                                     </a>
                                 </div>
                             )}

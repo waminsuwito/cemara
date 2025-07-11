@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
+import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -295,7 +296,7 @@ export default function MechanicTasksPage() {
                         <div className="mt-2">
                             <p className="text-sm text-muted-foreground mb-1">Foto dari Laporan:</p>
                             <a href={damagePhotoUrl} target="_blank" rel="noopener noreferrer">
-                                <img src={damagePhotoUrl} alt="Foto Laporan Kerusakan" className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine damage" />
+                                <Image src={damagePhotoUrl} alt="Foto Laporan Kerusakan" width={400} height={300} className="rounded-md w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity" data-ai-hint="machine damage" />
                             </a>
                         </div>
                     )}
