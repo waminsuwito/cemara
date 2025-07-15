@@ -179,5 +179,5 @@ export const initialLocations: Omit<Location, "id">[] = [
     { namaBP: "BP DUMAI", lokasiBP: "BP DUMAI" },
     { namaBP: "BP BAUNG", lokasiBP: "BP BAUNG" },
     { namaBP: "BP IKN", lokasiBP: "BP IKN" },
-    { namaBP: "KANTO", lokasiBP: "KANTO" },
 ];
+
