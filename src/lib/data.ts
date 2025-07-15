@@ -81,7 +81,7 @@ export type MechanicTask = {
     hullNumber: string;
     licensePlate: string;
     repairDescription: string;
-    targetDate: string; // YYYY-MM-DD
+    targetDate: string; // YYYY-MM-dd
     targetTime: string; // HH:mm
     triggeringReportId?: string;
   };
@@ -172,4 +172,12 @@ export const batchingPlantChecklistItems = [
     { id: "mixer_door", label: "Pintu mixer" },
     { id: "material_bucket_door", label: "Pintu baket material" },
     { id: "other_condition", label: "Kondisi alat lainnya" }
+];
+
+export const initialLocations: Omit<Location, "id">[] = [
+    { namaBP: "BP PEKANBARU", lokasiBP: "BP PEKANBARU" },
+    { namaBP: "BP DUMAI", lokasiBP: "BP DUMAI" },
+    { namaBP: "BP BAUNG", lokasiBP: "BP BAUNG" },
+    { namaBP: "BP IKN", lokasiBP: "BP IKN" },
+    { namaBP: "KANTO", lokasiBP: "KANTO" },
 ];

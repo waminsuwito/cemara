@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType } from '@/lib/data';
+import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit, getDoc } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -77,31 +77,45 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const { user: adminUser } = useAdminAuth();
   const { user: operatorUser } = useOperatorAuth();
 
-  const seedInitialUsers = useCallback(async () => {
+  const seedInitialData = useCallback(async () => {
+    // Seed Users
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, limit(1));
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) {
-      console.log('No users found in database. Seeding initial superusers...');
+    const userQuery = query(usersRef, limit(1));
+    const userSnapshot = await getDocs(userQuery);
+    if (userSnapshot.empty) {
+      console.log('Seeding initial users...');
       const initialUsers = [
         { name: 'Super Admin', username: 'superadmin', password: 'superadmin123', role: 'SUPER_ADMIN' as UserRole },
         { name: 'Admin', username: 'admin', password: 'admin', role: 'SUPER_ADMIN' as UserRole },
       ];
-      
-      const batch = writeBatch(db);
+      const userBatch = writeBatch(db);
       initialUsers.forEach(user => {
         const newUserRef = doc(usersRef);
-        batch.set(newUserRef, user);
+        userBatch.set(newUserRef, user);
       });
-      await batch.commit();
-      console.log('Initial superusers have been seeded.');
+      await userBatch.commit();
+      console.log('Initial users seeded.');
+    }
+
+    // Seed Locations
+    const locationsRef = collection(db, 'locations');
+    const locationQuery = query(locationsRef, limit(1));
+    const locationSnapshot = await getDocs(locationQuery);
+    if (locationSnapshot.empty) {
+      console.log('Seeding initial locations...');
+      const locationBatch = writeBatch(db);
+      initialLocations.forEach(loc => {
+          const newLocRef = doc(locationsRef);
+          locationBatch.set(newLocRef, loc);
+      });
+      await locationBatch.commit();
+      console.log('Initial locations seeded.');
     }
   }, []);
 
   // Effect for public data (loaded for everyone)
   useEffect(() => {
-    seedInitialUsers(); // Seed users on initial load if DB is empty
+    seedInitialData();
 
     const collectionsToWatch = [
       { name: 'users', setter: setUsers },
@@ -160,7 +174,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       unsubscribes.forEach(unsub => unsub());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seedInitialUsers]);
+  }, [seedInitialData]);
 
   // Effect for protected data (loaded only for logged-in users)
   useEffect(() => {
