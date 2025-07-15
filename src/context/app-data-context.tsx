@@ -2,10 +2,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Vehicle, Report, Location, ReportItem, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType } from '@/lib/data';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit, getDoc } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfToday, isSameDay, isBefore } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
@@ -77,8 +77,32 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const { user: adminUser } = useAdminAuth();
   const { user: operatorUser } = useOperatorAuth();
 
+  const seedInitialUsers = useCallback(async () => {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, limit(1));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      console.log('No users found in database. Seeding initial superusers...');
+      const initialUsers = [
+        { name: 'Super Admin', username: 'superadmin', password: 'superadmin123', role: 'SUPER_ADMIN' as UserRole },
+        { name: 'Admin', username: 'admin', password: 'admin', role: 'SUPER_ADMIN' as UserRole },
+      ];
+      
+      const batch = writeBatch(db);
+      initialUsers.forEach(user => {
+        const newUserRef = doc(usersRef);
+        batch.set(newUserRef, user);
+      });
+      await batch.commit();
+      console.log('Initial superusers have been seeded.');
+    }
+  }, []);
+
   // Effect for public data (loaded for everyone)
   useEffect(() => {
+    seedInitialUsers(); // Seed users on initial load if DB is empty
+
     const collectionsToWatch = [
       { name: 'users', setter: setUsers },
       { name: 'vehicles', setter: setVehicles },
@@ -114,7 +138,9 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             return { id: doc.id, ...docData };
         });
         setter(data as any);
-        onCollectionLoaded();
+        if (!isDataLoaded) { // Only call this on initial load to prevent multiple triggers
+            onCollectionLoaded();
+        }
       }, (error) => {
         console.error(`Error fetching ${name}: `, error);
         toast({
@@ -123,7 +149,9 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             description: `Tidak dapat mengambil data untuk "${name}". Periksa aturan keamanan Firestore Anda.`,
             duration: 9000
         });
-        onCollectionLoaded(); // Still count as "loaded" to not block the UI forever
+        if (!isDataLoaded) {
+            onCollectionLoaded();
+        }
       });
       unsubscribes.push(unsubscribe);
     });
@@ -132,7 +160,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       unsubscribes.forEach(unsub => unsub());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [seedInitialUsers]);
 
   // Effect for protected data (loaded only for logged-in users)
   useEffect(() => {
