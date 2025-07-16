@@ -20,6 +20,7 @@ import {
   CalendarCheck,
   Route,
   Wrench,
+  Factory,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { batchingPlantBatangan } from "@/lib/data";
 
 const NavLink = ({ href, icon: Icon, label, className, hasBadge }: {href: string, icon: React.ElementType, label: string, className?: string, hasBadge?: boolean}) => {
   const pathname = usePathname();
@@ -77,6 +79,11 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     if (!vehicle) return null;
     return vehicles.find(v => v.hullNumber === vehicle);
   }, [vehicle, vehicles]);
+
+  const isBPVehicle = useMemo(() => {
+    if (!selectedVehicle) return false;
+    return batchingPlantBatangan.includes(selectedVehicle.licensePlate);
+  }, [selectedVehicle]);
 
   const availableVehicles = useMemo(() => {
     if (!user?.batangan) return [];
@@ -260,7 +267,14 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
               PT FARIKA RIAU PERKASA
             </p>
           </div>
-          <div className="flex flex-1 justify-end">
+          <div className="flex flex-1 justify-end items-center gap-2">
+            {isBPVehicle && (
+                <Button asChild>
+                    <Link href="/checklist/produksi">
+                        <Factory className="mr-2 h-4 w-4" /> Produksi
+                    </Link>
+                </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
