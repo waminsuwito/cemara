@@ -21,7 +21,7 @@ export default function Home() {
           <div className="flex items-center gap-3 mt-4">
             <Truck className="h-10 w-10 text-primary" />
             <h1 className="text-3xl font-bold text-foreground font-headline">
-              my batching plant Manager
+              My Batching Plant Manager
             </h1>
           </div>
         </div>

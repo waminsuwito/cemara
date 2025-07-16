@@ -15,7 +15,7 @@ const inter = Inter({
 
 
 export const metadata: Metadata = {
-  title: 'my batching plant Manager',
+  title: 'My Batching Plant Manager',
   description: 'Aplikasi untuk checklist harian kendaraan/alat berat',
 };
 
