@@ -11,10 +11,31 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Printer } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay, isAfter, isBefore } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, isAfter, isBefore, parse } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { DateRange } from "react-day-picker";
+
+const calculateDuration = (startStr?: string, endStr?: string, date?: string | number | Date): number | null => {
+    if (!startStr || !endStr || !date) return null;
+    try {
+        const baseDate = new Date(date).toISOString().split('T')[0];
+        const startTime = parse(startStr, 'HH:mm:ss', new Date(`${baseDate}T00:00:00`));
+        const endTime = parse(endStr, 'HH:mm:ss', new Date(`${baseDate}T00:00:00`));
+
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return null;
+
+        let diff = (endTime.getTime() - startTime.getTime()) / (1000 * 60); // difference in minutes
+        
+        if (diff < 0) { // Handles overnight scenario, assumes it's next day
+            diff += 24 * 60;
+        }
+
+        return Math.round(diff);
+    } catch (e) {
+        return null;
+    }
+}
 
 export default function RiwayatRitasiPage() {
   const { user } = useOperatorAuth();
@@ -102,30 +123,43 @@ export default function RiwayatRitasiPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Tanggal</TableHead>
-                <TableHead>Asal</TableHead>
-                <TableHead>Tujuan</TableHead>
+                <TableHead>Asal &gt; Tujuan</TableHead>
                 <TableHead>Berangkat</TableHead>
+                <TableHead>Pergi (m)</TableHead>
                 <TableHead>Sampai</TableHead>
+                <TableHead>Di Lokasi (m)</TableHead>
                 <TableHead>Kembali</TableHead>
-                <TableHead>Tiba di BP</TableHead>
+                <TableHead>Pulang (m)</TableHead>
+                <TableHead>Tiba</TableHead>
+                <TableHead>Total Rit (m)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRitasi.length > 0 ? (
-                filteredRitasi.map(log => (
-                  <TableRow key={log.id}>
-                    <TableCell>{format(new Date(log.timestamp), 'd MMM yyyy', { locale: localeID })}</TableCell>
-                    <TableCell>{log.asal}</TableCell>
-                    <TableCell>{log.tujuan}</TableCell>
-                    <TableCell>{log.berangkat || '-'}</TableCell>
-                    <TableCell>{log.sampai || '-'}</TableCell>
-                    <TableCell>{log.kembali || '-'}</TableCell>
-                    <TableCell>{log.tiba || '-'}</TableCell>
-                  </TableRow>
-                ))
+                filteredRitasi.map(log => {
+                  const pergi = calculateDuration(log.berangkat, log.sampai, log.timestamp);
+                  const diLokasi = calculateDuration(log.sampai, log.kembali, log.timestamp);
+                  const pulang = calculateDuration(log.kembali, log.tiba, log.timestamp);
+                  const total = calculateDuration(log.berangkat, log.tiba, log.timestamp);
+
+                  return (
+                    <TableRow key={log.id}>
+                      <TableCell>{format(new Date(log.timestamp), 'd MMM yyyy', { locale: localeID })}</TableCell>
+                      <TableCell>{log.asal} &gt; {log.tujuan}</TableCell>
+                      <TableCell>{log.berangkat || '-'}</TableCell>
+                      <TableCell className="font-medium text-center">{pergi ?? '-'}</TableCell>
+                      <TableCell>{log.sampai || '-'}</TableCell>
+                      <TableCell className="font-medium text-center">{diLokasi ?? '-'}</TableCell>
+                      <TableCell>{log.kembali || '-'}</TableCell>
+                      <TableCell className="font-medium text-center">{pulang ?? '-'}</TableCell>
+                      <TableCell>{log.tiba || '-'}</TableCell>
+                      <TableCell className="font-bold text-center">{total ?? '-'}</TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">Tidak ada riwayat ritasi untuk rentang tanggal yang dipilih.</TableCell>
+                  <TableCell colSpan={10} className="h-24 text-center">Tidak ada riwayat ritasi untuk rentang tanggal yang dipilih.</TableCell>
                 </TableRow>
               )}
             </TableBody>

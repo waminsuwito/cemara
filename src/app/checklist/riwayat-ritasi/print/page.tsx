@@ -5,10 +5,31 @@ import React, { useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppData } from '@/context/app-data-context';
 import { useOperatorAuth } from '@/context/operator-auth-context';
-import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay, parse } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer } from 'lucide-react';
+
+const calculateDuration = (startStr?: string, endStr?: string, date?: string | number | Date): number | null => {
+    if (!startStr || !endStr || !date) return null;
+    try {
+        const baseDate = new Date(date).toISOString().split('T')[0];
+        const startTime = parse(startStr, 'HH:mm:ss', new Date(`${baseDate}T00:00:00`));
+        const endTime = parse(endStr, 'HH:mm:ss', new Date(`${baseDate}T00:00:00`));
+
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return null;
+
+        let diff = (endTime.getTime() - startTime.getTime()) / (1000 * 60); // difference in minutes
+        
+        if (diff < 0) { // Handles overnight scenario, assumes it's next day
+            diff += 24 * 60;
+        }
+
+        return Math.round(diff);
+    } catch (e) {
+        return null;
+    }
+}
 
 function PrintPageContent() {
     const router = useRouter();
@@ -76,28 +97,40 @@ function PrintPageContent() {
                             <thead>
                                 <tr className="bg-gray-200">
                                     <th className="border border-gray-600 p-2 text-left">Tanggal</th>
-                                    <th className="border border-gray-600 p-2 text-left">Asal</th>
-                                    <th className="border border-gray-600 p-2 text-left">Tujuan</th>
+                                    <th className="border border-gray-600 p-2 text-left">Asal &gt; Tujuan</th>
                                     <th className="border border-gray-600 p-2 text-center">Berangkat</th>
+                                    <th className="border border-gray-600 p-2 text-center">Pergi (m)</th>
                                     <th className="border border-gray-600 p-2 text-center">Sampai</th>
+                                    <th className="border border-gray-600 p-2 text-center">Di Lokasi (m)</th>
                                     <th className="border border-gray-600 p-2 text-center">Kembali</th>
+                                    <th className="border border-gray-600 p-2 text-center">Pulang (m)</th>
                                     <th className="border border-gray-600 p-2 text-center">Tiba</th>
+                                    <th className="border border-gray-600 p-2 text-center">Total (m)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredRitasi.length > 0 ? filteredRitasi.map(log => (
-                                    <tr key={log.id} className="even:bg-gray-50 align-top">
-                                        <td className="border border-gray-600 p-2 whitespace-nowrap">{format(new Date(log.timestamp), 'd MMM yyyy')}</td>
-                                        <td className="border border-gray-600 p-2">{log.asal}</td>
-                                        <td className="border border-gray-600 p-2">{log.tujuan}</td>
-                                        <td className="border border-gray-600 p-2 text-center">{log.berangkat || '-'}</td>
-                                        <td className="border border-gray-600 p-2 text-center">{log.sampai || '-'}</td>
-                                        <td className="border border-gray-600 p-2 text-center">{log.kembali || '-'}</td>
-                                        <td className="border border-gray-600 p-2 text-center">{log.tiba || '-'}</td>
-                                    </tr>
-                                )) : (
+                                {filteredRitasi.length > 0 ? filteredRitasi.map(log => {
+                                    const pergi = calculateDuration(log.berangkat, log.sampai, log.timestamp);
+                                    const diLokasi = calculateDuration(log.sampai, log.kembali, log.timestamp);
+                                    const pulang = calculateDuration(log.kembali, log.tiba, log.timestamp);
+                                    const total = calculateDuration(log.berangkat, log.tiba, log.timestamp);
+                                    return (
+                                        <tr key={log.id} className="even:bg-gray-50 align-top">
+                                            <td className="border border-gray-600 p-2 whitespace-nowrap">{format(new Date(log.timestamp), 'd MMM yyyy')}</td>
+                                            <td className="border border-gray-600 p-2">{log.asal} &gt; {log.tujuan}</td>
+                                            <td className="border border-gray-600 p-2 text-center">{log.berangkat || '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center font-medium">{pergi ?? '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center">{log.sampai || '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center font-medium">{diLokasi ?? '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center">{log.kembali || '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center font-medium">{pulang ?? '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center">{log.tiba || '-'}</td>
+                                            <td className="border border-gray-600 p-2 text-center font-bold">{total ?? '-'}</td>
+                                        </tr>
+                                    )
+                                }) : (
                                     <tr>
-                                        <td colSpan={7} className="border border-gray-600 p-4 text-center">Tidak ada data untuk filter yang dipilih.</td>
+                                        <td colSpan={10} className="border border-gray-600 p-4 text-center">Tidak ada data untuk filter yang dipilih.</td>
                                     </tr>
                                 )}
                             </tbody>
