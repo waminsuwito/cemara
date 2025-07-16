@@ -11,7 +11,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAppData } from '@/context/app-data-context';
 import { useOperatorAuth } from '@/context/operator-auth-context';
@@ -85,7 +84,8 @@ export default function RitasiPage() {
         console.error("Failed to save ritasi state to local storage", e);
       }
     }
-  }, [formValues, getStorageKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formValues]);
 
 
   const handleTimeClick = (field: keyof RitasiFormData) => {
