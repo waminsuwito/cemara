@@ -1,7 +1,7 @@
 
 import type { z } from "zod";
 
-export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR' | 'MEKANIK' | 'KEPALA_BP' | 'LOGISTIK';
+export type UserRole = 'SUPER_ADMIN' | 'LOCATION_ADMIN' | 'OPERATOR' | 'MEKANIK' | 'KEPALA_BP' | 'LOGISTIK' | 'Operator BP';
 
 export type User = {
   id: string;
@@ -128,7 +128,7 @@ export type Notification = {
 };
 
 
-export const roles: UserRole[] = ["OPERATOR", "MEKANIK", "KEPALA_BP", "LOGISTIK", "LOCATION_ADMIN", "SUPER_ADMIN"];
+export const roles: UserRole[] = ["OPERATOR", "Operator BP", "MEKANIK", "KEPALA_BP", "LOGISTIK", "LOCATION_ADMIN", "SUPER_ADMIN"];
 
 // Checklist for standard vehicles
 export const checklistItems = [
@@ -180,4 +180,3 @@ export const initialLocations: Omit<Location, "id">[] = [
     { namaBP: "BP BAUNG", lokasiBP: "BP BAUNG" },
     { namaBP: "BP IKN", lokasiBP: "BP IKN" },
 ];
-

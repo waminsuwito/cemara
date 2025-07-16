@@ -101,6 +101,7 @@ export function UnifiedLoginForm() {
 
       case 'OPERATOR':
       case 'KEPALA_BP':
+      case 'Operator BP':
         const batanganList = user.batangan?.split(',').map(b => b.trim()).filter(Boolean) || [];
         if (batanganList.length === 0) {
             toast({
@@ -112,7 +113,7 @@ export function UnifiedLoginForm() {
             return;
         }
 
-        if (batanganList.length === 1 && user.role === 'OPERATOR') {
+        if (batanganList.length === 1 && (user.role === 'OPERATOR' || user.role === 'Operator BP')) {
           const singleBatangan = batanganList[0];
           const cleanBatangan = singleBatangan.replace(/[-\s]/g, '').toLowerCase();
           const vehicle = vehicles.find(v => v.licensePlate?.replace(/[-\s]/g, '').toLowerCase() === cleanBatangan);

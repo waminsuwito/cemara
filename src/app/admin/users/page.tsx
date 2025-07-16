@@ -105,7 +105,7 @@ export default function UserManagementPage() {
     const batangan = formData.get("batangan") as string;
 
     // --- Start Validation ---
-    if ((role === 'OPERATOR' || role === 'MEKANIK' || role === 'KEPALA_BP') && nik) {
+    if ((role === 'OPERATOR' || role === 'MEKANIK' || role === 'KEPALA_BP' || role === 'Operator BP') && nik) {
       const isNikTaken = users.some(u => 
         (u.role === role) && u.nik?.toLowerCase().trim() === nik.toLowerCase().trim() && u.id !== editingUser?.id
       );
@@ -119,7 +119,7 @@ export default function UserManagementPage() {
       }
     }
 
-    if ((role === "OPERATOR" || role === "KEPALA_BP") && batangan) {
+    if ((role === "OPERATOR" || role === "KEPALA_BP" || role === "Operator BP") && batangan) {
       const allVehiclePlates = vehicles.map(v => v.licensePlate.replace(/[-\s]/g, '').toLowerCase());
       const newBatanganList = batangan.split(/[\n,]/).map(b => b.trim()).filter(Boolean);
 
@@ -139,7 +139,7 @@ export default function UserManagementPage() {
       for (const b of newBatanganList) {
         const isBatanganInOtherLocation = users.some(u => 
           u.id !== editingUser?.id &&
-          (u.role === 'OPERATOR' || u.role === 'KEPALA_BP') &&
+          (u.role === 'OPERATOR' || u.role === 'KEPALA_BP' || u.role === 'Operator BP') &&
           u.location !== location &&
           u.batangan?.split(',').map(bt => bt.trim().toLowerCase()).includes(b.toLowerCase())
         );
@@ -180,7 +180,7 @@ export default function UserManagementPage() {
             userToUpdate.password = password;
         }
         
-        if (role === 'OPERATOR' || role === 'KEPALA_BP') {
+        if (role === 'OPERATOR' || role === 'KEPALA_BP' || role === 'Operator BP') {
             userToUpdate.nik = nik;
             userToUpdate.batangan = batangan;
             userToUpdate.location = location;
@@ -220,7 +220,7 @@ export default function UserManagementPage() {
         
         let newUser: Omit<User, 'id'> = { name, password, role };
 
-        if (role === 'OPERATOR' || role === 'KEPALA_BP') {
+        if (role === 'OPERATOR' || role === 'KEPALA_BP' || role === 'Operator BP') {
             newUser = { ...newUser, nik, batangan, location };
         } else if (role === 'MEKANIK') {
              newUser = { ...newUser, username, nik, location };
