@@ -80,8 +80,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const seedInitialData = useCallback(async () => {
     // Seed Users
     const usersRef = collection(db, 'users');
-    const userQuery = query(usersRef, limit(1));
-    const userSnapshot = await getDocs(userQuery);
+    const userSnapshot = await getDocs(usersRef);
     if (userSnapshot.empty) {
       console.log('Seeding initial users...');
       const initialUsers = [
@@ -99,8 +98,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
     // Seed Locations
     const locationsRef = collection(db, 'locations');
-    const locationQuery = query(locationsRef, limit(1));
-    const locationSnapshot = await getDocs(locationQuery);
+    const locationSnapshot = await getDocs(locationsRef);
     if (locationSnapshot.empty) {
       console.log('Seeding initial locations...');
       const locationBatch = writeBatch(db);
