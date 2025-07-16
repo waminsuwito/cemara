@@ -8,8 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppData } from "@/context/app-data-context";
 import { useAdminAuth } from "@/context/admin-auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, RefreshCcw, Send, Loader2, VideoOff, CheckCircle } from "lucide-react";
+import { Camera, RefreshCcw, Send, Loader2, VideoOff, CheckCircle, Clock } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+
+type WorkPeriod = 'Pagi' | 'Siang' | 'Malam' | null;
+
+const getCurrentWorkPeriod = (): WorkPeriod => {
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    if (currentHour >= 7 && currentHour < 12) return 'Pagi';
+    if (currentHour >= 12 && currentHour < 17) return 'Siang';
+    if (currentHour >= 17 && currentHour <= 23) return 'Malam';
+    
+    return null;
+};
 
 export default function AbsensiKegiatanPage() {
     const { locationNames } = useAppData();
@@ -22,10 +35,21 @@ export default function AbsensiKegiatanPage() {
     const [uiStep, setUiStep] = useState<'capture' | 'plan' | 'done'>('capture');
     const [selectedLocation, setSelectedLocation] = useState(user?.location || "");
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
-    const [workPlan, setWorkPlan] = useState("");
+    
+    const [workPlanPagi, setWorkPlanPagi] = useState("");
+    const [workPlanSiang, setWorkPlanSiang] = useState("");
+    const [workPlanMalam, setWorkPlanMalam] = useState("");
+
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activePeriod, setActivePeriod] = useState<WorkPeriod>(null);
     
+    useEffect(() => {
+        if (uiStep === 'plan') {
+          setActivePeriod(getCurrentWorkPeriod());
+        }
+    }, [uiStep]);
+
     useEffect(() => {
         if (uiStep !== 'capture') return;
 
@@ -91,12 +115,21 @@ export default function AbsensiKegiatanPage() {
         
         toast({ title: 'Absensi Berhasil', description: `Absensi untuk lokasi ${selectedLocation} telah direkam.` });
         setIsSubmitting(false);
-        setUiStep('plan'); // Move to the next step
+        setUiStep('plan');
     };
 
     const handleSubmitWorkPlan = async () => {
-        if (!workPlan) {
-            toast({ variant: 'destructive', title: 'Rencana Kerja Kosong', description: 'Mohon isi rencana kerja Anda hari ini.' });
+        if (!activePeriod) return;
+
+        const plans = {
+            Pagi: workPlanPagi,
+            Siang: workPlanSiang,
+            Malam: workPlanMalam,
+        };
+        const currentPlan = plans[activePeriod];
+        
+        if (!currentPlan) {
+            toast({ variant: 'destructive', title: `Rencana Kerja ${activePeriod} Kosong`, description: 'Mohon isi rencana kerja Anda.' });
             return;
         }
         setIsSubmitting(true);
@@ -104,7 +137,8 @@ export default function AbsensiKegiatanPage() {
         console.log("Submitting work plan:", {
             userId: user?.username,
             timestamp: new Date(),
-            workPlan,
+            period: activePeriod,
+            workPlan: currentPlan,
         });
         
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -116,8 +150,18 @@ export default function AbsensiKegiatanPage() {
     
     const handleReset = () => {
         setCapturedImage(null);
-        setWorkPlan("");
+        setWorkPlanPagi("");
+        setWorkPlanSiang("");
+        setWorkPlanMalam("");
         setUiStep('capture');
+    };
+
+    const isSubmitPlanDisabled = () => {
+        if (isSubmitting || !activePeriod) return true;
+        if (activePeriod === 'Pagi' && !workPlanPagi) return true;
+        if (activePeriod === 'Siang' && !workPlanSiang) return true;
+        if (activePeriod === 'Malam' && !workPlanMalam) return true;
+        return false;
     };
 
     const renderCaptureStep = () => (
@@ -177,16 +221,54 @@ export default function AbsensiKegiatanPage() {
     );
 
     const renderPlanStep = () => (
-        <div className="flex flex-col items-center gap-4 animate-in fade-in-50">
-            <h3 className="text-xl font-semibold">Apa rencana kerja Anda hari ini?</h3>
-            <Textarea
-                placeholder="Contoh: Melakukan pengecekan rutin pada semua alat di lokasi, membuat laporan harian, dll."
-                className="w-full max-w-lg"
-                rows={5}
-                value={workPlan}
-                onChange={(e) => setWorkPlan(e.target.value)}
-            />
-            <Button onClick={handleSubmitWorkPlan} disabled={isSubmitting || !workPlan}>
+        <div className="flex flex-col items-center gap-6 animate-in fade-in-50 w-full max-w-lg mx-auto">
+            <h3 className="text-xl font-semibold">Apa rencana kerja Anda?</h3>
+            
+            {!activePeriod && (
+                <div className="text-center p-6 border-dashed border-2 rounded-lg bg-muted/50">
+                    <Clock className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <p className="mt-4 font-semibold">Di Luar Jam Kerja</p>
+                    <p className="text-sm text-muted-foreground">Pengisian rencana kerja hanya dapat dilakukan pada jam kerja yang telah ditentukan.</p>
+                </div>
+            )}
+
+            <div className="w-full space-y-4">
+                <div>
+                    <label className="font-medium">Rencana Kerja Pagi (07:00 - 11:00)</label>
+                    <Textarea
+                        placeholder="Contoh: Melakukan pengecekan rutin pada semua alat..."
+                        rows={3}
+                        value={workPlanPagi}
+                        onChange={(e) => setWorkPlanPagi(e.target.value)}
+                        disabled={activePeriod !== 'Pagi'}
+                        className={activePeriod === 'Pagi' ? 'border-primary' : ''}
+                    />
+                </div>
+                 <div>
+                    <label className="font-medium">Rencana Kerja Siang (12:00 - 16:00)</label>
+                    <Textarea
+                        placeholder="Contoh: Membuat laporan harian..."
+                        rows={3}
+                        value={workPlanSiang}
+                        onChange={(e) => setWorkPlanSiang(e.target.value)}
+                        disabled={activePeriod !== 'Siang'}
+                        className={activePeriod === 'Siang' ? 'border-primary' : ''}
+                    />
+                </div>
+                 <div>
+                    <label className="font-medium">Rencana Kerja Malam (17:00 - 23:59)</label>
+                    <Textarea
+                        placeholder="Contoh: Mempersiapkan alat untuk shift berikutnya..."
+                        rows={3}
+                        value={workPlanMalam}
+                        onChange={(e) => setWorkPlanMalam(e.target.value)}
+                        disabled={activePeriod !== 'Malam'}
+                        className={activePeriod === 'Malam' ? 'border-primary' : ''}
+                    />
+                </div>
+            </div>
+
+            <Button onClick={handleSubmitWorkPlan} disabled={isSubmitPlanDisabled()}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Kirim Rencana Kerja
             </Button>
