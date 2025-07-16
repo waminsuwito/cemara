@@ -199,7 +199,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                   ))}
                 </nav>
               </div>
-              <div className="p-4 border-t">
+              <div className="p-4 border-t mt-auto">
                  <div className="pb-4 text-center">
                    <img
                      src="https://i.ibb.co/V0NgdX7z/images.jpg"
@@ -238,7 +238,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                     Operator: <span className="font-semibold text-primary">{user.name}</span>
                     {selectedVehicle && (
                         <>
-                        , Kendaraan: <span className="font-semibold text-primary">{selectedVehicle.licensePlate} ({selectedVehicle.hullNumber})</span>
+                        , Kendaraan: <span className="font-semibold text-primary">{selectedVehicle.type} ({selectedVehicle.licensePlate})</span>
                         </>
                     )}
                 </div>
