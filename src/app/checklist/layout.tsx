@@ -262,7 +262,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                 </div>
               )}
           </div>
-          <div className="flex-1 justify-center hidden md:flex">
+          <div className="flex items-center justify-center flex-1 hidden md:flex">
             <p className="font-semibold text-primary tracking-wider whitespace-nowrap">
               PT FARIKA RIAU PERKASA
             </p>
