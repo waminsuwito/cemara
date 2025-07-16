@@ -89,6 +89,15 @@ const CompletionStatusBadge = ({ targetDate, targetTime, completedAt }: { target
 
 type VehicleWithStatus = Vehicle & { status: string; latestReport?: Report };
 
+// Function to generate WO number
+const generateWoNumber = (task: MechanicTask) => {
+    const date = new Date(task.createdAt);
+    const datePart = format(date, 'yyyyMMdd');
+    const idPart = task.id.slice(-4).toUpperCase();
+    return `WO-${datePart}-${idPart}`;
+};
+
+
 export default function MechanicTasksPage() {
   const { user } = useAdminAuth();
   const { vehicles, users, mechanicTasks, reports, addMechanicTask, updateMechanicTask, deleteMechanicTask } = useAppData();
@@ -430,7 +439,8 @@ export default function MechanicTasksPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[60%]">Detail Target Pekerjaan</TableHead>
+                            <TableHead>No. WO</TableHead>
+                            <TableHead className="w-[50%]">Detail Target Pekerjaan</TableHead>
                             <TableHead>Man Power</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Aksi</TableHead>
@@ -439,6 +449,7 @@ export default function MechanicTasksPage() {
                     <TableBody>
                         {tasksForUser.length > 0 ? tasksForUser.map(task => (
                             <TableRow key={task.id}>
+                                <TableCell className="font-mono text-xs">{generateWoNumber(task)}</TableCell>
                                 <TableCell>
                                     {task.vehicle ? (
                                       <div className="border-l-2 border-primary pl-3">
@@ -500,7 +511,7 @@ export default function MechanicTasksPage() {
                             </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">Belum ada target pekerjaan yang dibuat.</TableCell>
+                                <TableCell colSpan={5} className="h-24 text-center">Belum ada target pekerjaan yang dibuat.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
