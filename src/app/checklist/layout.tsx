@@ -44,7 +44,7 @@ import {
 
 const NavLink = ({ href, icon: Icon, label, className, hasBadge }: {href: string, icon: React.ElementType, label: string, className?: string, hasBadge?: boolean}) => {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname.startsWith(href);
 
   return (
     <Link
@@ -104,6 +104,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     
     if (selectedVehicle?.type === 'TM') {
       baseItems.push({ href: "/checklist/ritasi", icon: Route, label: "Ritasi Saya" });
+      baseItems.push({ href: "/checklist/riwayat-ritasi", icon: History, label: "Riwayat Ritasi Saya" });
     }
 
     baseItems.push(

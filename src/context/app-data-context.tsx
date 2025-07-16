@@ -54,6 +54,7 @@ type AppDataContextType = {
   addAttendance: (attendanceData: Omit<Attendance, 'id' | 'timestamp' | 'date'>) => Promise<void>;
   getTodayAttendance: (userId: string) => Promise<{ masuk: Attendance | null, pulang: Attendance | null }>;
   
+  ritasiLogs: Ritasi[];
   addRitasi: (ritasiData: Omit<Ritasi, 'id' | 'timestamp' | 'date'>) => Promise<void>;
 
   locations: Location[];
@@ -77,6 +78,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [sparePartLogs, setSparePartLogs] = useState<SparePartLog[]>([]);
   const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [ritasiLogs, setRitasiLogs] = useState<Ritasi[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
@@ -85,7 +87,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const seedInitialData = useCallback(async () => {
     // Seed Users
     const usersRef = collection(db, 'users');
-    const userSnapshot = await getDocs(usersRef);
+    const userSnapshot = await getDocs(query(usersRef, limit(1)));
     if (userSnapshot.empty) {
       console.log('Seeding initial users...');
       const initialUsers = [
@@ -103,7 +105,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
     // Seed Locations
     const locationsRef = collection(db, 'locations');
-    const locationSnapshot = await getDocs(locationsRef);
+    const locationSnapshot = await getDocs(query(locationsRef, limit(1)));
     if (locationSnapshot.empty) {
       console.log('Seeding initial locations...');
       const locationBatch = writeBatch(db);
@@ -190,6 +192,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
           { name: 'sparePartLogs', setter: setSparePartLogs, orderByField: 'logDate' },
           { name: 'penalties', setter: setPenalties, orderByField: 'timestamp' },
           { name: 'notifications', setter: setNotifications, orderByField: 'timestamp' },
+          { name: 'ritasi', setter: setRitasiLogs, orderByField: 'timestamp' },
       ];
 
       const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
@@ -228,6 +231,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       setSparePartLogs([]);
       setPenalties([]);
       setNotifications([]);
+      setRitasiLogs([]);
     }
   }, [adminUser, operatorUser, toast]);
 
@@ -748,6 +752,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     markNotificationsAsRead,
     addAttendance,
     getTodayAttendance,
+    ritasiLogs,
     addRitasi,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
