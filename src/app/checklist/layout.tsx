@@ -171,7 +171,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="relative flex h-14 items-center gap-4 border-b bg-muted/20 px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/20 px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -214,7 +214,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
               </div>
             </SheetContent>
           </Sheet>
-          <div className="w-full flex-1">
+          <div className="flex-1">
              {user.role === 'KEPALA_BP' ? (
                 <div className="flex items-center gap-2 sm:gap-4">
                   <div className="text-sm text-muted-foreground hidden lg:block">
@@ -244,26 +244,28 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                 </div>
               )}
           </div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+          <div className="flex-1 justify-center hidden md:flex">
             <p className="font-semibold text-primary tracking-wider whitespace-nowrap">
               PT FARIKA RIAU PERKASA
             </p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <CircleUser className="h-5 w-5 text-primary" />
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex flex-1 justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <CircleUser className="h-5 w-5 text-primary" />
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
           {children}
