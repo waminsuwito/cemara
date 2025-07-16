@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAppData } from '@/context/app-data-context';
 import { useOperatorAuth } from '@/context/operator-auth-context';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const ritasiFormSchema = z.object({
@@ -49,13 +49,13 @@ export default function RitasiPage() {
     },
   });
 
-  const { setValue, handleSubmit, watch, reset } = form;
+  const { setValue, handleSubmit, watch, reset, formState: { isDirty } } = form;
   const formValues = watch();
 
-  const getStorageKey = () => {
+  const getStorageKey = React.useCallback(() => {
     if (!user || !vehicle) return null;
     return `ritasiForm-${user.id}-${vehicle}-${todayKey}`;
-  };
+  }, [user, vehicle, todayKey]);
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -65,27 +65,25 @@ export default function RitasiPage() {
         const savedState = localStorage.getItem(storageKey);
         if (savedState) {
           const parsedState = JSON.parse(savedState);
-          reset(parsedState);
+          reset(parsedState, { keepDefaultValues: true });
         }
       } catch (e) {
         console.error("Failed to load ritasi state from local storage", e);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, vehicle, todayKey, reset]);
+  }, [getStorageKey, reset]);
 
-  // Save state to localStorage on change
+  // Save state to localStorage on change, only if form is dirty
   useEffect(() => {
     const storageKey = getStorageKey();
-    if (storageKey) {
+    if (storageKey && isDirty) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(formValues));
       } catch (e) {
         console.error("Failed to save ritasi state to local storage", e);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formValues]);
+  }, [formValues, getStorageKey, isDirty]);
 
 
   const handleTimeClick = (field: keyof RitasiFormData) => {
@@ -108,17 +106,8 @@ export default function RitasiPage() {
             operatorName: user.name,
             vehicleHullNumber: vehicle,
         });
-        toast({ title: "Sukses", description: "Data ritasi berhasil disimpan." });
+        toast({ title: "Sukses", description: "Data ritasi berhasil dikirim ke riwayat." });
         
-        // Don't remove from localStorage, just reset the form for the next entry
-        form.reset({
-            asal: '',
-            tujuan: '',
-            berangkat: '',
-            sampai: '',
-            kembali: '',
-            tiba: '',
-        });
     } catch (e) {
       console.error(e);
       // The context will show a toast on error
@@ -127,12 +116,34 @@ export default function RitasiPage() {
     }
   };
 
+  const handleResetForm = () => {
+    const storageKey = getStorageKey();
+    if (storageKey) {
+        localStorage.removeItem(storageKey);
+    }
+    reset({
+        asal: '',
+        tujuan: '',
+        berangkat: '',
+        sampai: '',
+        kembali: '',
+        tiba: '',
+    });
+    toast({ title: "Formulir Direset", description: "Anda dapat memulai entri ritasi baru."});
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Lembar Kerja Ritasi</CardTitle>
-        <CardDescription>Catat waktu perjalanan Anda untuk setiap ritasi. Tekan "OK" untuk mengisi waktu secara otomatis.</CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>Lembar Kerja Ritasi</CardTitle>
+                <CardDescription>Catat waktu perjalanan Anda untuk setiap ritasi. Data akan tersimpan otomatis.</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleResetForm}>
+                <RotateCcw className="mr-2 h-4 w-4" /> Reset Form
+            </Button>
+        </div>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -144,7 +155,7 @@ export default function RitasiPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Asal</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <Select onValueChange={(value) => field.onChange(value)} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih lokasi asal..." />
