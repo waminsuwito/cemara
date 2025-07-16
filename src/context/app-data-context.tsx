@@ -3,11 +3,11 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations } from '@/lib/data';
+import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations, Attendance } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit, getDoc, startAt, endAt } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
-import { format, startOfToday, isSameDay, isBefore } from 'date-fns';
+import { format, startOfToday, isSameDay, isBefore, endOfToday } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
 import { useOperatorAuth } from './operator-auth-context';
 
@@ -50,6 +50,9 @@ type AppDataContextType = {
 
   notifications: Notification[];
   markNotificationsAsRead: (userId: string) => Promise<void>;
+  
+  addAttendance: (attendanceData: Omit<Attendance, 'id' | 'timestamp' | 'date'>) => Promise<void>;
+  getTodayAttendance: (userId: string) => Promise<{ masuk: Attendance | null, pulang: Attendance | null }>;
 
   locations: Location[];
   locationNames: string[];
@@ -674,6 +677,44 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: "destructive", title: "Error", description: "Gagal menandai pesan sebagai sudah dibaca." });
     }
   };
+  
+  const addAttendance = async (attendanceData: Omit<Attendance, 'id' | 'timestamp' | 'date'>) => {
+    try {
+      const now = new Date();
+      await addDoc(collection(db, 'attendances'), {
+        ...attendanceData,
+        timestamp: now.getTime(),
+        date: format(now, 'yyyy-MM-dd'),
+      });
+    } catch(e) {
+      console.error("Error adding attendance: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menyimpan data absensi." });
+      throw e;
+    }
+  };
+
+  const getTodayAttendance = async (userId: string): Promise<{ masuk: Attendance | null, pulang: Attendance | null }> => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const q = query(
+      collection(db, 'attendances'), 
+      where('userId', '==', userId),
+      where('date', '==', todayStr)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const result: { masuk: Attendance | null, pulang: Attendance | null } = { masuk: null, pulang: null };
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as Attendance;
+      if (data.type === 'masuk') {
+        result.masuk = data;
+      } else if (data.type === 'pulang') {
+        result.pulang = data;
+      }
+    });
+
+    return result;
+  };
 
   const locationNames = locations.map(l => l.namaBP).sort();
 
@@ -688,6 +729,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     penalties, addPenalty, deletePenalty,
     notifications,
     markNotificationsAsRead,
+    addAttendance,
+    getTodayAttendance,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

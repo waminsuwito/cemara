@@ -127,6 +127,18 @@ export type Notification = {
   type?: NotificationType;
 };
 
+export type Attendance = {
+    id: string;
+    userId: string; // Can be username (for admins) or user.id (for operators)
+    userName: string;
+    timestamp: number;
+    date: string; // YYYY-MM-DD for easy querying
+    type: 'masuk' | 'pulang';
+    status: 'Tepat Waktu' | 'Terlambat';
+    location: string;
+    photo: string;
+};
+
 
 export const roles: UserRole[] = ["OPERATOR", "Operator BP", "MEKANIK", "KEPALA_BP", "LOGISTIK", "LOCATION_ADMIN", "SUPER_ADMIN"];
 
@@ -180,4 +192,3 @@ export const initialLocations: Omit<Location, "id">[] = [
     { namaBP: "BP BAUNG", lokasiBP: "BP BAUNG" },
     { namaBP: "BP IKN", lokasiBP: "BP IKN" },
 ];
-
