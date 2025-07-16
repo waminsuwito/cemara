@@ -110,11 +110,7 @@ export default function RitasiPage() {
         });
         toast({ title: "Sukses", description: "Data ritasi berhasil disimpan." });
         
-        // Clear form and localStorage
-        const storageKey = getStorageKey();
-        if (storageKey) {
-          localStorage.removeItem(storageKey);
-        }
+        // Don't remove from localStorage, just reset the form for the next entry
         form.reset({
             asal: '',
             tujuan: '',
