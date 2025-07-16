@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations, Attendance } from '@/lib/data';
+import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations, Attendance, Ritasi } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit, getDoc, startAt, endAt } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +53,8 @@ type AppDataContextType = {
   
   addAttendance: (attendanceData: Omit<Attendance, 'id' | 'timestamp' | 'date'>) => Promise<void>;
   getTodayAttendance: (userId: string) => Promise<{ masuk: Attendance | null, pulang: Attendance | null }>;
+  
+  addRitasi: (ritasiData: Omit<Ritasi, 'id' | 'timestamp' | 'date'>) => Promise<void>;
 
   locations: Location[];
   locationNames: string[];
@@ -398,7 +400,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             (u.role === 'SUPER_ADMIN' || u.location === newReportData.location)
         );
         
-        const operatorUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+        const operatorUser = users.find(u => u.batangan?.includes(vehicle?.licensePlate) && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
         
         const allUsersToNotify = [...usersToNotifyQuery];
         if (operatorUser && !allUsersToNotify.find(u => u.id === operatorUser.id)) {
@@ -715,6 +717,21 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
     return result;
   };
+  
+  const addRitasi = async (ritasiData: Omit<Ritasi, 'id' | 'timestamp' | 'date'>) => {
+    try {
+      const now = new Date();
+      await addDoc(collection(db, 'ritasi'), {
+        ...ritasiData,
+        timestamp: now.getTime(),
+        date: format(now, 'yyyy-MM-dd'),
+      });
+    } catch(e) {
+      console.error("Error adding ritasi: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menyimpan data ritasi." });
+      throw e;
+    }
+  };
 
   const locationNames = locations.map(l => l.namaBP).sort();
 
@@ -731,6 +748,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     markNotificationsAsRead,
     addAttendance,
     getTodayAttendance,
+    addRitasi,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

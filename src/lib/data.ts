@@ -19,7 +19,6 @@ export type Vehicle = {
   hullNumber: string;
   licensePlate: string;
   type: string;
-  operator?: string;
   location: string;
 };
 
@@ -137,6 +136,21 @@ export type Attendance = {
     status: 'Tepat Waktu' | 'Terlambat';
     location: string;
     photo: string;
+};
+
+export type Ritasi = {
+    id: string;
+    date: string; // YYYY-MM-DD
+    timestamp: number;
+    operatorId: string;
+    operatorName: string;
+    vehicleHullNumber: string;
+    asal: string;
+    tujuan: string;
+    berangkat?: string; // HH:mm:ss
+    sampai?: string;
+    kembali?: string;
+    tiba?: string;
 };
 
 
