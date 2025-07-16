@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
@@ -35,6 +35,9 @@ export default function RitasiPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const today = format(new Date(), 'eeee, dd MMMM yyyy', { locale: localeID });
+  const todayKey = format(new Date(), 'yyyy-MM-dd');
+
   const form = useForm<RitasiFormData>({
     resolver: zodResolver(ritasiFormSchema),
     defaultValues: {
@@ -47,7 +50,43 @@ export default function RitasiPage() {
     },
   });
 
-  const { setValue, handleSubmit } = form;
+  const { setValue, handleSubmit, watch, reset } = form;
+  const formValues = watch();
+
+  const getStorageKey = () => {
+    if (!user || !vehicle) return null;
+    return `ritasiForm-${user.id}-${vehicle}-${todayKey}`;
+  };
+
+  // Load state from sessionStorage on mount
+  useEffect(() => {
+    const storageKey = getStorageKey();
+    if (storageKey) {
+      try {
+        const savedState = sessionStorage.getItem(storageKey);
+        if (savedState) {
+          const parsedState = JSON.parse(savedState);
+          reset(parsedState);
+        }
+      } catch (e) {
+        console.error("Failed to load ritasi state from session storage", e);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, vehicle, todayKey, reset]);
+
+  // Save state to sessionStorage on change
+  useEffect(() => {
+    const storageKey = getStorageKey();
+    if (storageKey) {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(formValues));
+      } catch (e) {
+        console.error("Failed to save ritasi state to session storage", e);
+      }
+    }
+  }, [formValues, getStorageKey]);
+
 
   const handleTimeClick = (field: keyof RitasiFormData) => {
     const currentTime = format(new Date(), 'HH:mm:ss');
@@ -70,7 +109,20 @@ export default function RitasiPage() {
             vehicleHullNumber: vehicle,
         });
         toast({ title: "Sukses", description: "Data ritasi berhasil disimpan." });
-        form.reset();
+        
+        // Clear form and session storage
+        const storageKey = getStorageKey();
+        if (storageKey) {
+          sessionStorage.removeItem(storageKey);
+        }
+        form.reset({
+            asal: '',
+            tujuan: '',
+            berangkat: '',
+            sampai: '',
+            kembali: '',
+            tiba: '',
+        });
     } catch (e) {
       console.error(e);
       // The context will show a toast on error
@@ -79,7 +131,6 @@ export default function RitasiPage() {
     }
   };
 
-  const today = format(new Date(), 'eeee, dd MMMM yyyy', { locale: localeID });
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -97,7 +148,7 @@ export default function RitasiPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Asal</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih lokasi asal..." />
@@ -118,7 +169,7 @@ export default function RitasiPage() {
                   <FormItem>
                     <FormLabel>Tujuan</FormLabel>
                     <FormControl>
-                      <Input placeholder="Masukkan lokasi tujuan..." {...field} />
+                      <Input placeholder="Masukkan lokasi tujuan..." {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,7 +216,7 @@ function TimeInput({ control, name, label, onClick }: {
           <FormLabel>{label}</FormLabel>
           <div className="flex items-center gap-2">
             <FormControl>
-              <Input type="time" step="1" {...field} />
+              <Input type="time" step="1" {...field} value={field.value || ''} />
             </FormControl>
             <Button type="button" variant="outline" onClick={() => onClick(name)}>OK</Button>
           </div>
