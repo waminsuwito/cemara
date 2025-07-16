@@ -19,7 +19,7 @@ export type Vehicle = {
   hullNumber: string;
   licensePlate: string;
   type: string;
-  operator: string;
+  operator?: string;
   location: string;
 };
 
@@ -180,3 +180,4 @@ export const initialLocations: Omit<Location, "id">[] = [
     { namaBP: "BP BAUNG", lokasiBP: "BP BAUNG" },
     { namaBP: "BP IKN", lokasiBP: "BP IKN" },
 ];
+

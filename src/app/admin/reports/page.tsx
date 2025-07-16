@@ -103,7 +103,6 @@ export default function VehicleManagementPage() {
       hullNumber,
       licensePlate: formData.get("licensePlate") as string,
       type: formData.get("type") as string,
-      operator: formData.get("operator") as string,
       location: formData.get("location") as string,
     };
 
@@ -161,7 +160,6 @@ export default function VehicleManagementPage() {
                 <TableHead>Nomor Lambung</TableHead>
                 <TableHead>Nomor Polisi</TableHead>
                 <TableHead>Jenis Alat</TableHead>
-                <TableHead>Sopir/Operator</TableHead>
                 <TableHead>Lokasi</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -172,7 +170,6 @@ export default function VehicleManagementPage() {
                   <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
                   <TableCell>{vehicle.licensePlate}</TableCell>
                   <TableCell>{vehicle.type}</TableCell>
-                  <TableCell>{vehicle.operator}</TableCell>
                   <TableCell>{vehicle.location}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(vehicle)}>
@@ -238,12 +235,6 @@ export default function VehicleManagementPage() {
                   Jenis Alat
                 </Label>
                 <Input id="type" name="type" defaultValue={editingVehicle?.type} className="col-span-3" required />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="operator" className="text-right">
-                  Operator
-                </Label>
-                <Input id="operator" name="operator" defaultValue={editingVehicle?.operator} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="location" className="text-right">

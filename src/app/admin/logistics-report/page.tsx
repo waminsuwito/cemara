@@ -70,7 +70,7 @@ const DamageDetails = ({ log, reports, mechanicTasks }: { log: SparePartLog, rep
 };
 
 export default function LogisticsReportPage() {
-  const { sparePartLogs, vehicles, locationNames, mechanicTasks, reports, deleteSparePartLog } = useAppData();
+  const { sparePartLogs, vehicles, locationNames, mechanicTasks, reports, deleteSparePartLog, users } = useAppData();
   const { user } = useAdminAuth();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -237,11 +237,12 @@ export default function LogisticsReportPage() {
               {filteredLogs.length > 0 ? (
                 filteredLogs.map((log) => {
                   const vehicle = vehicles.find(v => v.hullNumber === log.vehicleHullNumber);
+                  const operatorUser = users.find(u => u.batangan?.includes(vehicle?.licensePlate || ''));
                   return (
                     <TableRow key={log.id}>
                       <TableCell className="align-top">{format(new Date(log.logDate), 'dd MMM yyyy', { locale: localeID })}</TableCell>
                       <TableCell className="font-medium align-top">{vehicle?.licensePlate || log.vehicleHullNumber}</TableCell>
-                      <TableCell className="align-top">{vehicle?.operator || 'N/A'}</TableCell>
+                      <TableCell className="align-top">{operatorUser?.name || 'N/A'}</TableCell>
                       <TableCell className="align-top">
                         <DamageDetails log={log} reports={reports} mechanicTasks={mechanicTasks} />
                       </TableCell>

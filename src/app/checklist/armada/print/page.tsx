@@ -7,7 +7,7 @@ import { useAppData } from "@/context/app-data-context";
 import { useOperatorAuth } from "@/context/operator-auth-context";
 import { format, isSameDay, isBefore, startOfToday } from "date-fns";
 import { id as localeID } from "date-fns/locale";
-import type { Report, Vehicle } from "@/lib/data";
+import type { Report, Vehicle, User } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Printer } from "lucide-react";
 
@@ -38,7 +38,7 @@ function PrintHeader() {
 }
 
 function PrintPageContent() {
-    const { vehicles, reports } = useAppData();
+    const { vehicles, reports, users } = useAppData();
     const { user: kepalaBP } = useOperatorAuth();
 
     const vehiclesForPrint = useMemo(() => {
@@ -137,16 +137,19 @@ function PrintPageContent() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {vehiclesForPrint.map((vehicle, index) => (
-                                    <tr key={vehicle.id} className="even:bg-gray-50">
-                                        <td className="border border-gray-600 p-2">{index + 1}</td>
-                                        <td className="border border-gray-600 p-2">{vehicle.licensePlate}</td>
-                                        <td className="border border-gray-600 p-2">{vehicle.hullNumber}</td>
-                                        <td className="border border-gray-600 p-2">{vehicle.type}</td>
-                                        <td className="border border-gray-600 p-2">{vehicle.operator}</td>
-                                        <td className="border border-gray-600 p-2">{vehicle.status}</td>
-                                    </tr>
-                                ))}
+                                {vehiclesForPrint.map((vehicle, index) => {
+                                    const operatorUser = users.find(u => u.batangan?.includes(vehicle.licensePlate));
+                                    return (
+                                        <tr key={vehicle.id} className="even:bg-gray-50">
+                                            <td className="border border-gray-600 p-2">{index + 1}</td>
+                                            <td className="border border-gray-600 p-2">{vehicle.licensePlate}</td>
+                                            <td className="border border-gray-600 p-2">{vehicle.hullNumber}</td>
+                                            <td className="border border-gray-600 p-2">{vehicle.type}</td>
+                                            <td className="border border-gray-600 p-2">{operatorUser?.name || 'N/A'}</td>
+                                            <td className="border border-gray-600 p-2">{vehicle.status}</td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
 

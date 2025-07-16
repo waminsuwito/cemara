@@ -86,9 +86,9 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
         const vehicle = vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
         
-        const responsibleUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+        const responsibleUser = users.find(u => u.batangan?.includes(vehicle.licensePlate) && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
         if (!responsibleUser || !responsibleUser.nik) {
-            toast({ title: "Pengguna Tidak Ditemukan", description: `Tidak dapat menemukan pengguna yang bertanggung jawab untuk ${vehicle.operator}`, variant: 'destructive' });
+            toast({ title: "Pengguna Tidak Ditemukan", description: `Tidak dapat menemukan pengguna yang bertanggung jawab untuk ${vehicle.licensePlate}`, variant: 'destructive' });
             setSendingPenalty(prev => ({ ...prev, [vehicleId]: false }));
             return;
         }
@@ -148,11 +148,13 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredVehicles.map((vehicle) => (
+                                {filteredVehicles.map((vehicle) => {
+                                    const operatorUser = users.find(u => u.batangan?.includes(vehicle.licensePlate));
+                                    return (
                                     <TableRow key={vehicle.id}>
                                         <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
                                         <TableCell>{vehicle.type}</TableCell>
-                                        <TableCell>{vehicle.operator}</TableCell>
+                                        <TableCell>{operatorUser?.name || 'N/A'}</TableCell>
                                         <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
                                         <TableCell className="text-right">
                                             {showPenaltyInput ? (
@@ -191,7 +193,8 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                             )}
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                    )
+                                })}
                             </TableBody>
                         </Table>
                     </div>
@@ -457,14 +460,17 @@ export default function ArmadaPage() {
                             </TableHeader>
                             <TableBody>
                                 {armadaVehicles.length > 0 ? (
-                                    armadaVehicles.map((vehicle) => (
-                                        <TableRow key={vehicle.id}>
-                                            <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
-                                            <TableCell>{vehicle.type}</TableCell>
-                                            <TableCell>{vehicle.operator}</TableCell>
-                                            <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
-                                        </TableRow>
-                                    ))
+                                    armadaVehicles.map((vehicle) => {
+                                        const operatorUser = users.find(u => u.batangan?.includes(vehicle.licensePlate));
+                                        return (
+                                            <TableRow key={vehicle.id}>
+                                                <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
+                                                <TableCell>{vehicle.type}</TableCell>
+                                                <TableCell>{operatorUser?.name || 'N/A'}</TableCell>
+                                                <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
+                                            </TableRow>
+                                        )
+                                    })
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={4} className="h-24 text-center">

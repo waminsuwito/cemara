@@ -77,7 +77,8 @@ export default function RepairHistoryPage() {
   });
 
   const operators = useMemo(() => {
-    const allOperators = users.filter(u => u.role === 'OPERATOR');
+    const operatorRoles: string[] = ['OPERATOR', 'KEPALA_BP', 'Operator BP'];
+    const allOperators = users.filter(u => operatorRoles.includes(u.role));
 
     if (user?.role === 'MEKANIK' && user.location) {
         return allOperators
@@ -113,11 +114,11 @@ export default function RepairHistoryPage() {
         
         // Filter by operator
         if (selectedOperatorId !== "all") {
-            const operator = operators.find(o => o.id === selectedOperatorId);
-            if (!operator) return false;
-
-            const vehicleOperatorInTask = vehicles.find(vh => vh.hullNumber === task.vehicle.hullNumber)?.operator;
-            if (vehicleOperatorInTask !== operator.name) {
+            const vehicleInTask = vehicles.find(vh => vh.hullNumber === task.vehicle.hullNumber);
+            if (!vehicleInTask) return false;
+            
+            const operatorUser = users.find(u => u.batangan?.includes(vehicleInTask.licensePlate));
+            if (!operatorUser || operatorUser.id !== selectedOperatorId) {
                 return false;
             }
         }
@@ -125,7 +126,7 @@ export default function RepairHistoryPage() {
         return true;
       })
       .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)); // Sort by most recent first
-  }, [mechanicTasks, date, selectedOperatorId, user, vehicles, operators]);
+  }, [mechanicTasks, date, selectedOperatorId, user, vehicles, users]);
 
   return (
     <Card>
@@ -200,30 +201,34 @@ export default function RepairHistoryPage() {
             </TableHeader>
             <TableBody>
               {filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>
-                      {task.vehicle ? (
-                        <div className="border-l-2 border-primary pl-3">
-                          <p className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></p>
-                          <p className="text-sm text-muted-foreground">&bull; Operator: {vehicles.find(vh => vh.hullNumber === task.vehicle.hullNumber)?.operator || 'N/A'}</p>
-                          <p className="text-sm text-muted-foreground">&bull; Perbaikan: {task.vehicle.repairDescription}</p>
+                filteredTasks.map((task) => {
+                  const vehicleInTask = vehicles.find(vh => vh.hullNumber === task.vehicle.hullNumber);
+                  const operatorUser = users.find(u => u.batangan?.includes(vehicleInTask?.licensePlate || ''));
+                  return(
+                    <TableRow key={task.id}>
+                      <TableCell>
+                        {task.vehicle ? (
+                          <div className="border-l-2 border-primary pl-3">
+                            <p className="font-semibold">{task.vehicle.licensePlate} <span className="text-muted-foreground font-normal">({task.vehicle.hullNumber})</span></p>
+                            <p className="text-sm text-muted-foreground">&bull; Operator: {operatorUser?.name || 'N/A'}</p>
+                            <p className="text-sm text-muted-foreground">&bull; Perbaikan: {task.vehicle.repairDescription}</p>
+                          </div>
+                        ) : ( 'N/A' )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                            {task.mechanics.map(m => <span key={m.id}>{m.name}</span>)}
                         </div>
-                      ) : ( 'N/A' )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                          {task.mechanics.map(m => <span key={m.id}>{m.name}</span>)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {task.completedAt ? format(new Date(task.completedAt), 'dd MMM yyyy, HH:mm', { locale: localeID }) : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {task.completedAt && task.vehicle && <CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} />}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell>
+                        {task.completedAt ? format(new Date(task.completedAt), 'dd MMM yyyy, HH:mm', { locale: localeID }) : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {task.completedAt && task.vehicle && <CompletionStatusBadge targetDate={task.vehicle.targetDate} targetTime={task.vehicle.targetTime} completedAt={task.completedAt} />}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">

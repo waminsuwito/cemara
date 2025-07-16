@@ -125,9 +125,9 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
         const vehicle = vehicles.find(v => v.id === vehicleId);
         if (!vehicle) return;
         
-        const responsibleUser = users.find(u => u.name === vehicle.operator && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
+        const responsibleUser = users.find(u => u.batangan?.includes(vehicle.licensePlate) && (u.role === 'OPERATOR' || u.role === 'KEPALA_BP'));
         if (!responsibleUser || !responsibleUser.nik) {
-            toast({ title: "Pengguna Tidak Ditemukan", description: `Tidak dapat menemukan pengguna yang bertanggung jawab untuk ${vehicle.operator}`, variant: 'destructive' });
+            toast({ title: "Pengguna Tidak Ditemukan", description: `Tidak dapat menemukan pengguna yang bertanggung jawab untuk ${vehicle.licensePlate}`, variant: 'destructive' });
             setSendingPenalty(prev => ({ ...prev, [vehicleId]: false }));
             return;
         }
@@ -188,51 +188,54 @@ const VehicleDetailContent = ({ vehicles, users, statusFilter, title, descriptio
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredVehicles.map((vehicle) => (
-                                    <TableRow key={vehicle.id}>
-                                        <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
-                                        <TableCell>{vehicle.type}</TableCell>
-                                        <TableCell>{vehicle.location}</TableCell>
-                                        <TableCell>{vehicle.operator}</TableCell>
-                                        <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
-                                        <TableCell className="text-right">
-                                            {title === "Detail Alat Belum Checklist" ? (
-                                                sentPenalties.includes(vehicle.id) ? (
-                                                    <div className="flex items-center justify-end text-green-500 gap-2">
-                                                        <CheckCircle2 className="h-4 w-4" />
-                                                        <span>Terkirim</span>
-                                                    </div>
+                                {filteredVehicles.map((vehicle) => {
+                                    const operatorUser = users.find(u => u.batangan?.includes(vehicle.licensePlate));
+                                    return (
+                                        <TableRow key={vehicle.id}>
+                                            <TableCell className="font-medium">{vehicle.hullNumber}</TableCell>
+                                            <TableCell>{vehicle.type}</TableCell>
+                                            <TableCell>{vehicle.location}</TableCell>
+                                            <TableCell>{operatorUser?.name || 'N/A'}</TableCell>
+                                            <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
+                                            <TableCell className="text-right">
+                                                {title === "Detail Alat Belum Checklist" ? (
+                                                    sentPenalties.includes(vehicle.id) ? (
+                                                        <div className="flex items-center justify-end text-green-500 gap-2">
+                                                            <CheckCircle2 className="h-4 w-4" />
+                                                            <span>Terkirim</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Input
+                                                                type="number"
+                                                                min="1"
+                                                                max="10"
+                                                                className="w-20 h-9 text-center"
+                                                                placeholder="Penalty"
+                                                                value={penalties[vehicle.id] ?? ''}
+                                                                onChange={(e) => handlePenaltyChange(vehicle.id, e.target.value)}
+                                                                disabled={sendingPenalty[vehicle.id]}
+                                                            />
+                                                            <Button 
+                                                                size="sm" 
+                                                                onClick={() => handleSendPenalty(vehicle.id)}
+                                                                disabled={!penalties[vehicle.id] || sendingPenalty[vehicle.id]}
+                                                            >
+                                                                {sendingPenalty[vehicle.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Kirim'}
+                                                            </Button>
+                                                        </div>
+                                                    )
                                                 ) : (
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            max="10"
-                                                            className="w-20 h-9 text-center"
-                                                            placeholder="Penalty"
-                                                            value={penalties[vehicle.id] ?? ''}
-                                                            onChange={(e) => handlePenaltyChange(vehicle.id, e.target.value)}
-                                                            disabled={sendingPenalty[vehicle.id]}
-                                                        />
-                                                        <Button 
-                                                            size="sm" 
-                                                            onClick={() => handleSendPenalty(vehicle.id)}
-                                                            disabled={!penalties[vehicle.id] || sendingPenalty[vehicle.id]}
-                                                        >
-                                                            {sendingPenalty[vehicle.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Kirim'}
+                                                    vehicle.latestReport && (vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && (
+                                                        <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle)}>
+                                                            Detail
                                                         </Button>
-                                                    </div>
-                                                )
-                                            ) : (
-                                                vehicle.latestReport && (vehicle.status === 'Rusak' || vehicle.status === 'Perlu Perhatian') && (
-                                                    <Button variant="outline" size="sm" onClick={() => handleDetailClick(vehicle)}>
-                                                        Detail
-                                                    </Button>
-                                                )
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                                    )
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
                             </TableBody>
                         </Table>
                     </div>

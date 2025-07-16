@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
 export default function SparePartsHistoryPage() {
-  const { sparePartLogs, vehicles } = useAppData();
+  const { sparePartLogs, vehicles, users } = useAppData();
   const { user } = useAdminAuth();
 
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
@@ -158,11 +158,12 @@ export default function SparePartsHistoryPage() {
               {filteredLogs.length > 0 ? (
                 filteredLogs.map((log) => {
                   const vehicle = vehicles.find(v => v.hullNumber === log.vehicleHullNumber);
+                  const operatorUser = users.find(u => u.batangan?.includes(vehicle?.licensePlate || ''));
                   return (
                     <TableRow key={log.id}>
                       <TableCell>{format(new Date(log.logDate), 'dd MMM yyyy', { locale: localeID })}</TableCell>
                       <TableCell className="font-medium">{vehicle?.licensePlate || log.vehicleHullNumber}</TableCell>
-                      <TableCell>{vehicle?.operator || 'N/A'}</TableCell>
+                      <TableCell>{operatorUser?.name || 'N/A'}</TableCell>
                       <TableCell className="text-sm whitespace-pre-wrap">{log.partsUsed}</TableCell>
                       <TableCell>{log.loggedByName}</TableCell>
                     </TableRow>

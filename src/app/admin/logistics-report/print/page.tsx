@@ -45,7 +45,7 @@ const DamageDetails = ({ log, reports, mechanicTasks }: { log: SparePartLog, rep
 function PrintPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { sparePartLogs, vehicles, reports, mechanicTasks } = useAppData();
+    const { sparePartLogs, vehicles, reports, mechanicTasks, users } = useAppData();
     const { user } = useAdminAuth();
 
     const locationFilter = searchParams.get('location') || 'all';
@@ -131,10 +131,11 @@ function PrintPageContent() {
                             <tbody>
                                 {filteredLogs.length > 0 ? filteredLogs.map(log => {
                                     const vehicle = vehicles.find(v => v.hullNumber === log.vehicleHullNumber);
+                                    const operatorUser = users.find(u => u.batangan?.includes(vehicle?.licensePlate || ''));
                                     return (
                                         <tr key={log.id} className="even:bg-gray-50 align-top">
                                             <td className="border border-gray-600 p-2 whitespace-nowrap">{format(new Date(log.logDate), 'dd MMM yyyy')}</td>
-                                            <td className="border border-gray-600 p-2">{vehicle?.licensePlate || log.vehicleHullNumber}<br/><span className="text-gray-500">{vehicle?.operator}</span></td>
+                                            <td className="border border-gray-600 p-2">{vehicle?.licensePlate || log.vehicleHullNumber}<br/><span className="text-gray-500">{operatorUser?.name || 'N/A'}</span></td>
                                             <td className="border border-gray-600 p-2">
                                                 <DamageDetails log={log} reports={reports} mechanicTasks={mechanicTasks} />
                                             </td>
