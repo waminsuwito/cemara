@@ -58,31 +58,31 @@ export default function RitasiPage() {
     return `ritasiForm-${user.id}-${vehicle}-${todayKey}`;
   };
 
-  // Load state from sessionStorage on mount
+  // Load state from localStorage on mount
   useEffect(() => {
     const storageKey = getStorageKey();
     if (storageKey) {
       try {
-        const savedState = sessionStorage.getItem(storageKey);
+        const savedState = localStorage.getItem(storageKey);
         if (savedState) {
           const parsedState = JSON.parse(savedState);
           reset(parsedState);
         }
       } catch (e) {
-        console.error("Failed to load ritasi state from session storage", e);
+        console.error("Failed to load ritasi state from local storage", e);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, vehicle, todayKey, reset]);
 
-  // Save state to sessionStorage on change
+  // Save state to localStorage on change
   useEffect(() => {
     const storageKey = getStorageKey();
     if (storageKey) {
       try {
-        sessionStorage.setItem(storageKey, JSON.stringify(formValues));
+        localStorage.setItem(storageKey, JSON.stringify(formValues));
       } catch (e) {
-        console.error("Failed to save ritasi state to session storage", e);
+        console.error("Failed to save ritasi state to local storage", e);
       }
     }
   }, [formValues, getStorageKey]);
@@ -110,10 +110,10 @@ export default function RitasiPage() {
         });
         toast({ title: "Sukses", description: "Data ritasi berhasil disimpan." });
         
-        // Clear form and session storage
+        // Clear form and localStorage
         const storageKey = getStorageKey();
         if (storageKey) {
-          sessionStorage.removeItem(storageKey);
+          localStorage.removeItem(storageKey);
         }
         form.reset({
             asal: '',
