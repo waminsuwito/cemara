@@ -19,6 +19,7 @@ import {
   Users,
   CalendarCheck,
   Route,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,6 +112,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
       { href: "/checklist/complaint", icon: MessageSquareWarning, label: "Komplain" },
       { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
       { href: "/checklist/history", icon: History, label: "Riwayat Checklist" },
+      { href: "/checklist/damage-history", icon: Wrench, label: "Riwayat Kerusakan Alat" },
       { href: "/checklist/change-password", icon: KeyRound, label: "Ganti Password" },
       { href: "/checklist/penalty", icon: ShieldAlert, label: "Riwayat Penalti Saya", className: "text-destructive hover:text-destructive/90" },
       { href: "/checklist/notifications", icon: Inbox, label: "Pesan Masuk" },
