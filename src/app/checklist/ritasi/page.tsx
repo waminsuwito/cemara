@@ -21,10 +21,10 @@ import { useToast } from '@/hooks/use-toast';
 const ritasiFormSchema = z.object({
   asal: z.string().min(1, 'Asal harus dipilih.'),
   tujuan: z.string().min(1, 'Tujuan harus diisi.'),
-  berangkat: z.string().optional(),
-  sampai: z.string().optional(),
-  kembali: z.string().optional(),
-  tiba: z.string().optional(),
+  berangkat: z.string().min(1, 'Jam berangkat harus diisi.'),
+  sampai: z.string().min(1, 'Jam sampai harus diisi.'),
+  kembali: z.string().min(1, 'Jam kembali harus diisi.'),
+  tiba: z.string().min(1, 'Jam tiba di BP harus diisi.'),
 });
 
 type RitasiFormData = z.infer<typeof ritasiFormSchema>;
