@@ -22,8 +22,8 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem('operatorUser');
-      const savedVehicle = localStorage.getItem('operatorVehicle');
+      const savedUser = sessionStorage.getItem('operatorUser');
+      const savedVehicle = sessionStorage.getItem('operatorVehicle');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }
@@ -31,9 +31,9 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
         setVehicle(savedVehicle);
       }
     } catch (e) {
-      console.error("Failed to parse operator from local storage", e);
-      localStorage.removeItem('operatorUser');
-      localStorage.removeItem('operatorVehicle');
+      console.error("Failed to parse operator from session storage", e);
+      sessionStorage.removeItem('operatorUser');
+      sessionStorage.removeItem('operatorVehicle');
     } finally {
       setIsLoading(false);
     }
@@ -43,30 +43,30 @@ export const OperatorAuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     setVehicle(vehicleData);
     try {
-        localStorage.setItem('operatorUser', JSON.stringify(userData));
+        sessionStorage.setItem('operatorUser', JSON.stringify(userData));
         if (vehicleData) {
-          localStorage.setItem('operatorVehicle', vehicleData);
+          sessionStorage.setItem('operatorVehicle', vehicleData);
         } else {
-          localStorage.removeItem('operatorVehicle');
+          sessionStorage.removeItem('operatorVehicle');
         }
     } catch(e) {
-        console.error("Failed to save operator to local storage", e);
+        console.error("Failed to save operator to session storage", e);
     }
   };
 
   const logout = () => {
     setUser(null);
     setVehicle(null);
-    localStorage.removeItem('operatorUser');
-    localStorage.removeItem('operatorVehicle');
+    sessionStorage.removeItem('operatorUser');
+    sessionStorage.removeItem('operatorVehicle');
   };
 
   const selectVehicle = (vehicleData: string) => {
     setVehicle(vehicleData);
     try {
-      localStorage.setItem('operatorVehicle', vehicleData);
+      sessionStorage.setItem('operatorVehicle', vehicleData);
     } catch (e) {
-      console.error("Failed to save selected vehicle to local storage", e);
+      console.error("Failed to save selected vehicle to session storage", e);
     }
   };
 
