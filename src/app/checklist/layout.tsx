@@ -110,7 +110,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     baseItems.push(
       { href: "/checklist/complaint", icon: MessageSquareWarning, label: "Komplain" },
       { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
-      { href: "/checklist/history", icon: History, label: "Riwayat Saya" },
+      { href: "/checklist/history", icon: History, label: "Riwayat Checklist" },
       { href: "/checklist/change-password", icon: KeyRound, label: "Ganti Password" },
       { href: "/checklist/penalty", icon: ShieldAlert, label: "Riwayat Penalti Saya", className: "text-destructive hover:text-destructive/90" },
       { href: "/checklist/notifications", icon: Inbox, label: "Pesan Masuk" },
