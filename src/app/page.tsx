@@ -1,9 +1,8 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UnifiedLoginForm } from "@/components/unified-login-form";
-import { Truck, Loader2 } from "lucide-react";
+import { UserTie, Loader2 } from "lucide-react";
 import { useAppData } from "@/context/app-data-context";
 
 export default function Home() {
@@ -13,13 +12,8 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-6 bg-background">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
-          <img
-            src="/logo.png"
-            alt="Logo PT Farika Riau Perkasa"
-            className="h-32 w-32 object-contain"
-          />
           <div className="flex items-center gap-3 mt-4">
-            <Truck className="h-10 w-10 text-primary" />
+            <UserTie className="h-10 w-10 text-primary" />
             <h1 className="text-3xl font-bold text-foreground font-headline">
               My Batching Plant Manager
             </h1>
