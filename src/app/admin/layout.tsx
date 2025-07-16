@@ -45,11 +45,11 @@ import { useAppData } from "@/context/app-data-context";
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/reports", icon: Wrench, label: "Manajemen Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/history", icon: History, label: "Riwayat Alat", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/mechanic-activity", icon: Activity, label: "Kegiatan Mekanik", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/logistics-report", icon: Package, label: "Laporan Logistik", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/locations", icon: MapPin, label: "Manajemen Lokasi", roles: ['SUPER_ADMIN'] },
-  { href: "/admin/users", icon: Users, label: "Manajemen Pengguna", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/penalty", icon: ShieldX, label: "Riwayat Penalti", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
