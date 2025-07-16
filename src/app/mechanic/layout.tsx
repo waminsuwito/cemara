@@ -15,6 +15,7 @@ import {
   History,
   ShieldAlert,
   Inbox,
+  CalendarCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const navItems = [
   { href: "/mechanic/completed-tasks", icon: ClipboardCheck, label: "Realisasi Pekerjaan Hari Ini" },
   { href: "/mechanic/repair-history", icon: History, label: "Histori Perbaikan Alat" },
   { href: "/mechanic/members", icon: Users, label: "Anggota Mekanik" },
+  { href: "/mechanic/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan" },
   { href: "/mechanic/penalty", icon: ShieldAlert, label: "Riwayat Penalti Saya", className: "text-destructive hover:text-destructive/90" },
   { href: "/mechanic/notifications", icon: Inbox, label: "Pesan Masuk" },
 ];

@@ -19,6 +19,7 @@ import {
   Package,
   ShieldX,
   Inbox,
+  CalendarCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const navItems = [
   { href: "/admin/complaints", icon: MessageSquareWarning, label: "Komplain dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/suggestions", icon: Lightbulb, label: "Usulan / Saran dari Sopir", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
   { href: "/admin/notifications", icon: Inbox, label: "Pesan Masuk", roles: ['SUPER_ADMIN', 'LOCATION_ADMIN'] },
+  { href: "/admin/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan", roles: ['LOCATION_ADMIN'] },
 ];
 
 const NavLink = ({ href, icon: Icon, label, hasBadge }: {href: string, icon: React.ElementType, label: string, hasBadge?: boolean}) => {

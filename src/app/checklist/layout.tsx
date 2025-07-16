@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Inbox,
   Users,
+  CalendarCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +98,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
   const navItems = React.useMemo(() => {
     const baseItems = [
       { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
+      { href: "/checklist/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan" },
       { href: "/checklist/complaint", icon: MessageSquareWarning, label: "Komplain" },
       { href: "/checklist/suggestion", icon: Lightbulb, label: "Usulan/Saran" },
       { href: "/checklist/history", icon: History, label: "Riwayat Saya" },
