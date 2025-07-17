@@ -82,7 +82,6 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
 
   const isBPVehicle = useMemo(() => {
     if (!selectedVehicle) return false;
-    // Check if the vehicle type is "Batching Plant"
     return selectedVehicle.type.toLowerCase().includes('batching plant');
   }, [selectedVehicle]);
 
@@ -108,8 +107,13 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
   const navItems = React.useMemo(() => {
     let baseItems = [
       { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
-      { href: "/checklist/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan" },
     ];
+
+    if (isBPVehicle) {
+      baseItems.push({ href: "/checklist/produksi", icon: Factory, label: "PRODUKSI" });
+    }
+
+    baseItems.push({ href: "/checklist/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan" });
     
     if (selectedVehicle?.type === 'TM') {
       baseItems.push({ href: "/checklist/ritasi", icon: Route, label: "Ritasi Saya" });
@@ -132,7 +136,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     }
 
     return baseItems;
-  }, [user, selectedVehicle]);
+  }, [user, selectedVehicle, isBPVehicle]);
 
 
   React.useEffect(() => {
