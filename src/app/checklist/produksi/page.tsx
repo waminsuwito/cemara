@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 
 const WeightIndicator = ({ label, value, unit, icon: Icon }: { label: string, value: string, unit: string, icon: React.ElementType }) => (
     <Card className="text-center bg-gray-900/60 border-white/10 backdrop-blur-sm shadow-lg flex flex-col justify-between">
@@ -49,6 +51,20 @@ const indicators = [
     { label: "SEMEN2", value: "0.00", unit: "KG", icon: Component },
     { label: "AIR", value: "0.00", unit: "L", icon: Droplets }
 ];
+
+const scheduleData = Array(10).fill({
+    no: '',
+    noPo: '',
+    nama: '',
+    lokasi: '',
+    mutuBeton: '',
+    slump: '',
+    volumeM3: '',
+    tmKe: '',
+    terkirimM3: '',
+    sisaM3: '',
+    volLoading: '',
+});
 
 export default function ProduksiPage() {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto');
@@ -120,14 +136,14 @@ export default function ProduksiPage() {
         </div>
         
         {/* Indicators Section */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 flex-shrink-0">
             {indicators.map(indicator => (
                 <WeightIndicator key={indicator.label} {...indicator} />
             ))}
         </div>
 
         {/* Controls Section */}
-        <div className="flex-grow grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-shrink-0">
             <Card className="bg-gray-900/50 border-white/10 flex flex-col">
                 <CardHeader>
                     <CardTitle className='text-center text-lg'>Mode & Operasi</CardTitle>
@@ -168,6 +184,59 @@ export default function ProduksiPage() {
                     <MaterialButton label="Vibro Pasir" icon={Zap} />
                     <MaterialButton label="Vibro Semen" icon={Zap} />
                     <MaterialButton label="Klakson" icon={Speaker} />
+                </CardContent>
+            </Card>
+        </div>
+
+        {/* Schedule Table Section */}
+        <div className="flex-shrink-0">
+            <Card className="bg-gray-900/50 border-white/10">
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">SCHEDULE COR HARI INI</CardTitle>
+                        <div className="flex items-center gap-2">
+                           <span className="text-sm text-muted-foreground">TANGGAL:</span>
+                           <Input type="text" readOnly value={new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric'})} className="bg-gray-700/50 border-white/10 w-48 h-8" />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="w-full overflow-x-auto">
+                        <Table className="border border-gray-600 border-collapse min-w-full">
+                            <TableHeader>
+                                <TableRow className="bg-gray-700/50">
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-12">NO</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">NO PO</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-48">NAMA</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-48">LOKASI</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">MUTU BETON</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">SLUMP (CM)</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">VOLUME M3</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">TM KE</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">TERKIRIM M3</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">SISA M3</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">VOL LOADING</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {scheduleData.map((row, index) => (
+                                    <TableRow key={index} className="hover:bg-gray-700/30">
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>
