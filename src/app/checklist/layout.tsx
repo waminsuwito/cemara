@@ -82,7 +82,8 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
 
   const isBPVehicle = useMemo(() => {
     if (!selectedVehicle) return false;
-    return batchingPlantBatangan.includes(selectedVehicle.licensePlate);
+    // Simplified and more reliable check based on vehicle type
+    return selectedVehicle.type.toLowerCase().includes('batching plant');
   }, [selectedVehicle]);
 
   const availableVehicles = useMemo(() => {
