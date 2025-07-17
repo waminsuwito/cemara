@@ -5,9 +5,9 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations, Attendance, Ritasi } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit, getDoc, startAt, endAt } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
-import { format, startOfToday, isSameDay, isBefore, endOfToday } from 'date-fns';
+import { format, startOfToday, isSameDay, isBefore } from 'date-fns';
 import { useAdminAuth } from './admin-auth-context';
 import { useOperatorAuth } from './operator-auth-context';
 
@@ -67,25 +67,52 @@ type AppDataContextType = {
 
 const AppDataContext = React.createContext<AppDataContextType | null>(null);
 
+// Helper to get data from localStorage
+const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    try {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading from localStorage key “${key}”:`, error);
+        return defaultValue;
+    }
+};
+
+// Helper to set data to localStorage
+const setToLocalStorage = <T,>(key: string, value: T) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error(`Error writing to localStorage key “${key}”:`, error);
+    }
+};
+
+
 export const AppDataProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [mechanicTasks, setMechanicTasks] = useState<MechanicTask[]>([]);
-  const [sparePartLogs, setSparePartLogs] = useState<SparePartLog[]>([]);
-  const [penalties, setPenalties] = useState<Penalty[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [ritasiLogs, setRitasiLogs] = useState<Ritasi[]>([]);
+  const [users, setUsers] = useState<User[]>(() => getFromLocalStorage('users', []));
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() => getFromLocalStorage('vehicles', []));
+  const [reports, setReports] = useState<Report[]>(() => getFromLocalStorage('reports', []));
+  const [locations, setLocations] = useState<Location[]>(() => getFromLocalStorage('locations', []));
+  const [complaints, setComplaints] = useState<Complaint[]>(() => getFromLocalStorage('complaints', []));
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(() => getFromLocalStorage('suggestions', []));
+  const [mechanicTasks, setMechanicTasks] = useState<MechanicTask[]>(() => getFromLocalStorage('mechanicTasks', []));
+  const [sparePartLogs, setSparePartLogs] = useState<SparePartLog[]>(() => getFromLocalStorage('sparePartLogs', []));
+  const [penalties, setPenalties] = useState<Penalty[]>(() => getFromLocalStorage('penalties', []));
+  const [notifications, setNotifications] = useState<Notification[]>(() => getFromLocalStorage('notifications', []));
+  const [ritasiLogs, setRitasiLogs] = useState<Ritasi[]>(() => getFromLocalStorage('ritasiLogs', []));
+
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
   const { user: adminUser } = useAdminAuth();
   const { user: operatorUser } = useOperatorAuth();
 
   const seedInitialData = useCallback(async () => {
-    // Seed Users
     const usersRef = collection(db, 'users');
     const userSnapshot = await getDocs(query(usersRef, limit(1)));
     if (userSnapshot.empty) {
@@ -103,7 +130,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       console.log('Initial users seeded.');
     }
 
-    // Seed Locations
     const locationsRef = collection(db, 'locations');
     const locationSnapshot = await getDocs(query(locationsRef, limit(1)));
     if (locationSnapshot.empty) {
@@ -118,37 +144,33 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Effect for public data (loaded for everyone)
   useEffect(() => {
     seedInitialData();
 
     const collectionsToWatch = [
-      { name: 'users', setter: setUsers },
-      { name: 'vehicles', setter: setVehicles },
-      { name: 'locations', setter: setLocations },
+      { name: 'users', setter: setUsers, storageKey: 'users' },
+      { name: 'vehicles', setter: setVehicles, storageKey: 'vehicles' },
+      { name: 'locations', setter: setLocations, storageKey: 'locations' },
+      { name: 'reports', setter: setReports, storageKey: 'reports' },
+      { name: 'complaints', setter: setComplaints, storageKey: 'complaints' },
+      { name: 'suggestions', setter: setSuggestions, storageKey: 'suggestions' },
+      { name: 'mechanicTasks', setter: setMechanicTasks, storageKey: 'mechanicTasks' },
+      { name: 'sparePartLogs', setter: setSparePartLogs, storageKey: 'sparePartLogs' },
+      { name: 'penalties', setter: setPenalties, storageKey: 'penalties' },
+      { name: 'notifications', setter: setNotifications, storageKey: 'notifications' },
+      { name: 'ritasi', setter: setRitasiLogs, storageKey: 'ritasiLogs' },
     ];
     
-    let loadedCount = 0;
     const unsubscribes: (() => void)[] = [];
 
-    if (collectionsToWatch.length === 0) {
-        setIsDataLoaded(true);
-        return;
-    }
-
-    const onCollectionLoaded = () => {
-        loadedCount++;
-        if (loadedCount === collectionsToWatch.length) {
-            setIsDataLoaded(true);
-        }
-    };
-    
-    collectionsToWatch.forEach(({ name, setter }) => {
-      const q = query(collection(db, name));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const data = querySnapshot.docs.map(doc => {
+    const handleSnapshot = (
+        querySnapshot: any, 
+        setter: React.Dispatch<React.SetStateAction<any[]>>, 
+        storageKey: string,
+        orderByField?: string
+    ) => {
+        const data = querySnapshot.docs.map((doc: any) => {
             const docData = doc.data();
-            // Convert any Timestamps to milliseconds
             Object.keys(docData).forEach(key => {
                 if (docData[key] instanceof Timestamp) {
                     docData[key] = docData[key].toMillis();
@@ -156,84 +178,35 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             });
             return { id: doc.id, ...docData };
         });
-        setter(data as any);
-        if (!isDataLoaded) { // Only call this on initial load to prevent multiple triggers
-            onCollectionLoaded();
+
+        if (orderByField) {
+             data.sort((a: any, b: any) => (b[orderByField] || 0) - (a[orderByField] || 0));
         }
-      }, (error) => {
+
+        setter(data);
+        setToLocalStorage(storageKey, data);
+    };
+
+    collectionsToWatch.forEach(({ name, setter, storageKey }) => {
+      const q = query(collection(db, name));
+      const unsubscribe = onSnapshot(q, (snapshot) => handleSnapshot(snapshot, setter, storageKey, 'timestamp'), (error) => {
         console.error(`Error fetching ${name}: `, error);
         toast({
             variant: "destructive",
             title: `Gagal Memuat Data`,
-            description: `Tidak dapat mengambil data untuk "${name}". Periksa aturan keamanan Firestore Anda.`,
-            duration: 9000
+            description: `Tidak dapat mengambil data untuk "${name}". Menampilkan data dari cache lokal.`,
         });
-        if (!isDataLoaded) {
-            onCollectionLoaded();
-        }
       });
       unsubscribes.push(unsubscribe);
     });
+    
+    setIsDataLoaded(true);
 
     return () => {
       unsubscribes.forEach(unsub => unsub());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedInitialData]);
-
-  // Effect for protected data (loaded only for logged-in users)
-  useEffect(() => {
-    if (adminUser || operatorUser) {
-      const protectedCollections = [
-          { name: 'reports', setter: setReports, orderByField: 'timestamp' },
-          { name: 'complaints', setter: setComplaints, orderByField: 'timestamp' },
-          { name: 'suggestions', setter: setSuggestions, orderByField: 'timestamp' },
-          { name: 'mechanicTasks', setter: setMechanicTasks, orderByField: 'createdAt' },
-          { name: 'sparePartLogs', setter: setSparePartLogs, orderByField: 'logDate' },
-          { name: 'penalties', setter: setPenalties, orderByField: 'timestamp' },
-          { name: 'notifications', setter: setNotifications, orderByField: 'timestamp' },
-          { name: 'ritasi', setter: setRitasiLogs, orderByField: 'timestamp' },
-      ];
-
-      const unsubscribes = protectedCollections.map(({ name, setter, orderByField }) => {
-          const q = query(collection(db, name));
-          return onSnapshot(q, (querySnapshot) => {
-              const data = querySnapshot.docs.map((doc) => {
-                  const docData = doc.data();
-                  // Convert all Timestamps to milliseconds for easier handling on client
-                  Object.keys(docData).forEach(key => {
-                      if (docData[key] instanceof Timestamp) {
-                          docData[key] = docData[key].toMillis();
-                      }
-                  });
-                  return { id: doc.id, ...docData };
-              });
-              // Sort descending by timestamp locally
-              data.sort((a: any, b: any) => (b[orderByField] || 0) - (a[orderByField] || 0));
-              setter(data as any);
-          }, (error) => {
-              console.error(`Error fetching ${name}: `, error);
-              toast({
-                  variant: "destructive",
-                  title: `Gagal Memuat Data ${name.charAt(0).toUpperCase() + name.slice(1)}`,
-                  description: `Terjadi masalah saat mengambil data.`,
-              });
-          });
-      });
-    
-      return () => unsubscribes.forEach(unsub => unsub());
-    } else {
-      // If user logs out, clear the sensitive data
-      setReports([]);
-      setComplaints([]);
-      setSuggestions([]);
-      setMechanicTasks([]);
-      setSparePartLogs([]);
-      setPenalties([]);
-      setNotifications([]);
-      setRitasiLogs([]);
-    }
-  }, [adminUser, operatorUser, toast]);
 
 
   const addUser = async (userData: Omit<User, 'id'>) => {
@@ -351,7 +324,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     const today = new Date();
     const reportDateStr = format(today, 'yyyy-MM-dd');
   
-    // Find vehicle details from state (which is assumed to be up-to-date for this)
     const vehicle = vehicles.find(v => v.hullNumber === newReportData.vehicleId);
     if (!vehicle) {
       throw new Error(`Kendaraan dengan nomor lambung ${newReportData.vehicleId} tidak ditemukan.`);
@@ -365,12 +337,9 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   
     const batch = writeBatch(db);
   
-    // Add the new report to the batch
     const reportRef = doc(collection(db, 'reports'));
     batch.set(reportRef, reportWithTimestamp);
   
-    // --- Notification Logic ---
-    // Fetch the single latest report directly from Firestore to get the true previous state
     const reportsRef = collection(db, 'reports');
     const q = query(reportsRef, where("vehicleId", "==", newReportData.vehicleId), orderBy("timestamp", "desc"), limit(1));
     const querySnapshot = await getDocs(q);
@@ -424,7 +393,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             title = 'Perbaikan Selesai';
              if (submittedBy === 'mechanic') {
                 message = `Kendaraan ${vehicle.licensePlate} (${vehicle.hullNumber}) telah selesai perbaikan, dikerjakan dan dilaporkan oleh mekanik ${newReportData.operatorName.replace('Mekanik: ','')}.`;
-            } else { // submitted by operator
+            } else {
                 message = `Kendaraan ${vehicle.licensePlate} (${vehicle.hullNumber}) dilaporkan telah selesai perbaikan kondisi baik, dikerjakan oleh ${repairerName || 'Tim Mekanik'} dan dilaporkan oleh operator ${newReportData.operatorName}.`;
             }
         }
@@ -629,7 +598,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     try {
         const batch = writeBatch(db);
 
-        // 1. Add penalty document
         const penaltyRef = doc(collection(db, 'penalties'));
         batch.set(penaltyRef, { 
             ...penaltyToAdd,
@@ -637,7 +605,6 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
             givenByAdminUsername: penaltyGiver
         });
 
-        // 2. Add notification document for the user
         const notificationRef = doc(collection(db, 'notifications'));
         batch.set(notificationRef, {
             userId: penaltyToAdd.userId,
