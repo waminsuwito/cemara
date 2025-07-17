@@ -20,6 +20,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { JmfDialog } from '@/components/jmf-dialog';
+import { Label } from '@/components/ui/label';
 
 const WeightIndicator = ({ label, value, unit, icon: Icon }: { label: string, value: string, unit: string, icon: React.ElementType }) => (
     <Card className="text-center bg-gray-900/60 border-white/10 backdrop-blur-sm shadow-lg flex flex-col justify-between">
@@ -44,6 +45,17 @@ const MaterialButton = ({ label, className, icon: Icon }: { label: string, class
          <span className="text-xs sm:text-sm">{label}</span>
     </Button>
 );
+
+const ProductionInput = ({ label, unit }: { label: string, unit?: string }) => (
+    <div className="flex items-center">
+        <Label className="w-1/2 text-sm text-muted-foreground">{label}</Label>
+        <div className="w-1/2 flex items-center">
+            <Input className="h-8 bg-gray-700/50 border-white/10 text-right font-mono" />
+            {unit && <span className="ml-2 text-sm text-muted-foreground">{unit}</span>}
+        </div>
+    </div>
+);
+
 
 const indicators = [
     { label: "PASIR", value: "0.00", unit: "KG", icon: Gauge },
@@ -145,8 +157,8 @@ export default function ProduksiPage() {
         </div>
 
         {/* Controls Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-shrink-0">
-            <Card className="bg-gray-900/50 border-white/10 flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-shrink-0">
+            <Card className="lg:col-span-5 bg-gray-900/50 border-white/10 flex flex-col">
                 <CardHeader>
                     <CardTitle className='text-center text-lg'>Mode & Operasi</CardTitle>
                 </CardHeader>
@@ -168,7 +180,24 @@ export default function ProduksiPage() {
                 </CardContent>
             </Card>
 
-            <Card className="flex-grow bg-gray-900/50 border-white/10 flex flex-col">
+            <Card className="lg:col-span-3 bg-gray-900/50 border-white/10 flex flex-col">
+                 <CardHeader>
+                    <CardTitle className='text-center text-lg'>Production Target</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col justify-center gap-2.5 p-4">
+                    <ProductionInput label="NO. REQUEST" />
+                    <ProductionInput label="NO PO" />
+                    <ProductionInput label="PASIR" unit="KG" />
+                    <ProductionInput label="BATU" unit="KG" />
+                    <ProductionInput label="SEMEN" unit="KG" />
+                    <ProductionInput label="AIR" unit="KG" />
+                    <div className="border-t border-gray-700 my-2"></div>
+                    <ProductionInput label="TARGET VOLUME" />
+                    <ProductionInput label="JUMLAH MIXING" />
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-4 flex-grow bg-gray-900/50 border-white/10 flex flex-col">
                  <CardHeader>
                     <CardTitle className='text-center text-lg'>Kontrol Manual Relay</CardTitle>
                 </CardHeader>
