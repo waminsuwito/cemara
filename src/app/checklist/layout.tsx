@@ -262,19 +262,20 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
                 </div>
               )}
           </div>
-          <div className="flex items-center justify-center flex-1 hidden md:flex">
-            <p className="font-semibold text-primary tracking-wider whitespace-nowrap">
-              PT FARIKA RIAU PERKASA
-            </p>
-          </div>
-          <div className="flex flex-1 justify-end items-center gap-2">
-            {isBPVehicle && (
-                <Button asChild>
-                    <Link href="/checklist/produksi">
-                        <Factory className="mr-2 h-4 w-4" /> Produksi
-                    </Link>
-                </Button>
-            )}
+          <div className="flex items-center justify-end flex-grow gap-4">
+            <div className="hidden md:flex items-center gap-4">
+                <p className="font-semibold text-primary tracking-wider whitespace-nowrap">
+                  PT FARIKA RIAU PERKASA
+                </p>
+                {isBPVehicle && (
+                    <Button asChild>
+                        <Link href="/checklist/produksi">
+                            <Factory className="mr-2 h-4 w-4" /> Produksi
+                        </Link>
+                    </Button>
+                )}
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
