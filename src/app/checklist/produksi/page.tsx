@@ -6,8 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Play, Square, Gauge, Wheat, Gem, Droplets, Component } from 'lucide-react';
+import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings } from 'lucide-react';
 import { useOperatorAuth } from '@/context/operator-auth-context';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const WeightIndicator = ({ label, value, unit, icon: Icon }: { label: string, value: string, unit: string, icon: React.ElementType }) => (
     <Card className="text-center bg-gray-900/60 border-white/10 backdrop-blur-sm shadow-lg flex flex-col justify-between">
@@ -57,7 +63,22 @@ export default function ProduksiPage() {
     <div className="fixed inset-0 bg-gray-800 text-white font-sans p-2 sm:p-4 flex flex-col gap-4 overflow-y-auto">
         {/* Header */}
         <div className="flex-shrink-0 flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-white/10">
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-headline tracking-wider">Batching Plant Control</h1>
+            <div className="flex items-center gap-4">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-headline tracking-wider">Batching Plant Control</h1>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10">
+                            <Settings className="mr-2 h-4 w-4" />
+                            Setting
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-gray-800 text-white border-white/20">
+                        <DropdownMenuItem>Tombol manual</DropdownMenuItem>
+                        <DropdownMenuItem>timer pintu mixer</DropdownMenuItem>
+                        <DropdownMenuItem>urutan loading</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
             <div className='text-right'>
                 <p className="text-sm font-semibold text-primary">{user.name}</p>
                 <p className="text-xs text-muted-foreground">{user.location}</p>
