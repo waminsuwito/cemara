@@ -2,16 +2,19 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings, ClipboardList, Speaker, ArrowDown, ArrowUp, Zap } from 'lucide-react';
+import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings, ClipboardList, Speaker, ArrowDown, ArrowUp, Zap, CircleUser, LogOut } from 'lucide-react';
 import { useOperatorAuth } from '@/context/operator-auth-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -49,7 +52,13 @@ const indicators = [
 
 export default function ProduksiPage() {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto');
-  const { user } = useOperatorAuth();
+  const { user, logout } = useOperatorAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   if (!user) {
     return (
@@ -89,10 +98,25 @@ export default function ProduksiPage() {
                     </Button>
                  </div>
             </div>
-            <div className='text-right'>
-                <p className="text-sm font-semibold text-primary">{user.name}</p>
-                <p className="text-xs text-muted-foreground">{user.location}</p>
-            </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 text-right p-2 h-auto hover:bg-gray-700/50">
+                        <div className="hidden sm:block">
+                            <p className="text-sm font-semibold text-primary">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">{user.location}</p>
+                        </div>
+                        <CircleUser className="w-6 h-6 text-primary" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gray-800 text-white border-white/20" align="end">
+                    <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Logout</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
         
         {/* Indicators Section */}
