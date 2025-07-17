@@ -43,9 +43,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { batchingPlantBatangan } from "@/lib/data";
 
-const NavLink = ({ href, icon: Icon, label, className, hasBadge }: {href: string, icon: React.ElementType, label: string, className?: string, hasBadge?: boolean}) => {
+interface NavItem {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  className?: string;
+  hasBadge?: boolean;
+}
+
+const NavLink = ({ href, icon: Icon, label, className, hasBadge }: NavItem) => {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
 
@@ -99,8 +106,8 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     }
   };
 
-  const navItems = React.useMemo(() => {
-    let baseItems = [
+  const navItems = React.useMemo((): NavItem[] => {
+    let baseItems: NavItem[] = [
       { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
     ];
     
