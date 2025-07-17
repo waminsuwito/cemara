@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations, Attendance, Ritasi } from '@/lib/data';
+import { User, Vehicle, Report, Location, Complaint, Suggestion, MechanicTask, SparePartLog, Penalty, Notification, UserRole, NotificationType, initialLocations, Attendance, Ritasi, JobMixFormula } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp, getDocs, Timestamp, deleteField, writeBatch, orderBy, limit } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +56,11 @@ type AppDataContextType = {
   
   ritasiLogs: Ritasi[];
   addRitasi: (ritasiData: Omit<Ritasi, 'id' | 'timestamp' | 'date'>) => Promise<void>;
+  
+  jobMixFormulas: JobMixFormula[];
+  addJobMixFormula: (jmfData: Omit<JobMixFormula, 'id'>) => Promise<void>;
+  updateJobMixFormula: (jmf: JobMixFormula) => Promise<void>;
+  deleteJobMixFormula: (jmfId: string) => Promise<void>;
 
   locations: Location[];
   locationNames: string[];
@@ -106,6 +111,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [penalties, setPenalties] = useState<Penalty[]>(() => getFromLocalStorage('penalties', []));
   const [notifications, setNotifications] = useState<Notification[]>(() => getFromLocalStorage('notifications', []));
   const [ritasiLogs, setRitasiLogs] = useState<Ritasi[]>(() => getFromLocalStorage('ritasiLogs', []));
+  const [jobMixFormulas, setJobMixFormulas] = useState<JobMixFormula[]>(() => getFromLocalStorage('jobMixFormulas', []));
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { toast } = useToast();
@@ -159,6 +165,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       { name: 'penalties', setter: setPenalties, storageKey: 'penalties' },
       { name: 'notifications', setter: setNotifications, storageKey: 'notifications' },
       { name: 'ritasi', setter: setRitasiLogs, storageKey: 'ritasiLogs' },
+      { name: 'jobMixFormulas', setter: setJobMixFormulas, storageKey: 'jobMixFormulas' },
     ];
     
     const unsubscribes: (() => void)[] = [];
@@ -704,6 +711,37 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const addJobMixFormula = async (jmfData: Omit<JobMixFormula, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'jobMixFormulas'), jmfData);
+      toast({ title: "Sukses", description: "Job Mix Formula berhasil disimpan." });
+    } catch (e) {
+      console.error("Error adding JMF: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menyimpan JMF." });
+    }
+  };
+
+  const updateJobMixFormula = async (jmf: JobMixFormula) => {
+    const { id, ...jmfData } = jmf;
+    try {
+      await updateDoc(doc(db, 'jobMixFormulas', id), jmfData);
+      toast({ title: "Sukses", description: "Job Mix Formula berhasil diperbarui." });
+    } catch (e) {
+      console.error("Error updating JMF: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal memperbarui JMF." });
+    }
+  };
+
+  const deleteJobMixFormula = async (jmfId: string) => {
+    try {
+      await deleteDoc(doc(db, 'jobMixFormulas', jmfId));
+      toast({ title: "Sukses", description: "Job Mix Formula berhasil dihapus." });
+    } catch (e) {
+      console.error("Error deleting JMF: ", e);
+      toast({ variant: "destructive", title: "Error", description: "Gagal menghapus JMF." });
+    }
+  };
+
   const locationNames = locations.map(l => l.namaBP).sort();
 
   const value = {
@@ -721,6 +759,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     getTodayAttendance,
     ritasiLogs,
     addRitasi,
+    jobMixFormulas, addJobMixFormula, updateJobMixFormula, deleteJobMixFormula,
     locations, locationNames, addLocation, updateLocation, deleteLocation,
     isDataLoaded,
   };

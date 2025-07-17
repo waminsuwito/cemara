@@ -153,6 +153,18 @@ export type Ritasi = {
     tiba?: string;
 };
 
+export type JobMixFormula = {
+    id: string;
+    mutu: string;
+    pasir1: number;
+    pasir2: number;
+    batu1: number;
+    batu2: number;
+    semen1: number;
+    semen2: number;
+    air: number;
+};
+
 
 export const roles: UserRole[] = ["OPERATOR", "Operator BP", "MEKANIK", "KEPALA_BP", "LOGISTIK", "LOCATION_ADMIN", "SUPER_ADMIN"];
 

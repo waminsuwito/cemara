@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { JmfDialog } from '@/components/jmf-dialog';
 
 const WeightIndicator = ({ label, value, unit, icon: Icon }: { label: string, value: string, unit: string, icon: React.ElementType }) => (
     <Card className="text-center bg-gray-900/60 border-white/10 backdrop-blur-sm shadow-lg flex flex-col justify-between">
@@ -68,6 +69,7 @@ const scheduleData = Array(10).fill({
 
 export default function ProduksiPage() {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto');
+  const [isJmfDialogOpen, setIsJmfDialogOpen] = useState(false);
   const { user, logout } = useOperatorAuth();
   const router = useRouter();
 
@@ -85,6 +87,7 @@ export default function ProduksiPage() {
   }
 
   return (
+    <>
     <div className="fixed inset-0 bg-gray-800 text-white font-sans p-2 sm:p-4 flex flex-col gap-4 overflow-y-auto">
         {/* Header */}
         <div className="flex-shrink-0 flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-white/10">
@@ -108,7 +111,7 @@ export default function ProduksiPage() {
                         <Droplets className="mr-2 h-4 w-4" />
                         Moisturizer control
                     </Button>
-                    <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10">
+                    <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10" onClick={() => setIsJmfDialogOpen(true)}>
                         <ClipboardList className="mr-2 h-4 w-4" />
                         JMF
                     </Button>
@@ -241,5 +244,7 @@ export default function ProduksiPage() {
             </Card>
         </div>
     </div>
+    <JmfDialog isOpen={isJmfDialogOpen} setIsOpen={setIsJmfDialogOpen} />
+    </>
   );
 }
