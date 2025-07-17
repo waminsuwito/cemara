@@ -80,11 +80,6 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     return vehicles.find(v => v.hullNumber === vehicle);
   }, [vehicle, vehicles]);
 
-  const isBPVehicle = useMemo(() => {
-    if (!selectedVehicle) return false;
-    return selectedVehicle.type.toLowerCase().includes('batching plant');
-  }, [selectedVehicle]);
-
   const availableVehicles = useMemo(() => {
     if (!user?.batangan) return [];
     const batanganList = user.batangan.split(',').map(b => b.trim().toLowerCase());
@@ -108,8 +103,12 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     let baseItems = [
       { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
     ];
+    
+    const shouldShowProduksiMenu = 
+      user?.role === 'OPERATOR' && 
+      selectedVehicle?.licensePlate.toLowerCase() === 'bp 1 baung';
 
-    if (isBPVehicle) {
+    if (shouldShowProduksiMenu) {
       baseItems.push({ href: "/checklist/produksi", icon: Factory, label: "PRODUKSI" });
     }
 
@@ -136,7 +135,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     }
 
     return baseItems;
-  }, [user, selectedVehicle, isBPVehicle]);
+  }, [user, selectedVehicle]);
 
 
   React.useEffect(() => {
@@ -157,6 +156,8 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
       </div>
     );
   }
+  
+  const isBPVehicle = selectedVehicle?.type.toLowerCase().includes('batching plant');
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
