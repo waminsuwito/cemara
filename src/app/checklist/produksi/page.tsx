@@ -54,17 +54,16 @@ const indicators = [
 ];
 
 const scheduleData = Array(10).fill({
-    no: '',
+    noRequest: '',
     noPo: '',
     nama: '',
     lokasi: '',
-    mutuBeton: '',
+    mutu: '',
     slump: '',
-    volumeM3: '',
-    tmKe: '',
+    volumeRequestM3: '',
+    penambahanM3: '',
     terkirimM3: '',
     sisaM3: '',
-    volLoading: '',
 });
 
 export default function ProduksiPage() {
@@ -208,17 +207,16 @@ export default function ProduksiPage() {
                         <Table className="border border-gray-600 border-collapse min-w-full">
                             <TableHeader>
                                 <TableRow className="bg-gray-700/50">
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-12">NO</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">NO PO</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-48">NAMA</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-48">LOKASI</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">MUTU BETON</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">SLUMP (CM)</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">VOLUME M3</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">TM KE</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">TERKIRIM M3</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">SISA M3</TableHead>
-                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10 w-24">VOL LOADING</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">NO. REQUEST</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">NO PO</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">NAMA</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">LOKASI</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">MUTU</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">SLUMP (CM)</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">VOLUME REQUEST M3</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">PENAMBAHAN M3</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">TERKIRIM M3</TableHead>
+                                    <TableHead className="border border-gray-600 text-white text-center p-1 h-10">SISA M3</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -228,7 +226,6 @@ export default function ProduksiPage() {
                                         <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
                                         <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 focus-visible:ring-0" /></TableCell>
                                         <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 focus-visible:ring-0" /></TableCell>
-                                        <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
                                         <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
                                         <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
                                         <TableCell className="border border-gray-600 p-0 h-10"><Input readOnly className="h-full w-full bg-transparent border-0 text-center focus-visible:ring-0" /></TableCell>
