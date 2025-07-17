@@ -160,7 +160,7 @@ export default function ProduksiPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-shrink-0">
             <Card className="lg:col-span-4 bg-gray-900/50 border-white/10 flex flex-col">
                 <CardHeader>
-                    <CardTitle className='text-center text-lg'>Mode & Operasi</CardTitle>
+                    <CardTitle className='text-center text-lg'>Mode &amp; Operasi</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col items-center justify-center gap-4 sm:gap-6">
                     <Tabs value={mode} onValueChange={(v) => setMode(v as 'auto' | 'manual')} className="w-full max-w-xs">
