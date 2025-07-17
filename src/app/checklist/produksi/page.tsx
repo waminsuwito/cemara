@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -57,11 +58,11 @@ export default function ProduksiPage() {
             
             {/* Left Panel: Indicators */}
             <div className="lg:col-span-1 space-y-4">
-                <WeightIndicator label="Pasir" value="0.00" unit="KG" />
-                <WeightIndicator label="Batu" value="0.00" unit="KG" />
-                <WeightIndicator label="Semen #1" value="0.00" unit="KG" />
-                <WeightIndicator label="Semen #2" value="0.00" unit="KG" />
-                <WeightIndicator label="Air" value="0.00" unit="L" />
+                <WeightIndicator label="PASIR" value="0.00" unit="KG" />
+                <WeightIndicator label="BATU" value="0.00" unit="KG" />
+                <WeightIndicator label="SEMEN1" value="0.00" unit="KG" />
+                <WeightIndicator label="SEMEN2" value="0.00" unit="KG" />
+                <WeightIndicator label="AIR" value="0.00" unit="L" />
             </div>
 
             {/* Right Panel: Controls */}
