@@ -25,13 +25,13 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      const savedUser = sessionStorage.getItem('adminUser');
+      const savedUser = localStorage.getItem('adminUser');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }
     } catch (e) {
-      console.error("Failed to parse user from session storage", e);
-      sessionStorage.removeItem('adminUser');
+      console.error("Failed to parse user from local storage", e);
+      localStorage.removeItem('adminUser');
     } finally {
       setIsLoading(false);
     }
@@ -40,15 +40,15 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const login = (userData: AdminUser) => {
     setUser(userData);
     try {
-        sessionStorage.setItem('adminUser', JSON.stringify(userData));
+        localStorage.setItem('adminUser', JSON.stringify(userData));
     } catch(e) {
-        console.error("Failed to save user to session storage", e);
+        console.error("Failed to save user to local storage", e);
     }
   };
 
   const logout = () => {
     setUser(null);
-    sessionStorage.removeItem('adminUser');
+    localStorage.removeItem('adminUser');
   };
 
   return (

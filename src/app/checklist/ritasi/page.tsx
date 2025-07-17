@@ -57,30 +57,30 @@ export default function RitasiPage() {
     return `ritasiForm-${user.id}-${vehicle}-${todayKey}`;
   }, [user, vehicle, todayKey]);
 
-  // Load state from sessionStorage on mount
+  // Load state from localStorage on mount
   useEffect(() => {
     const storageKey = getStorageKey();
     if (storageKey) {
       try {
-        const savedState = sessionStorage.getItem(storageKey);
+        const savedState = localStorage.getItem(storageKey);
         if (savedState) {
           const parsedState = JSON.parse(savedState);
           reset(parsedState, { keepDefaultValues: true });
         }
       } catch (e) {
-        console.error("Failed to load ritasi state from session storage", e);
+        console.error("Failed to load ritasi state from local storage", e);
       }
     }
   }, [getStorageKey, reset]);
 
-  // Save state to sessionStorage on change, only if form is dirty
+  // Save state to localStorage on change, only if form is dirty
   useEffect(() => {
     const storageKey = getStorageKey();
     if (storageKey && isDirty) {
       try {
-        sessionStorage.setItem(storageKey, JSON.stringify(formValues));
+        localStorage.setItem(storageKey, JSON.stringify(formValues));
       } catch (e) {
-        console.error("Failed to save ritasi state to session storage", e);
+        console.error("Failed to save ritasi state to local storage", e);
       }
     }
   }, [formValues, getStorageKey, isDirty]);
@@ -119,7 +119,7 @@ export default function RitasiPage() {
   const handleResetForm = () => {
     const storageKey = getStorageKey();
     if (storageKey) {
-        sessionStorage.removeItem(storageKey);
+        localStorage.removeItem(storageKey);
     }
     reset({
         asal: '',
