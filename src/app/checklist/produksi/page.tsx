@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings, ClipboardList } from 'lucide-react';
+import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings, ClipboardList, Speaker, ArrowDown, ArrowUp, Zap } from 'lucide-react';
 import { useOperatorAuth } from '@/context/operator-auth-context';
 import {
   DropdownMenu,
@@ -128,16 +128,22 @@ export default function ProduksiPage() {
 
             <Card className="flex-grow bg-gray-900/50 border-white/10 flex flex-col">
                  <CardHeader>
-                    <CardTitle className='text-center text-lg'>Kontrol Material (Manual)</CardTitle>
+                    <CardTitle className='text-center text-lg'>Kontrol Manual Relay</CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-4">
+                <CardContent className="p-4 grid grid-cols-4 gap-2 sm:gap-4">
                     <MaterialButton label="Pasir 1" icon={Gauge} />
                     <MaterialButton label="Pasir 2" icon={Gauge} />
                     <MaterialButton label="Batu 1" icon={Gem} />
                     <MaterialButton label="Batu 2" icon={Gem} />
-                    <MaterialButton label="Semen 1" icon={Wheat} />
-                    <MaterialButton label="Semen 2" icon={Component} />
-                    <MaterialButton label="Air" icon={Droplets} />
+                    <MaterialButton label="Semen Isi" icon={ArrowDown} />
+                    <MaterialButton label="Air Isi" icon={ArrowDown} />
+                    <MaterialButton label="Air Buang" icon={ArrowUp} />
+                    <MaterialButton label="Semen Buang" icon={ArrowUp} />
+                    <MaterialButton label="Konveyor Atas" icon={ArrowUp} />
+                    <MaterialButton label="Konveyor Bawah" icon={ArrowDown} />
+                    <MaterialButton label="Vibro Pasir" icon={Zap} />
+                    <MaterialButton label="Vibro Semen" icon={Zap} />
+                    <MaterialButton label="Klakson" icon={Speaker} />
                 </CardContent>
             </Card>
         </div>
