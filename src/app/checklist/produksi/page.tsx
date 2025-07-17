@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings } from 'lucide-react';
+import { Play, Square, Gauge, Wheat, Gem, Droplets, Component, Settings, ClipboardList } from 'lucide-react';
 import { useOperatorAuth } from '@/context/operator-auth-context';
 import {
   DropdownMenu,
@@ -65,19 +65,29 @@ export default function ProduksiPage() {
         <div className="flex-shrink-0 flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-white/10">
             <div className="flex items-center gap-4">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-headline tracking-wider">Batching Plant Control</h1>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Setting
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-gray-800 text-white border-white/20">
-                        <DropdownMenuItem>Tombol manual</DropdownMenuItem>
-                        <DropdownMenuItem>timer pintu mixer</DropdownMenuItem>
-                        <DropdownMenuItem>urutan loading</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                 <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10">
+                                <Settings className="mr-2 h-4 w-4" />
+                                Setting
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="bg-gray-800 text-white border-white/20">
+                            <DropdownMenuItem>Tombol manual</DropdownMenuItem>
+                            <DropdownMenuItem>timer pintu mixer</DropdownMenuItem>
+                            <DropdownMenuItem>urutan loading</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10">
+                        <Droplets className="mr-2 h-4 w-4" />
+                        Moisturizer control
+                    </Button>
+                    <Button variant="outline" className="bg-gray-700/50 hover:bg-gray-700/80 border-white/10">
+                        <ClipboardList className="mr-2 h-4 w-4" />
+                        JMF
+                    </Button>
+                 </div>
             </div>
             <div className='text-right'>
                 <p className="text-sm font-semibold text-primary">{user.name}</p>
