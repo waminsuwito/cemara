@@ -10,6 +10,7 @@ import { useOperatorAuth } from "@/context/operator-auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, RefreshCcw, Send, Loader2, VideoOff, CheckCircle, Clock, LogIn, LogOut, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Attendance } from "@/lib/data";
 
 type AttendanceType = 'masuk' | 'pulang';
 type ViewState = 'selection' | 'capture';
@@ -167,7 +168,7 @@ export default function AbsensiKegiatanPage() {
 
         setIsSubmitting(true);
         
-        let status = 'Tepat Waktu';
+        let status: Attendance['status'] = 'Tepat Waktu';
         if (attendanceType === 'masuk') {
             const isLate = now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 30);
             if(isLate) status = 'Terlambat';
