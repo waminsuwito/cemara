@@ -158,7 +158,7 @@ export default function ProduksiPage() {
 
         {/* Controls Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-shrink-0">
-            <Card className="lg:col-span-5 bg-gray-900/50 border-white/10 flex flex-col">
+            <Card className="lg:col-span-4 bg-gray-900/50 border-white/10 flex flex-col">
                 <CardHeader>
                     <CardTitle className='text-center text-lg'>Mode & Operasi</CardTitle>
                 </CardHeader>
@@ -180,7 +180,7 @@ export default function ProduksiPage() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3 bg-gray-900/50 border-white/10 flex flex-col">
+            <Card className="lg:col-span-4 bg-gray-900/50 border-white/10 flex flex-col">
                  <CardHeader>
                     <CardTitle className='text-center text-lg'>Production Target</CardTitle>
                 </CardHeader>
