@@ -108,13 +108,8 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
   const navItems = React.useMemo(() => {
     let baseItems = [
       { href: "/checklist", icon: ClipboardCheck, label: "Checklist Harian" },
+      { href: "/checklist/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan" },
     ];
-
-    if (isBPVehicle) {
-      baseItems.push({ href: "/checklist/produksi", icon: Factory, label: "PRODUKSI" });
-    }
-    
-    baseItems.push({ href: "/checklist/absensi", icon: CalendarCheck, label: "Absensi & Kegiatan" });
     
     if (selectedVehicle?.type === 'TM') {
       baseItems.push({ href: "/checklist/ritasi", icon: Route, label: "Ritasi Saya" });
@@ -137,7 +132,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     }
 
     return baseItems;
-  }, [user, selectedVehicle, isBPVehicle]);
+  }, [user, selectedVehicle]);
 
 
   React.useEffect(() => {
